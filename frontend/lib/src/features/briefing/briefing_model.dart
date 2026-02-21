@@ -38,6 +38,8 @@ abstract class BriefingItem with _$BriefingItem {
     String? price,
     String? change,
     String? analysis,
+    String? explanation,
+    String? horizon,
   }) = _BriefingItem;
 
   factory BriefingItem.fromJson(Map<String, dynamic> json) => _$BriefingItemFromJson(json);

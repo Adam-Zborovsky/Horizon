@@ -50,6 +50,8 @@ _BriefingItem _$BriefingItemFromJson(Map<String, dynamic> json) =>
       price: json['price'] as String?,
       change: json['change'] as String?,
       analysis: json['analysis'] as String?,
+      explanation: json['explanation'] as String?,
+      horizon: json['horizon'] as String?,
     );
 
 Map<String, dynamic> _$BriefingItemToJson(_BriefingItem instance) =>
@@ -64,4 +66,6 @@ Map<String, dynamic> _$BriefingItemToJson(_BriefingItem instance) =>
       'price': instance.price,
       'change': instance.change,
       'analysis': instance.analysis,
+      'explanation': instance.explanation,
+      'horizon': instance.horizon,
     };

@@ -565,7 +565,7 @@ as List<BriefingItem>,
 /// @nodoc
 mixin _$BriefingItem {
 
- String? get title; String? get l; double? get sentiment; String? get img; String? get takeaway; String? get ticker; String? get name; String? get price; String? get change; String? get analysis;
+ String? get title; String? get l; double? get sentiment; String? get img; String? get takeaway; String? get ticker; String? get name; String? get price; String? get change; String? get analysis; String? get explanation; String? get horizon;
 /// Create a copy of BriefingItem
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -578,16 +578,16 @@ $BriefingItemCopyWith<BriefingItem> get copyWith => _$BriefingItemCopyWithImpl<B
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is BriefingItem&&(identical(other.title, title) || other.title == title)&&(identical(other.l, l) || other.l == l)&&(identical(other.sentiment, sentiment) || other.sentiment == sentiment)&&(identical(other.img, img) || other.img == img)&&(identical(other.takeaway, takeaway) || other.takeaway == takeaway)&&(identical(other.ticker, ticker) || other.ticker == ticker)&&(identical(other.name, name) || other.name == name)&&(identical(other.price, price) || other.price == price)&&(identical(other.change, change) || other.change == change)&&(identical(other.analysis, analysis) || other.analysis == analysis));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is BriefingItem&&(identical(other.title, title) || other.title == title)&&(identical(other.l, l) || other.l == l)&&(identical(other.sentiment, sentiment) || other.sentiment == sentiment)&&(identical(other.img, img) || other.img == img)&&(identical(other.takeaway, takeaway) || other.takeaway == takeaway)&&(identical(other.ticker, ticker) || other.ticker == ticker)&&(identical(other.name, name) || other.name == name)&&(identical(other.price, price) || other.price == price)&&(identical(other.change, change) || other.change == change)&&(identical(other.analysis, analysis) || other.analysis == analysis)&&(identical(other.explanation, explanation) || other.explanation == explanation)&&(identical(other.horizon, horizon) || other.horizon == horizon));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,title,l,sentiment,img,takeaway,ticker,name,price,change,analysis);
+int get hashCode => Object.hash(runtimeType,title,l,sentiment,img,takeaway,ticker,name,price,change,analysis,explanation,horizon);
 
 @override
 String toString() {
-  return 'BriefingItem(title: $title, l: $l, sentiment: $sentiment, img: $img, takeaway: $takeaway, ticker: $ticker, name: $name, price: $price, change: $change, analysis: $analysis)';
+  return 'BriefingItem(title: $title, l: $l, sentiment: $sentiment, img: $img, takeaway: $takeaway, ticker: $ticker, name: $name, price: $price, change: $change, analysis: $analysis, explanation: $explanation, horizon: $horizon)';
 }
 
 
@@ -598,7 +598,7 @@ abstract mixin class $BriefingItemCopyWith<$Res>  {
   factory $BriefingItemCopyWith(BriefingItem value, $Res Function(BriefingItem) _then) = _$BriefingItemCopyWithImpl;
 @useResult
 $Res call({
- String? title, String? l, double? sentiment, String? img, String? takeaway, String? ticker, String? name, String? price, String? change, String? analysis
+ String? title, String? l, double? sentiment, String? img, String? takeaway, String? ticker, String? name, String? price, String? change, String? analysis, String? explanation, String? horizon
 });
 
 
@@ -615,7 +615,7 @@ class _$BriefingItemCopyWithImpl<$Res>
 
 /// Create a copy of BriefingItem
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? title = freezed,Object? l = freezed,Object? sentiment = freezed,Object? img = freezed,Object? takeaway = freezed,Object? ticker = freezed,Object? name = freezed,Object? price = freezed,Object? change = freezed,Object? analysis = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? title = freezed,Object? l = freezed,Object? sentiment = freezed,Object? img = freezed,Object? takeaway = freezed,Object? ticker = freezed,Object? name = freezed,Object? price = freezed,Object? change = freezed,Object? analysis = freezed,Object? explanation = freezed,Object? horizon = freezed,}) {
   return _then(_self.copyWith(
 title: freezed == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
 as String?,l: freezed == l ? _self.l : l // ignore: cast_nullable_to_non_nullable
@@ -627,6 +627,8 @@ as String?,name: freezed == name ? _self.name : name // ignore: cast_nullable_to
 as String?,price: freezed == price ? _self.price : price // ignore: cast_nullable_to_non_nullable
 as String?,change: freezed == change ? _self.change : change // ignore: cast_nullable_to_non_nullable
 as String?,analysis: freezed == analysis ? _self.analysis : analysis // ignore: cast_nullable_to_non_nullable
+as String?,explanation: freezed == explanation ? _self.explanation : explanation // ignore: cast_nullable_to_non_nullable
+as String?,horizon: freezed == horizon ? _self.horizon : horizon // ignore: cast_nullable_to_non_nullable
 as String?,
   ));
 }
@@ -712,10 +714,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String? title,  String? l,  double? sentiment,  String? img,  String? takeaway,  String? ticker,  String? name,  String? price,  String? change,  String? analysis)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String? title,  String? l,  double? sentiment,  String? img,  String? takeaway,  String? ticker,  String? name,  String? price,  String? change,  String? analysis,  String? explanation,  String? horizon)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _BriefingItem() when $default != null:
-return $default(_that.title,_that.l,_that.sentiment,_that.img,_that.takeaway,_that.ticker,_that.name,_that.price,_that.change,_that.analysis);case _:
+return $default(_that.title,_that.l,_that.sentiment,_that.img,_that.takeaway,_that.ticker,_that.name,_that.price,_that.change,_that.analysis,_that.explanation,_that.horizon);case _:
   return orElse();
 
 }
@@ -733,10 +735,10 @@ return $default(_that.title,_that.l,_that.sentiment,_that.img,_that.takeaway,_th
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String? title,  String? l,  double? sentiment,  String? img,  String? takeaway,  String? ticker,  String? name,  String? price,  String? change,  String? analysis)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String? title,  String? l,  double? sentiment,  String? img,  String? takeaway,  String? ticker,  String? name,  String? price,  String? change,  String? analysis,  String? explanation,  String? horizon)  $default,) {final _that = this;
 switch (_that) {
 case _BriefingItem():
-return $default(_that.title,_that.l,_that.sentiment,_that.img,_that.takeaway,_that.ticker,_that.name,_that.price,_that.change,_that.analysis);case _:
+return $default(_that.title,_that.l,_that.sentiment,_that.img,_that.takeaway,_that.ticker,_that.name,_that.price,_that.change,_that.analysis,_that.explanation,_that.horizon);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -753,10 +755,10 @@ return $default(_that.title,_that.l,_that.sentiment,_that.img,_that.takeaway,_th
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String? title,  String? l,  double? sentiment,  String? img,  String? takeaway,  String? ticker,  String? name,  String? price,  String? change,  String? analysis)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String? title,  String? l,  double? sentiment,  String? img,  String? takeaway,  String? ticker,  String? name,  String? price,  String? change,  String? analysis,  String? explanation,  String? horizon)?  $default,) {final _that = this;
 switch (_that) {
 case _BriefingItem() when $default != null:
-return $default(_that.title,_that.l,_that.sentiment,_that.img,_that.takeaway,_that.ticker,_that.name,_that.price,_that.change,_that.analysis);case _:
+return $default(_that.title,_that.l,_that.sentiment,_that.img,_that.takeaway,_that.ticker,_that.name,_that.price,_that.change,_that.analysis,_that.explanation,_that.horizon);case _:
   return null;
 
 }
@@ -768,7 +770,7 @@ return $default(_that.title,_that.l,_that.sentiment,_that.img,_that.takeaway,_th
 @JsonSerializable()
 
 class _BriefingItem implements BriefingItem {
-  const _BriefingItem({this.title, this.l, this.sentiment, this.img, this.takeaway, this.ticker, this.name, this.price, this.change, this.analysis});
+  const _BriefingItem({this.title, this.l, this.sentiment, this.img, this.takeaway, this.ticker, this.name, this.price, this.change, this.analysis, this.explanation, this.horizon});
   factory _BriefingItem.fromJson(Map<String, dynamic> json) => _$BriefingItemFromJson(json);
 
 @override final  String? title;
@@ -781,6 +783,8 @@ class _BriefingItem implements BriefingItem {
 @override final  String? price;
 @override final  String? change;
 @override final  String? analysis;
+@override final  String? explanation;
+@override final  String? horizon;
 
 /// Create a copy of BriefingItem
 /// with the given fields replaced by the non-null parameter values.
@@ -795,16 +799,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _BriefingItem&&(identical(other.title, title) || other.title == title)&&(identical(other.l, l) || other.l == l)&&(identical(other.sentiment, sentiment) || other.sentiment == sentiment)&&(identical(other.img, img) || other.img == img)&&(identical(other.takeaway, takeaway) || other.takeaway == takeaway)&&(identical(other.ticker, ticker) || other.ticker == ticker)&&(identical(other.name, name) || other.name == name)&&(identical(other.price, price) || other.price == price)&&(identical(other.change, change) || other.change == change)&&(identical(other.analysis, analysis) || other.analysis == analysis));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _BriefingItem&&(identical(other.title, title) || other.title == title)&&(identical(other.l, l) || other.l == l)&&(identical(other.sentiment, sentiment) || other.sentiment == sentiment)&&(identical(other.img, img) || other.img == img)&&(identical(other.takeaway, takeaway) || other.takeaway == takeaway)&&(identical(other.ticker, ticker) || other.ticker == ticker)&&(identical(other.name, name) || other.name == name)&&(identical(other.price, price) || other.price == price)&&(identical(other.change, change) || other.change == change)&&(identical(other.analysis, analysis) || other.analysis == analysis)&&(identical(other.explanation, explanation) || other.explanation == explanation)&&(identical(other.horizon, horizon) || other.horizon == horizon));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,title,l,sentiment,img,takeaway,ticker,name,price,change,analysis);
+int get hashCode => Object.hash(runtimeType,title,l,sentiment,img,takeaway,ticker,name,price,change,analysis,explanation,horizon);
 
 @override
 String toString() {
-  return 'BriefingItem(title: $title, l: $l, sentiment: $sentiment, img: $img, takeaway: $takeaway, ticker: $ticker, name: $name, price: $price, change: $change, analysis: $analysis)';
+  return 'BriefingItem(title: $title, l: $l, sentiment: $sentiment, img: $img, takeaway: $takeaway, ticker: $ticker, name: $name, price: $price, change: $change, analysis: $analysis, explanation: $explanation, horizon: $horizon)';
 }
 
 
@@ -815,7 +819,7 @@ abstract mixin class _$BriefingItemCopyWith<$Res> implements $BriefingItemCopyWi
   factory _$BriefingItemCopyWith(_BriefingItem value, $Res Function(_BriefingItem) _then) = __$BriefingItemCopyWithImpl;
 @override @useResult
 $Res call({
- String? title, String? l, double? sentiment, String? img, String? takeaway, String? ticker, String? name, String? price, String? change, String? analysis
+ String? title, String? l, double? sentiment, String? img, String? takeaway, String? ticker, String? name, String? price, String? change, String? analysis, String? explanation, String? horizon
 });
 
 
@@ -832,7 +836,7 @@ class __$BriefingItemCopyWithImpl<$Res>
 
 /// Create a copy of BriefingItem
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? title = freezed,Object? l = freezed,Object? sentiment = freezed,Object? img = freezed,Object? takeaway = freezed,Object? ticker = freezed,Object? name = freezed,Object? price = freezed,Object? change = freezed,Object? analysis = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? title = freezed,Object? l = freezed,Object? sentiment = freezed,Object? img = freezed,Object? takeaway = freezed,Object? ticker = freezed,Object? name = freezed,Object? price = freezed,Object? change = freezed,Object? analysis = freezed,Object? explanation = freezed,Object? horizon = freezed,}) {
   return _then(_BriefingItem(
 title: freezed == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
 as String?,l: freezed == l ? _self.l : l // ignore: cast_nullable_to_non_nullable
@@ -844,6 +848,8 @@ as String?,name: freezed == name ? _self.name : name // ignore: cast_nullable_to
 as String?,price: freezed == price ? _self.price : price // ignore: cast_nullable_to_non_nullable
 as String?,change: freezed == change ? _self.change : change // ignore: cast_nullable_to_non_nullable
 as String?,analysis: freezed == analysis ? _self.analysis : analysis // ignore: cast_nullable_to_non_nullable
+as String?,explanation: freezed == explanation ? _self.explanation : explanation // ignore: cast_nullable_to_non_nullable
+as String?,horizon: freezed == horizon ? _self.horizon : horizon // ignore: cast_nullable_to_non_nullable
 as String?,
   ));
 }
