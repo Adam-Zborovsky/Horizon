@@ -49,10 +49,39 @@ class BriefingController {
   }
 
   /**
+   * PUT /api/v1/briefing/config/topic/:topicName
+   * Toggles the enabled status of a specific topic
+   */
+  async toggleTopic(req, res, next) {
+    try {
+      const { topicName } = req.params;
+      const { enabled } = req.body;
+
+      if (typeof enabled === 'undefined') {
+        return res.status(400).json({
+          success: false,
+          message: 'The "enabled" status is required in the request body.',
+        });
+      }
+
+      const config = await briefingService.toggleTopic(topicName, enabled);
+      
+      res.status(200).json({
+        success: true,
+        data: config,
+        message: `Topic "${topicName}" enabled status updated to ${enabled}.`,
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  /**
    * POST /webhook/update-briefing-config
    * Receives updated topics/tickers from the frontend
    */
   async updateConfig(req, res, next) {
+
     try {
       const config = await briefingService.updateConfig(req.body);
       

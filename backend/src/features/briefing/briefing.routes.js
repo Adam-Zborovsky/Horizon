@@ -27,4 +27,13 @@ router.get('/config', briefingController.getConfig);
  */
 router.get('/history', briefingController.getHistory);
 
+router.put('/config/topic/:topicName', briefingController.toggleTopic);
+
+/**
+ * @route PUT /api/v1/briefing/config
+ * Updates the briefing configuration (topics, tickers)
+ */
+router.put('/config', briefingController.updateConfig);
+
 module.exports = router;
+

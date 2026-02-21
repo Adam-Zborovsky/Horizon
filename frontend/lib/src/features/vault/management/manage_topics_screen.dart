@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:horizon/src/core/theme/app_theme.dart';
 import 'package:horizon/src/core/widgets/glass_card.dart';
-import 'package:horizon/src/features/briefing/briefing_repository.dart';
-import 'package:horizon/src/features/dashboard/watchlist_provider.dart';
+import 'package:horizon/src/features/briefing/briefing_config_model.dart';
+import 'package:horizon/src/features/briefing/briefing_config_repository.dart';
 
 class ManageTopicsScreen extends ConsumerStatefulWidget {
   const ManageTopicsScreen({super.key});
@@ -14,7 +14,17 @@ class ManageTopicsScreen extends ConsumerStatefulWidget {
 
 class _ManageTopicsScreenState extends ConsumerState<ManageTopicsScreen> {
   final TextEditingController _searchController = TextEditingController();
-  final List<String> _recommended = ['Semiconductors', 'Geopolitics', 'Sovereign AI', 'Energy', 'Defense Tech', 'Cybersecurity', 'Macro Crypto'];
+  
+  // These should ideally come from backend config or initial setup
+  final List<String> _defaultRecommendedTopics = [
+    'Semiconductors', 
+    'Geopolitics', 
+    'Sovereign AI', 
+    'Energy', 
+    'Defense Tech', 
+    'Cybersecurity', 
+    'Macro Crypto'
+  ];
 
   @override
   void dispose() {
@@ -24,8 +34,7 @@ class _ManageTopicsScreenState extends ConsumerState<ManageTopicsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final followed = ref.watch(followedTopicsProvider);
-    final briefingAsync = ref.watch(briefingRepositoryProvider);
+    final briefingConfigAsync = ref.watch(briefingConfigRepositoryProvider);
 
     return Scaffold(
       backgroundColor: AppTheme.obsidian,
@@ -35,15 +44,27 @@ class _ManageTopicsScreenState extends ConsumerState<ManageTopicsScreen> {
             controller: _searchController, 
             onSubmitted: (val) async {
               if (val.isNotEmpty) {
-                await ref.read(followedTopicsProvider.notifier).toggle(val);
+                // Add the new topic and enable it
+                await ref.read(briefingConfigRepositoryProvider.notifier).toggleTopic(val, true);
                 _searchController.clear();
               }
             },
           ),
           SliverToBoxAdapter(
-            child: _RecommendedSection(
-              recommended: _recommended,
-              onTap: (topic) async => await ref.read(followedTopicsProvider.notifier).toggle(topic),
+            child: briefingConfigAsync.when(
+              data: (config) {
+                // Filter out topics already in the config to avoid duplicates in recommended section logic
+                final recommendedFiltered = _defaultRecommendedTopics.where(
+                  (recTopic) => !config.topics.any((cfgTopic) => cfgTopic.name == recTopic)
+                ).toList();
+
+                return _RecommendedSection(
+                  recommended: recommendedFiltered,
+                  onTap: (topic) async => await ref.read(briefingConfigRepositoryProvider.notifier).toggleTopic(topic, true),
+                );
+              },
+              loading: () => const SizedBox.shrink(), // Or a small loader for this section
+              error: (err, stack) => const SizedBox.shrink(),
             ),
           ),
           const SliverPadding(
@@ -60,13 +81,9 @@ class _ManageTopicsScreenState extends ConsumerState<ManageTopicsScreen> {
               ),
             ),
           ),
-          briefingAsync.when(
-            data: (briefing) {
-              final categories = briefing.data.keys.toList();
-              // Combine actual categories from backend with any custom followed ones
-              final allVisible = {...categories, ...followed}.toList();
-              
-              if (allVisible.isEmpty) {
+          briefingConfigAsync.when(
+            data: (config) {
+              if (config.topics.isEmpty) {
                 return const SliverFillRemaining(
                   hasScrollBody: false,
                   child: Center(
@@ -78,15 +95,16 @@ class _ManageTopicsScreenState extends ConsumerState<ManageTopicsScreen> {
               return SliverList(
                 delegate: SliverChildBuilderDelegate(
                   (context, index) {
-                    final topic = allVisible[index];
-                    final isFollowing = followed.contains(topic);
+                    final topic = config.topics[index];
                     return _TopicItem(
-                      title: topic,
-                      isFollowing: isFollowing,
-                      onToggle: () async => await ref.read(followedTopicsProvider.notifier).toggle(topic),
+                      title: topic.name,
+                      isEnabled: topic.enabled,
+                      onToggle: (bool newValue) async {
+                        await ref.read(briefingConfigRepositoryProvider.notifier).toggleTopic(topic.name, newValue);
+                      },
                     );
                   },
-                  childCount: allVisible.length,
+                  childCount: config.topics.length,
                 ),
               );
             },
@@ -158,6 +176,8 @@ class _RecommendedSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (recommended.isEmpty) return const SizedBox.shrink(); // Don't show if no recommendations
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -196,17 +216,21 @@ class _RecommendedSection extends StatelessWidget {
 
 class _TopicItem extends StatelessWidget {
   final String title;
-  final bool isFollowing;
-  final VoidCallback onToggle;
+  final bool isEnabled;
+  final ValueChanged<bool> onToggle;
 
-  const _TopicItem({required this.title, required this.isFollowing, required this.onToggle});
+  const _TopicItem({
+    required this.title, 
+    required this.isEnabled, 
+    required this.onToggle,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 6),
       child: GlassCard(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8), // Adjusted vertical padding
         child: Row(
           children: [
             Container(
@@ -224,24 +248,12 @@ class _TopicItem extends StatelessWidget {
                 style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
               ),
             ),
-            TextButton(
-              onPressed: onToggle,
-              style: TextButton.styleFrom(
-                backgroundColor: isFollowing ? Colors.transparent : AppTheme.goldAmber.withOpacity(0.1),
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  side: BorderSide(color: isFollowing ? Colors.white10 : AppTheme.goldAmber.withOpacity(0.3)),
-                ),
-              ),
-              child: Text(
-                isFollowing ? 'UNFOLLOW' : 'FOLLOW',
-                style: TextStyle(
-                  color: isFollowing ? Colors.white38 : AppTheme.goldAmber,
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+            Switch(
+              value: isEnabled,
+              onChanged: onToggle,
+              activeColor: AppTheme.goldAmber,
+              inactiveTrackColor: Colors.white10,
+              inactiveThumbColor: Colors.white30,
             ),
           ],
         ),

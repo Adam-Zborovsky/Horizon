@@ -1,11 +1,15 @@
 const mongoose = require('mongoose');
 
 const briefingConfigSchema = new mongoose.Schema({
-  topics: {
-    type: [String],
-    default: [],
-  },
+  topics: [
+    { name: 'Geopolitical Defense & AI Strategy', enabled: true },
+    { name: 'Market Trends & Analysis', enabled: true },
+    { name: 'Tech Innovation & Disruptions', enabled: true },
+    { name: 'Economic Indicators', enabled: true },
+    { name: 'Company News', enabled: true },
+  ],
   tickers: {
+
     type: [String],
     default: [],
   },
