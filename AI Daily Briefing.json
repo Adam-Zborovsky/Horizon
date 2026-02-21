@@ -6,7 +6,7 @@
         "httpMethod": "POST",
         "path": "update-briefing-config",
         "options": {
-          "binaryData": true
+          "binaryData": false
         }
       },
       "id": "0daa3ae2-6245-4e83-bf04-b19841d8159b",
@@ -643,7 +643,7 @@
     "callerPolicy": "workflowsFromSameOwner",
     "timeSavedPerExecution": 25
   },
-  "versionId": "97d05045-815a-4bf3-8884-e8a42ef875be",
+  "versionId": "a9a564d9-8d55-4129-b3e9-4303a00354a1",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "462f72c1cb99079f620d4944d8321993a68403a9c985b9412cdd835b5280d81a"
