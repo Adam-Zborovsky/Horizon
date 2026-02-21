@@ -8,7 +8,7 @@ services:
     environment:
       - PORT=8181
       - NODE_ENV=production
-      - MONGODB_URI=mongodb://localhost:27017/alpha-horizon
+      - MONGODB_URI=mongodb://mongodb:27017/alpha-horizon
       - API_PREFIX=/api/v1
     depends_on:
       - mongodb
