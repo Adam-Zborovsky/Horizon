@@ -70,7 +70,7 @@ class _DetailContent extends ConsumerWidget {
                         border: Border.all(color: color.withOpacity(0.2)),
                       ),
                       child: Text(
-                        '${stock.changePercent > 0 ? "+" : ""}${stock.changePercent}%',
+                        '${stock.changePercent > 0 ? "+" : ""}${stock.changePercent.toStringAsFixed(2)}%',
                         style: TextStyle(
                           color: color,
                           fontWeight: FontWeight.bold,
@@ -201,6 +201,19 @@ class _MainChart extends StatelessWidget {
         gridData: const FlGridData(show: false),
         titlesData: const FlTitlesData(show: false),
         borderData: FlBorderData(show: false),
+        lineTouchData: LineTouchData(
+          touchTooltipData: LineTouchTooltipData(
+            getTooltipColor: (touchedSpot) => Colors.black.withOpacity(0.8),
+            getTooltipItems: (List<LineBarSpot> touchedBarSpots) {
+              return touchedBarSpots.map((barSpot) {
+                return LineTooltipItem(
+                  '\$${barSpot.y.toStringAsFixed(2)}',
+                  const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                );
+              }).toList();
+            },
+          ),
+        ),
         lineBarsData: [
           LineChartBarData(
             spots: data.asMap().entries.map((e) => FlSpot(e.key.toDouble(), e.value)).toList(),
@@ -242,7 +255,7 @@ class _SentimentPill extends StatelessWidget {
         border: Border.all(color: color.withOpacity(0.3)),
       ),
       child: Text(
-        '${score > 0 ? "+" : ""}$score SNT',
+        '${score > 0 ? "+" : ""}${score.toStringAsFixed(1)} SNT',
         style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 12),
       ),
     );

@@ -26,7 +26,6 @@ class BriefingRepository extends _$BriefingRepository {
           }
           firstBriefing = decodedBody.first as Map<String, dynamic>;
         } else if (decodedBody is Map<String, dynamic>) {
-          // Check if it has a 'data' field that is a list
           if (decodedBody['data'] is List && (decodedBody['data'] as List).isNotEmpty) {
             firstBriefing = (decodedBody['data'] as List).first as Map<String, dynamic>;
           } else {
@@ -36,17 +35,15 @@ class BriefingRepository extends _$BriefingRepository {
           throw Exception('Unexpected response format');
         }
         
-        // 2. Extract the nested 'data' content
+        // 2. Extract and clean the nested 'data' content
         dynamic rawData = firstBriefing['data'];
         String rawContent = '';
 
         if (rawData is String) {
           rawContent = rawData;
         } else if (rawData is Map) {
-          // If it's already a map, we'll re-encode it to string to use our unified parser
           rawContent = jsonEncode(rawData);
         } else {
-          // If no 'data' field, the whole firstBriefing might be the payload
           rawContent = jsonEncode(firstBriefing);
         }
         
@@ -57,12 +54,12 @@ class BriefingRepository extends _$BriefingRepository {
           rawContent = match.group(0)!;
         }
 
-        // 3. Decode the actual intelligence content
+        // 3. Decode content
         final dynamic decodedContent = jsonDecode(rawContent);
         final Map<String, CategoryData> categoriesMap = {};
 
         if (decodedContent is Map<String, dynamic>) {
-          // Pattern A: {"categories": [{"category": "Name", ...}, ...]}
+          // Pattern A: categories list
           if (decodedContent.containsKey('categories') && decodedContent['categories'] is List) {
             final List<dynamic> list = decodedContent['categories'];
             for (final item in list) {
@@ -72,14 +69,14 @@ class BriefingRepository extends _$BriefingRepository {
               }
             }
           } 
-          // Pattern B: {"Category Name": {"sentiment_score": ..., "items": [...]}, ...}
+          // Pattern B: direct map
           else {
             decodedContent.forEach((key, value) {
               if (value is Map<String, dynamic> && (value.containsKey('items') || value.containsKey('sentiment_score'))) {
                 try {
                   categoriesMap[key] = CategoryData.fromJson(value);
                 } catch (e) {
-                  // Skip if not a valid category
+                  // Skip
                 }
               }
             });

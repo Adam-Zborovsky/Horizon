@@ -48,7 +48,8 @@ class AlphaScannerScreen extends ConsumerWidget {
                     const SizedBox(height: 15),
                     stocksAsync.when(
                       data: (stocks) {
-                        final divergences = stocks.where((s) => s.sentiment > 0.6 && s.changePercent <= 0).toList();
+                        // Find stocks where AI conviction is strong but price isn't moving yet
+                        final divergences = stocks.where((s) => s.sentiment > 0.5 && s.changePercent <= 0.5).toList();
                         if (divergences.isEmpty) {
                           return const _EmptyScannerState(message: 'No active divergences detected.');
                         }
@@ -63,7 +64,7 @@ class AlphaScannerScreen extends ConsumerWidget {
                     const _ScannerSectionHeader(title: 'Strategic Catalysts'),
                     const SizedBox(height: 8),
                     const Text(
-                      'High-impact events identified from daily briefing.',
+                      'Deep-intelligence anchors extracted from daily briefing.',
                       style: TextStyle(color: Colors.white24, fontSize: 11),
                     ),
                     const SizedBox(height: 15),
@@ -86,7 +87,7 @@ class AlphaScannerScreen extends ConsumerWidget {
                       error: (e, s) => const SizedBox.shrink(),
                     ),
                     const SizedBox(height: 30),
-                    const _ScannerSectionHeader(title: 'System Analysis Map'),
+                    const _ScannerSectionHeader(title: 'Macro Correlation Engine'),
                     const SizedBox(height: 15),
                     const _MacroImpactMap(),
                     const SizedBox(height: 120),
@@ -106,19 +107,17 @@ class _ScannerHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SliverAppBar(
-      expandedHeight: 80,
+      expandedHeight: 70,
+      collapsedHeight: 60,
       backgroundColor: Colors.transparent,
       elevation: 0,
       pinned: true,
-      flexibleSpace: FlexibleSpaceBar(
-        centerTitle: false,
-        titlePadding: const EdgeInsets.only(left: 24, bottom: 16),
-        title: Text(
-          'Alpha Scanner',
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-            fontWeight: FontWeight.bold,
-            letterSpacing: -0.5,
-          ),
+      centerTitle: false,
+      title: Text(
+        'Alpha Scanner',
+        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+          fontWeight: FontWeight.bold,
+          letterSpacing: -0.5,
         ),
       ),
     );
@@ -155,9 +154,9 @@ class _ScannerPulseState extends State<_ScannerPulse> with SingleTickerProviderS
       builder: (context, child) {
         return Container(
           width: double.infinity,
-          height: 80,
+          height: 60,
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(15),
+            borderRadius: BorderRadius.circular(12),
             border: Border.all(color: AppTheme.goldAmber.withOpacity(_animation.value)),
             gradient: LinearGradient(
               begin: Alignment.topCenter,
@@ -168,23 +167,21 @@ class _ScannerPulseState extends State<_ScannerPulse> with SingleTickerProviderS
               ],
             ),
           ),
-          child: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.radar_rounded, color: AppTheme.goldAmber.withOpacity(_animation.value + 0.4), size: 24),
-                const SizedBox(height: 8),
-                Text(
-                  'ENGINE ACTIVE',
-                  style: TextStyle(
-                    color: Colors.white.withOpacity(0.6),
-                    fontWeight: FontWeight.bold,
-                    fontSize: 8,
-                    letterSpacing: 4,
-                  ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.radar_rounded, color: AppTheme.goldAmber.withOpacity(_animation.value + 0.4), size: 20),
+              const SizedBox(width: 12),
+              Text(
+                'SYSTEM SCANNING LIVE',
+                style: TextStyle(
+                  color: Colors.white.withOpacity(0.6),
+                  fontWeight: FontWeight.bold,
+                  fontSize: 9,
+                  letterSpacing: 3,
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         );
       },
@@ -216,20 +213,20 @@ class _DivergenceCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.only(bottom: 10),
       child: GestureDetector(
         onTap: () => context.push('/stock/${stock.ticker}'),
         child: GlassCard(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
           child: Row(
             children: [
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(stock.ticker, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white, fontFamily: 'Montserrat')),
+                  Text(stock.ticker, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white, fontFamily: 'Montserrat')),
                   Text(
                     'DIVERGENCE DETECTED',
-                    style: TextStyle(color: AppTheme.goldAmber.withOpacity(0.8), fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 1),
+                    style: TextStyle(color: AppTheme.goldAmber.withOpacity(0.8), fontSize: 8, fontWeight: FontWeight.bold, letterSpacing: 1),
                   ),
                 ],
               ),
@@ -237,12 +234,62 @@ class _DivergenceCard extends StatelessWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  Text('+${stock.sentiment} SNT', style: const TextStyle(color: AppTheme.goldAmber, fontWeight: FontWeight.bold, fontSize: 14)),
-                  Text('${stock.changePercent}% Action', style: const TextStyle(color: Colors.white38, fontSize: 11)),
+                  Text('+${stock.sentiment.toStringAsFixed(1)} SNT', style: const TextStyle(color: AppTheme.goldAmber, fontWeight: FontWeight.bold, fontSize: 14)),
+                  Text('${stock.changePercent.toStringAsFixed(2)}% Action', style: const TextStyle(color: Colors.white38, fontSize: 10)),
                 ],
               ),
               const SizedBox(width: 16),
               const Icon(Icons.arrow_forward_ios_rounded, size: 12, color: Colors.white10),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _CatalystCard extends StatelessWidget {
+  final BriefingItem item;
+
+  const _CatalystCard({required this.item});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: GestureDetector(
+        onTap: () => context.go('/vault'), // Or deep dive if title matches
+        child: GlassCard(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppTheme.goldAmber.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(Icons.bolt_rounded, color: AppTheme.goldAmber, size: 16),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(item.title ?? 'Market Event', 
+                      maxLines: 1, 
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.white)
+                    ),
+                    const SizedBox(height: 2),
+                    Text(item.takeaway?.toUpperCase() ?? 'CATALYST', 
+                      maxLines: 1, 
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(color: AppTheme.goldAmber.withOpacity(0.4), fontSize: 9, letterSpacing: 1)
+                    ),
+                  ],
+                ),
+              ),
             ],
           ),
         ),
@@ -278,7 +325,7 @@ class _MacroImpactMap extends StatelessWidget {
   Widget build(BuildContext context) {
     return GlassCard(
       padding: const EdgeInsets.all(24),
-      height: 150,
+      height: 120,
       child: Stack(
         children: [
           CustomPaint(
@@ -288,7 +335,7 @@ class _MacroImpactMap extends StatelessWidget {
           const Align(
             alignment: Alignment.bottomRight,
             child: Text(
-              'CORRELATION ACTIVE',
+              'CORRELATION ENGINE ACTIVE',
               style: TextStyle(color: Colors.white10, fontSize: 7, letterSpacing: 2),
             ),
           ),
@@ -328,47 +375,4 @@ class _GeometricMapPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
-
-class _CatalystCard extends StatelessWidget {
-  final BriefingItem item;
-
-  const _CatalystCard({required this.item});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: GlassCard(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: AppTheme.goldAmber.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: const Icon(Icons.bolt_rounded, color: AppTheme.goldAmber, size: 16),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(item.title ?? 'Market Event', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.white)),
-                  const SizedBox(height: 2),
-                  Text(item.takeaway?.toUpperCase() ?? 'CATALYST', 
-                    maxLines: 1, 
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(color: AppTheme.goldAmber.withOpacity(0.4), fontSize: 9, letterSpacing: 1)
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 }

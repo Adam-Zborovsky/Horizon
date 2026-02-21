@@ -31,7 +31,7 @@ class DashboardScreen extends ConsumerWidget {
         child: CustomScrollView(
           physics: const BouncingScrollPhysics(),
           slivers: [
-            _WarRoomHeader(),
+            const _WarRoomHeader(),
             SliverPadding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               sliver: SliverToBoxAdapter(
@@ -43,7 +43,7 @@ class DashboardScreen extends ConsumerWidget {
               ),
             ),
             const SliverToBoxAdapter(child: SizedBox(height: 30)),
-            _SectionHeader(title: 'Intelligence Pillars'),
+            const _SectionHeader(title: 'Intelligence Pillars'),
             const SliverToBoxAdapter(child: SizedBox(height: 15)),
             briefingAsync.when(
               data: (briefing) => _IntelPillarsGrid(briefing: briefing),
@@ -51,7 +51,7 @@ class DashboardScreen extends ConsumerWidget {
               error: (err, stack) => const SliverToBoxAdapter(child: SizedBox.shrink()),
             ),
             const SliverToBoxAdapter(child: SizedBox(height: 30)),
-            _SectionHeader(title: 'Market Nexus'),
+            const _SectionHeader(title: 'Market Nexus'),
             const SliverToBoxAdapter(child: SizedBox(height: 15)),
             stocksAsync.when(
               data: (stocks) => _MarketNexusList(stocks: stocks),
@@ -104,23 +104,23 @@ class _ErrorWidget extends StatelessWidget {
 }
 
 class _WarRoomHeader extends StatelessWidget {
+  const _WarRoomHeader();
+
   @override
   Widget build(BuildContext context) {
     return SliverAppBar(
-      expandedHeight: 80,
+      expandedHeight: 70,
+      collapsedHeight: 60,
       backgroundColor: Colors.transparent,
       elevation: 0,
       pinned: true,
-      stretch: true,
-      flexibleSpace: FlexibleSpaceBar(
-        centerTitle: false,
-        titlePadding: const EdgeInsets.only(left: 20, bottom: 16),
-        title: Text(
-          'War Room',
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-            fontWeight: FontWeight.bold,
-            letterSpacing: -0.5,
-          ),
+      centerTitle: false,
+      title: Text(
+        'War Room',
+        style: Theme.of(context).textTheme.displaySmall?.copyWith(
+          fontSize: 22,
+          fontWeight: FontWeight.bold,
+          letterSpacing: -0.5,
         ),
       ),
       actions: [
@@ -133,9 +133,9 @@ class _WarRoomHeader extends StatelessWidget {
           child: GestureDetector(
             onTap: () => context.push('/profile'),
             child: const CircleAvatar(
-              radius: 18,
+              radius: 16,
               backgroundColor: AppTheme.glassWhite,
-              child: Icon(Icons.person_outline_rounded, color: Colors.white70),
+              child: Icon(Icons.person_outline_rounded, color: Colors.white70, size: 18),
             ),
           ),
         ),
@@ -191,79 +191,71 @@ class _DailyBriefingSummary extends StatelessWidget {
       );
     }
 
-    // Get the first category
+    final categoryName = briefing.data.keys.first;
     final category = briefing.data.values.first;
     final summary = category.summary;
     final score = category.sentimentScore;
 
-    return GlassCard(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Daily Analysis',
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: AppTheme.goldAmber,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 1.2,
-                          ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      briefing.data.keys.first, 
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(fontSize: 18),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                ),
-              ),
-              _SentimentRing(score: (score + 1) / 2),
-            ],
-          ),
-          const SizedBox(height: 20),
-          Text(
-            summary,
-            style: Theme.of(context).textTheme.bodyLarge?.copyWith(height: 1.4),
-            maxLines: 4,
-            overflow: TextOverflow.ellipsis,
-          ),
-          const SizedBox(height: 20),
-          GestureDetector(
-            onTap: () => context.go('/vault'),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              decoration: BoxDecoration(
-                color: AppTheme.goldAmber.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppTheme.goldAmber.withOpacity(0.2)),
-              ),
-              child: const Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    'Full Intelligence Report',
-                    style: TextStyle(
-                      color: AppTheme.goldAmber,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 12,
-                    ),
+    return GestureDetector(
+      onTap: () => context.push('/vault?category=${Uri.encodeComponent(categoryName)}'),
+      child: GlassCard(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Daily Analysis',
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              color: AppTheme.goldAmber,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 1.2,
+                            ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        categoryName, 
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(fontSize: 18),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
                   ),
-                  SizedBox(width: 8),
-                  Icon(Icons.north_east_rounded, size: 14, color: AppTheme.goldAmber),
-                ],
-              ),
+                ),
+                _SentimentRing(score: (score + 1) / 2),
+              ],
             ),
-          ),
-        ],
+            const SizedBox(height: 20),
+            Text(
+              summary,
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(height: 1.4),
+              maxLines: 4,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 20),
+            const Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Full Intelligence Report',
+                  style: TextStyle(
+                    color: AppTheme.goldAmber,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12,
+                  ),
+                ),
+                SizedBox(width: 8),
+                Icon(Icons.north_east_rounded, size: 14, color: AppTheme.goldAmber),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -324,9 +316,12 @@ class _IntelPillarsGrid extends StatelessWidget {
           (context, index) {
             final catName = categories[index];
             final catData = briefing.data[catName]!;
-            return _IntelCard(name: catName, score: catData.sentimentScore);
+            return GestureDetector(
+              onTap: () => context.go('/vault?category=${Uri.encodeComponent(catName)}'),
+              child: _IntelCard(name: catName, score: catData.sentimentScore),
+            );
           },
-          childCount: categories.length > 4 ? 4 : categories.length,
+          childCount: categories.length, // Show ALL live categories
         ),
       ),
     );
@@ -417,11 +412,23 @@ class _MarketNexusList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (stocks.isEmpty) {
-      return const SliverToBoxAdapter(
-        child: Center(
-          child: Padding(
-            padding: EdgeInsets.all(20),
-            child: Text('No active market nexus identified.', style: TextStyle(color: Colors.white24, fontSize: 12)),
+      return SliverToBoxAdapter(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: GestureDetector(
+            onTap: () => context.push('/manage-watchlist'),
+            child: GlassCard(
+              padding: const EdgeInsets.all(30),
+              child: Column(
+                children: [
+                  const Icon(Icons.add_chart_rounded, color: Colors.white10, size: 32),
+                  const SizedBox(height: 12),
+                  const Text('No stocks in nexus', style: TextStyle(color: Colors.white24)),
+                  const SizedBox(height: 8),
+                  Text('Tap to configure watchlist', style: TextStyle(color: AppTheme.goldAmber.withOpacity(0.5), fontSize: 11, fontWeight: FontWeight.bold)),
+                ],
+              ),
+            ),
           ),
         ),
       );
@@ -479,7 +486,7 @@ class _MarketNexusList extends StatelessWidget {
                           ),
                         ),
                         Text(
-                          '${stock.changePercent >= 0 ? "+" : ""}${stock.changePercent}%',
+                          '${stock.changePercent >= 0 ? "+" : ""}${stock.changePercent.toStringAsFixed(2)}%',
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
@@ -521,6 +528,7 @@ class _MiniSparkline extends StatelessWidget {
         gridData: const FlGridData(show: false),
         titlesData: const FlTitlesData(show: false),
         borderData: FlBorderData(show: false),
+        lineTouchData: const LineTouchData(enabled: false),
         lineBarsData: [
           LineChartBarData(
             spots: data.asMap().entries.map((e) => FlSpot(e.key.toDouble(), e.value)).toList(),

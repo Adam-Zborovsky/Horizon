@@ -44,7 +44,10 @@ final _router = GoRouter(
         ),
         GoRoute(
           path: '/vault',
-          builder: (context, state) => const IntelligenceVaultScreen(),
+          builder: (context, state) {
+            final category = state.uri.queryParameters['category'];
+            return IntelligenceVaultScreen(initialCategory: category);
+          },
         ),
         GoRoute(
           path: '/scanner',

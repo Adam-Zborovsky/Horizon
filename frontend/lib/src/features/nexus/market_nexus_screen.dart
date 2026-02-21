@@ -28,8 +28,8 @@ class MarketNexusScreen extends ConsumerWidget {
         child: CustomScrollView(
           physics: const BouncingScrollPhysics(),
           slivers: [
-            _NexusHeader(),
-            _NexusToolbar(),
+            const _NexusHeader(),
+            const _NexusToolbar(),
             stocksAsync.when(
               data: (stocks) => _NexusList(stocks: stocks),
               loading: () => const SliverFillRemaining(child: Center(child: CircularProgressIndicator())),
@@ -44,19 +44,21 @@ class MarketNexusScreen extends ConsumerWidget {
 }
 
 class _NexusHeader extends StatelessWidget {
+  const _NexusHeader();
   @override
   Widget build(BuildContext context) {
     return SliverAppBar(
-      expandedHeight: 120,
+      expandedHeight: 70,
+      collapsedHeight: 60,
       backgroundColor: Colors.transparent,
       elevation: 0,
       pinned: true,
-      flexibleSpace: FlexibleSpaceBar(
-        centerTitle: false,
-        titlePadding: const EdgeInsets.only(left: 24, bottom: 16),
-        title: Text(
-          'Market Nexus',
-          style: Theme.of(context).textTheme.displayMedium,
+      centerTitle: false,
+      title: Text(
+        'Market Nexus',
+        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+          fontWeight: FontWeight.bold,
+          letterSpacing: -0.5,
         ),
       ),
       actions: [
@@ -71,6 +73,7 @@ class _NexusHeader extends StatelessWidget {
 }
 
 class _NexusToolbar extends StatelessWidget {
+  const _NexusToolbar();
   @override
   Widget build(BuildContext context) {
     return SliverToBoxAdapter(
@@ -79,18 +82,21 @@ class _NexusToolbar extends StatelessWidget {
         child: Row(
           children: [
             Expanded(
-              child: GlassCard(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                borderRadius: 15,
-                child: Row(
-                  children: [
-                    const Icon(Icons.search_rounded, color: Colors.white24, size: 20),
-                    const SizedBox(width: 12),
-                    Text(
-                      'Search Assets...',
-                      style: TextStyle(color: Colors.white.withOpacity(0.2), fontSize: 14),
-                    ),
-                  ],
+              child: GestureDetector(
+                onTap: () => context.push('/manage-watchlist'),
+                child: GlassCard(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  borderRadius: 15,
+                  child: Row(
+                    children: [
+                      const Icon(Icons.search_rounded, color: Colors.white24, size: 20),
+                      const SizedBox(width: 12),
+                      Text(
+                        'Search Assets...',
+                        style: TextStyle(color: Colors.white.withOpacity(0.2), fontSize: 14),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -113,6 +119,15 @@ class _NexusList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (stocks.isEmpty) {
+      return const SliverFillRemaining(
+        hasScrollBody: false,
+        child: Center(
+          child: Text('Add assets to track live intelligence.', style: TextStyle(color: Colors.white24)),
+        ),
+      );
+    }
+
     return SliverList(
       delegate: SliverChildBuilderDelegate(
         (context, index) {
@@ -131,7 +146,7 @@ class _NexusCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = stock.changePercent > 0 ? AppTheme.goldAmber : AppTheme.softCrimson;
+    final color = stock.changePercent >= 0 ? AppTheme.goldAmber : AppTheme.softCrimson;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
@@ -183,7 +198,7 @@ class _NexusCard extends StatelessWidget {
                           border: Border.all(color: color.withOpacity(0.2)),
                         ),
                         child: Text(
-                          '${stock.changePercent > 0 ? "+" : ""}${stock.changePercent}%',
+                          '${stock.changePercent >= 0 ? "+" : ""}${stock.changePercent.toStringAsFixed(2)}%',
                           style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.bold,
@@ -232,6 +247,7 @@ class _NexusSparkline extends StatelessWidget {
         gridData: const FlGridData(show: false),
         titlesData: const FlTitlesData(show: false),
         borderData: FlBorderData(show: false),
+        lineTouchData: const LineTouchData(enabled: false), // Disable tooltips for sparklines
         lineBarsData: [
           LineChartBarData(
             spots: data.asMap().entries.map((e) => FlSpot(e.key.toDouble(), e.value)).toList(),

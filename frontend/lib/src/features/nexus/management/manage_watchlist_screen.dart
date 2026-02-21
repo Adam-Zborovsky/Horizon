@@ -14,7 +14,6 @@ class ManageWatchlistScreen extends ConsumerStatefulWidget {
 class _ManageWatchlistScreenState extends ConsumerState<ManageWatchlistScreen> {
   final TextEditingController _searchController = TextEditingController();
   
-  // Simulated available stocks for autocomplete
   final List<Map<String, String>> _allAvailableStocks = [
     {'ticker': 'AAPL', 'name': 'Apple Inc.'},
     {'ticker': 'MSFT', 'name': 'Microsoft Corporation'},
@@ -27,11 +26,12 @@ class _ManageWatchlistScreenState extends ConsumerState<ManageWatchlistScreen> {
     {'ticker': 'INTC', 'name': 'Intel Corporation'},
     {'ticker': 'TSM', 'name': 'Taiwan Semiconductor Manufacturing'},
     {'ticker': 'META', 'name': 'Meta Platforms, Inc.'},
-    {'ticker': 'NFLX', 'name': 'Netflix, Inc.'},
-    {'ticker': 'ASML', 'name': 'ASML Holding N.V.'},
-    {'ticker': 'AVGO', 'name': 'Broadcom Inc.'},
-    {'ticker': 'ARM', 'name': 'Arm Holdings plc'},
     {'ticker': 'PLTR', 'name': 'Palantir Technologies Inc.'},
+    {'ticker': 'ARM', 'name': 'Arm Holdings plc'},
+    {'ticker': 'AVGO', 'name': 'Broadcom Inc.'},
+    {'ticker': 'SMCI', 'name': 'Super Micro Computer, Inc.'},
+    {'ticker': 'BTC-USD', 'name': 'Bitcoin USD'},
+    {'ticker': 'ETH-USD', 'name': 'Ethereum USD'},
   ];
 
   List<Map<String, String>> _searchResults = [];
@@ -74,9 +74,9 @@ class _ManageWatchlistScreenState extends ConsumerState<ManageWatchlistScreen> {
         slivers: [
           _SliverSearchHeader(
             controller: _searchController,
-            onSubmitted: (val) {
+            onSubmitted: (val) async {
               if (val.isNotEmpty) {
-                ref.read(watchlistProvider.notifier).add(val);
+                await ref.read(watchlistProvider.notifier).add(val);
                 _searchController.clear();
               }
             },
@@ -88,14 +88,17 @@ class _ManageWatchlistScreenState extends ConsumerState<ManageWatchlistScreen> {
                 delegate: SliverChildBuilderDelegate(
                   (context, index) {
                     final stock = _searchResults[index];
-                    final isAdded = watchlist.contains(stock['ticker']!);
+                    final ticker = stock['ticker']!;
+                    final isAdded = watchlist.contains(ticker);
                     
                     return GestureDetector(
-                      onTap: () {
-                        if (!isAdded) {
-                          ref.read(watchlistProvider.notifier).add(stock['ticker']!);
-                          _searchController.clear();
+                      onTap: () async {
+                        if (isAdded) {
+                          await ref.read(watchlistProvider.notifier).remove(ticker);
+                        } else {
+                          await ref.read(watchlistProvider.notifier).add(ticker);
                         }
+                        setState(() {}); // Refresh local state for icons
                       },
                       child: Container(
                         margin: const EdgeInsets.only(bottom: 8),
@@ -110,8 +113,8 @@ class _ManageWatchlistScreenState extends ConsumerState<ManageWatchlistScreen> {
                             Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(stock['ticker']!, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                                Text(stock['name']!, style: TextStyle(color: Colors.white38, fontSize: 12)),
+                                Text(ticker, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                                Text(stock['name']!, style: const TextStyle(color: Colors.white38, fontSize: 12)),
                               ],
                             ),
                             const Spacer(),
@@ -154,7 +157,6 @@ class _ManageWatchlistScreenState extends ConsumerState<ManageWatchlistScreen> {
               delegate: SliverChildBuilderDelegate(
                 (context, index) {
                   final ticker = watchlist.toList()[index];
-                  // Try to find full name from our list or fallback to ticker
                   final stockInfo = _allAvailableStocks.firstWhere(
                     (s) => s['ticker'] == ticker,
                     orElse: () => {'ticker': ticker, 'name': 'Market Asset'},
@@ -163,7 +165,7 @@ class _ManageWatchlistScreenState extends ConsumerState<ManageWatchlistScreen> {
                   return _WatchlistItem(
                     ticker: ticker,
                     name: stockInfo['name']!,
-                    onRemove: () => ref.read(watchlistProvider.notifier).remove(ticker),
+                    onRemove: () async => await ref.read(watchlistProvider.notifier).remove(ticker),
                   );
                 },
                 childCount: watchlist.length,
@@ -185,8 +187,8 @@ class _SliverSearchHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SliverAppBar(
-      expandedHeight: 140,
-      collapsedHeight: 100,
+      expandedHeight: 100, // Reduced from 140
+      collapsedHeight: 80,
       pinned: true,
       backgroundColor: Colors.transparent,
       automaticallyImplyLeading: false,
@@ -194,35 +196,30 @@ class _SliverSearchHeader extends StatelessWidget {
       flexibleSpace: GlassCard(
         borderRadius: 0,
         blur: 20,
-        padding: const EdgeInsets.only(top: 60, left: 24, right: 24, bottom: 10),
+        padding: const EdgeInsets.only(top: 40, left: 24, right: 24, bottom: 10),
         color: AppTheme.obsidian.withOpacity(0.7),
         border: const Border(bottom: BorderSide(color: Colors.white10)),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: Row(
           children: [
-            Row(
-              children: [
-                IconButton(
-                  onPressed: () => Navigator.pop(context),
-                  icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
+            IconButton(
+              onPressed: () => Navigator.pop(context),
+              icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: TextField(
+                controller: controller,
+                onSubmitted: onSubmitted,
+                style: const TextStyle(color: Colors.white, fontSize: 16),
+                decoration: InputDecoration(
+                  hintText: 'SEARCH TICKERS...',
+                  hintStyle: TextStyle(color: Colors.white.withOpacity(0.2), fontSize: 14, letterSpacing: 1),
+                  border: InputBorder.none,
+                  suffixIcon: Icon(Icons.search_rounded, color: AppTheme.goldAmber.withOpacity(0.5)),
                 ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: TextField(
-                    controller: controller,
-                    onSubmitted: onSubmitted,
-                    style: const TextStyle(color: Colors.white, fontSize: 16),
-                    decoration: InputDecoration(
-                      hintText: 'SEARCH TICKERS...',
-                      hintStyle: TextStyle(color: Colors.white.withOpacity(0.2), fontSize: 14, letterSpacing: 1),
-                      border: InputBorder.none,
-                      suffixIcon: Icon(Icons.search_rounded, color: AppTheme.goldAmber.withOpacity(0.5)),
-                    ),
-                  ),
-                ),
-              ],
+              ),
             ),
           ],
         ),

@@ -8,14 +8,31 @@ import '../briefing/briefing_model.dart';
 import 'saved_articles_provider.dart';
 
 class IntelligenceVaultScreen extends ConsumerStatefulWidget {
-  const IntelligenceVaultScreen({super.key});
+  final String? initialCategory;
+  const IntelligenceVaultScreen({super.key, this.initialCategory});
 
   @override
   ConsumerState<IntelligenceVaultScreen> createState() => _IntelligenceVaultScreenState();
 }
 
 class _IntelligenceVaultScreenState extends ConsumerState<IntelligenceVaultScreen> {
-  String _selectedCategory = 'All';
+  late String _selectedCategory;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedCategory = widget.initialCategory ?? 'All';
+  }
+
+  @override
+  void didUpdateWidget(IntelligenceVaultScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.initialCategory != oldWidget.initialCategory && widget.initialCategory != null) {
+      setState(() {
+        _selectedCategory = widget.initialCategory!;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -39,7 +56,21 @@ class _IntelligenceVaultScreenState extends ConsumerState<IntelligenceVaultScree
             const _VaultHeader(),
             briefingAsync.when(
               data: (briefing) {
-                final categories = ['All', ...briefing.data.keys];
+                // Filter categories: only show those with >= 2 articles, plus 'All'
+                final validCategories = briefing.data.entries
+                    .where((e) => e.value.items.where((i) => i.title != null).length >= 2)
+                    .map((e) => e.key)
+                    .toList();
+                
+                final categories = ['All', ...validCategories];
+                
+                // If our selected category is not in the list (but exists in data), we should still show it if it was explicitly selected
+                if (_selectedCategory != 'All' && !validCategories.contains(_selectedCategory) && briefing.data.containsKey(_selectedCategory)) {
+                  categories.add(_selectedCategory);
+                }
+
+                if (categories.length <= 1) return const SliverToBoxAdapter(child: SizedBox.shrink());
+
                 return SliverToBoxAdapter(
                   child: _CategoryPills(
                     categories: categories,
@@ -98,20 +129,17 @@ class _VaultHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SliverAppBar(
-      expandedHeight: 80,
+      expandedHeight: 70,
+      collapsedHeight: 60,
       backgroundColor: Colors.transparent,
       elevation: 0,
       pinned: true,
-      stretch: true,
-      flexibleSpace: FlexibleSpaceBar(
-        centerTitle: false,
-        titlePadding: const EdgeInsets.only(left: 24, bottom: 16),
-        title: Text(
-          'Intelligence Vault',
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-            fontWeight: FontWeight.bold,
-            letterSpacing: -0.5,
-          ),
+      centerTitle: false,
+      title: Text(
+        'Intelligence Vault',
+        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+          fontWeight: FontWeight.bold,
+          letterSpacing: -0.5,
         ),
       ),
       actions: [

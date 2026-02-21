@@ -14,7 +14,7 @@ class ManageTopicsScreen extends ConsumerStatefulWidget {
 
 class _ManageTopicsScreenState extends ConsumerState<ManageTopicsScreen> {
   final TextEditingController _searchController = TextEditingController();
-  final List<String> _recommended = ['Energy', 'Defense Tech', 'Cybersecurity', 'Macro Crypto', 'EU Policy'];
+  final List<String> _recommended = ['Semiconductors', 'Geopolitics', 'Sovereign AI', 'Energy', 'Defense Tech', 'Cybersecurity', 'Macro Crypto'];
 
   @override
   void dispose() {
@@ -33,9 +33,9 @@ class _ManageTopicsScreenState extends ConsumerState<ManageTopicsScreen> {
         slivers: [
           _SliverSearchHeader(
             controller: _searchController, 
-            onSubmitted: (val) {
+            onSubmitted: (val) async {
               if (val.isNotEmpty) {
-                ref.read(followedTopicsProvider.notifier).toggle(val);
+                await ref.read(followedTopicsProvider.notifier).toggle(val);
                 _searchController.clear();
               }
             },
@@ -43,7 +43,7 @@ class _ManageTopicsScreenState extends ConsumerState<ManageTopicsScreen> {
           SliverToBoxAdapter(
             child: _RecommendedSection(
               recommended: _recommended,
-              onTap: (topic) => ref.read(followedTopicsProvider.notifier).toggle(topic),
+              onTap: (topic) async => await ref.read(followedTopicsProvider.notifier).toggle(topic),
             ),
           ),
           const SliverPadding(
@@ -83,7 +83,7 @@ class _ManageTopicsScreenState extends ConsumerState<ManageTopicsScreen> {
                     return _TopicItem(
                       title: topic,
                       isFollowing: isFollowing,
-                      onToggle: () => ref.read(followedTopicsProvider.notifier).toggle(topic),
+                      onToggle: () async => await ref.read(followedTopicsProvider.notifier).toggle(topic),
                     );
                   },
                   childCount: allVisible.length,
@@ -109,8 +109,8 @@ class _SliverSearchHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SliverAppBar(
-      expandedHeight: 140,
-      collapsedHeight: 100,
+      expandedHeight: 100,
+      collapsedHeight: 80,
       pinned: true,
       backgroundColor: Colors.transparent,
       automaticallyImplyLeading: false,
@@ -118,35 +118,30 @@ class _SliverSearchHeader extends StatelessWidget {
       flexibleSpace: GlassCard(
         borderRadius: 0,
         blur: 20,
-        padding: const EdgeInsets.only(top: 60, left: 24, right: 24, bottom: 10),
+        padding: const EdgeInsets.only(top: 40, left: 24, right: 24, bottom: 10),
         color: AppTheme.obsidian.withOpacity(0.7),
         border: const Border(bottom: BorderSide(color: Colors.white10)),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: Row(
           children: [
-            Row(
-              children: [
-                IconButton(
-                  onPressed: () => Navigator.pop(context),
-                  icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
+            IconButton(
+              onPressed: () => Navigator.pop(context),
+              icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: TextField(
+                controller: controller,
+                onSubmitted: onSubmitted,
+                style: const TextStyle(color: Colors.white, fontSize: 16),
+                decoration: InputDecoration(
+                  hintText: 'SEARCH TOPICS...',
+                  hintStyle: TextStyle(color: Colors.white.withOpacity(0.2), fontSize: 14, letterSpacing: 1),
+                  border: InputBorder.none,
+                  suffixIcon: Icon(Icons.search_rounded, color: AppTheme.goldAmber.withOpacity(0.5)),
                 ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: TextField(
-                    controller: controller,
-                    onSubmitted: onSubmitted,
-                    style: const TextStyle(color: Colors.white, fontSize: 16),
-                    decoration: InputDecoration(
-                      hintText: 'SEARCH TOPICS...',
-                      hintStyle: TextStyle(color: Colors.white.withOpacity(0.2), fontSize: 14, letterSpacing: 1),
-                      border: InputBorder.none,
-                      suffixIcon: Icon(Icons.search_rounded, color: AppTheme.goldAmber.withOpacity(0.5)),
-                    ),
-                  ),
-                ),
-              ],
+              ),
             ),
           ],
         ),
