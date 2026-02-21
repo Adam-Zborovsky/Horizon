@@ -216,8 +216,19 @@ class _NexusSparkline extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (data.isEmpty) return const SizedBox.shrink();
+
+    final minVal = data.reduce((a, b) => a < b ? a : b);
+    final maxVal = data.reduce((a, b) => a > b ? a : b);
+    final range = maxVal - minVal;
+    
+    // Add 10% padding to the range to make the chart look tactical and not hit the edges
+    final padding = range == 0 ? 1.0 : range * 0.1;
+
     return LineChart(
       LineChartData(
+        minY: minVal - padding,
+        maxY: maxVal + padding,
         gridData: const FlGridData(show: false),
         titlesData: const FlTitlesData(show: false),
         borderData: FlBorderData(show: false),

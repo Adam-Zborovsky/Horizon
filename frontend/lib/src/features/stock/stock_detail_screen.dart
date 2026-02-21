@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/glass_card.dart';
 import '../stock/stock_repository.dart';
+import '../dashboard/watchlist_provider.dart';
 
 class StockDetailScreen extends ConsumerWidget {
   final String ticker;
@@ -26,12 +27,12 @@ class StockDetailScreen extends ConsumerWidget {
   }
 }
 
-class _DetailContent extends StatelessWidget {
+class _DetailContent extends ConsumerWidget {
   final StockData stock;
   const _DetailContent({required this.stock});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final color = stock.changePercent > 0 ? AppTheme.goldAmber : AppTheme.softCrimson;
 
     return CustomScrollView(
@@ -128,8 +129,8 @@ class _DetailContent extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 12),
-                _MacroItem(title: 'Memory Wall Bottleneck', description: 'Primary bottleneck for AI scaling.'),
-                _MacroItem(title: 'Sovereign AI Pivot', description: 'Nations prioritizing hardware ownership.'),
+                const _MacroItem(title: 'Memory Wall Bottleneck', description: 'Primary bottleneck for AI scaling.'),
+                const _MacroItem(title: 'Sovereign AI Pivot', description: 'Nations prioritizing hardware ownership.'),
                 const SizedBox(height: 100),
               ],
             ),
@@ -140,12 +141,15 @@ class _DetailContent extends StatelessWidget {
   }
 }
 
-class _DetailHeader extends StatelessWidget {
+class _DetailHeader extends ConsumerWidget {
   final String ticker;
   const _DetailHeader({required this.ticker});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final watchlist = ref.watch(watchlistProvider);
+    final isInWatchlist = watchlist.contains(ticker.toUpperCase());
+
     return SliverAppBar(
       backgroundColor: Colors.transparent,
       elevation: 0,
@@ -157,8 +161,17 @@ class _DetailHeader extends StatelessWidget {
       title: Text(ticker, style: Theme.of(context).textTheme.displaySmall),
       actions: [
         IconButton(
-          icon: const Icon(Icons.star_outline_rounded, color: Colors.white38),
-          onPressed: () {},
+          icon: Icon(
+            isInWatchlist ? Icons.star_rounded : Icons.star_outline_rounded,
+            color: isInWatchlist ? AppTheme.goldAmber : Colors.white38,
+          ),
+          onPressed: () {
+            if (isInWatchlist) {
+              ref.read(watchlistProvider.notifier).remove(ticker);
+            } else {
+              ref.read(watchlistProvider.notifier).add(ticker);
+            }
+          },
         ),
       ],
     );
@@ -172,8 +185,19 @@ class _MainChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (data.isEmpty) return const SizedBox.shrink();
+
+    final minVal = data.reduce((a, b) => a < b ? a : b);
+    final maxVal = data.reduce((a, b) => a > b ? a : b);
+    final range = maxVal - minVal;
+    
+    // Add 15% padding to the range to make the chart look tactical and not hit the edges
+    final padding = range == 0 ? 1.0 : range * 0.15;
+
     return LineChart(
       LineChartData(
+        minY: minVal - padding,
+        maxY: maxVal + padding,
         gridData: const FlGridData(show: false),
         titlesData: const FlTitlesData(show: false),
         borderData: FlBorderData(show: false),

@@ -84,15 +84,18 @@ class _WarRoomHeader extends StatelessWidget {
       ),
       actions: [
         IconButton(
-          onPressed: () {},
+          onPressed: () => context.push('/notifications'),
           icon: const Icon(Icons.notifications_none_rounded, color: Colors.white70),
         ),
-        const Padding(
-          padding: EdgeInsets.only(right: 20, left: 10),
-          child: CircleAvatar(
-            radius: 18,
-            backgroundColor: AppTheme.glassWhite,
-            child: Icon(Icons.person_outline_rounded, color: Colors.white70),
+        Padding(
+          padding: const EdgeInsets.only(right: 20, left: 10),
+          child: GestureDetector(
+            onTap: () => context.push('/profile'),
+            child: const CircleAvatar(
+              radius: 18,
+              backgroundColor: AppTheme.glassWhite,
+              child: Icon(Icons.person_outline_rounded, color: Colors.white70),
+            ),
           ),
         ),
       ],
@@ -109,12 +112,18 @@ class _SectionHeader extends StatelessWidget {
     return SliverToBoxAdapter(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(title, style: Theme.of(context).textTheme.titleLarge),
-            Icon(Icons.arrow_forward_ios_rounded, size: 14, color: AppTheme.goldAmber.withOpacity(0.5)),
-          ],
+        child: GestureDetector(
+          onTap: () {
+            if (title.contains('Intelligence')) context.go('/vault');
+            if (title.contains('Market')) context.go('/nexus');
+          },
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(title, style: Theme.of(context).textTheme.titleLarge),
+              Icon(Icons.arrow_forward_ios_rounded, size: 14, color: AppTheme.goldAmber.withOpacity(0.5)),
+            ],
+          ),
         ),
       ),
     );
@@ -172,27 +181,30 @@ class _DailyBriefingSummary extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
           ),
           const SizedBox(height: 20),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            decoration: BoxDecoration(
-              color: AppTheme.goldAmber.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppTheme.goldAmber.withOpacity(0.2)),
-            ),
-            child: const Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  'Full Intelligence Report',
-                  style: TextStyle(
-                    color: AppTheme.goldAmber,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 12,
+          GestureDetector(
+            onTap: () => context.go('/vault'),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              decoration: BoxDecoration(
+                color: AppTheme.goldAmber.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppTheme.goldAmber.withOpacity(0.2)),
+              ),
+              child: const Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'Full Intelligence Report',
+                    style: TextStyle(
+                      color: AppTheme.goldAmber,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12,
+                    ),
                   ),
-                ),
-                SizedBox(width: 8),
-                Icon(Icons.north_east_rounded, size: 14, color: AppTheme.goldAmber),
-              ],
+                  SizedBox(width: 8),
+                  Icon(Icons.north_east_rounded, size: 14, color: AppTheme.goldAmber),
+                ],
+              ),
             ),
           ),
         ],
@@ -428,8 +440,19 @@ class _MiniSparkline extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (data.isEmpty) return const SizedBox.shrink();
+    
+    final minVal = data.reduce((a, b) => a < b ? a : b);
+    final maxVal = data.reduce((a, b) => a > b ? a : b);
+    final range = maxVal - minVal;
+    
+    // Add 10% padding to the range to make the chart look tactical and not hit the edges
+    final padding = range == 0 ? 1.0 : range * 0.1;
+
     return LineChart(
       LineChartData(
+        minY: minVal - padding,
+        maxY: maxVal + padding,
         gridData: const FlGridData(show: false),
         titlesData: const FlTitlesData(show: false),
         borderData: FlBorderData(show: false),

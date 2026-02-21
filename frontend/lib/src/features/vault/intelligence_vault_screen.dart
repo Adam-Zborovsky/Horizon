@@ -5,12 +5,18 @@ import '../../core/theme/app_theme.dart';
 import '../../core/widgets/glass_card.dart';
 import '../briefing/briefing_repository.dart';
 import '../briefing/briefing_model.dart';
+import 'saved_articles_provider.dart';
 
-class IntelligenceVaultScreen extends ConsumerWidget {
+class IntelligenceVaultScreen extends ConsumerStatefulWidget {
   const IntelligenceVaultScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<IntelligenceVaultScreen> createState() => _IntelligenceVaultScreenState();
+}
+
+class _IntelligenceVaultScreenState extends ConsumerState<IntelligenceVaultScreen> {
+  @override
+  Widget build(BuildContext context) {
     final briefingAsync = ref.watch(briefingRepositoryProvider);
 
     return Scaffold(
@@ -28,8 +34,7 @@ class IntelligenceVaultScreen extends ConsumerWidget {
         child: CustomScrollView(
           physics: const BouncingScrollPhysics(),
           slivers: [
-            _VaultHeader(),
-            _CategoryPills(),
+            const _VaultHeader(),
             briefingAsync.when(
               data: (briefing) => _NewsList(briefing: briefing),
               loading: () => const SliverFillRemaining(child: Center(child: CircularProgressIndicator())),
@@ -44,6 +49,8 @@ class IntelligenceVaultScreen extends ConsumerWidget {
 }
 
 class _VaultHeader extends StatelessWidget {
+  const _VaultHeader();
+
   @override
   Widget build(BuildContext context) {
     return SliverAppBar(
@@ -70,79 +77,56 @@ class _VaultHeader extends StatelessWidget {
   }
 }
 
-class _CategoryPills extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    final categories = ['All', 'Semiconductors', 'Geopolitics', 'Sovereign AI'];
-    return SliverToBoxAdapter(
-      child: Container(
-        height: 40,
-        margin: const EdgeInsets.only(bottom: 20, top: 10),
-        child: ListView.builder(
-          scrollDirection: Axis.horizontal,
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          itemCount: categories.length,
-          itemBuilder: (context, index) {
-            final isActive = index == 0;
-            return Container(
-              margin: const EdgeInsets.only(right: 12),
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: isActive ? AppTheme.goldAmber : AppTheme.glassWhite,
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: isActive ? AppTheme.goldAmber : Colors.white10),
-              ),
-              child: Text(
-                categories[index],
-                style: TextStyle(
-                  color: isActive ? Colors.black : Colors.white60,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 12,
-                ),
-              ),
-            );
-          },
-        ),
-      ),
-    );
-  }
-}
-
 class _NewsList extends StatelessWidget {
   final BriefingData briefing;
+
   const _NewsList({required this.briefing});
 
   @override
   Widget build(BuildContext context) {
-    // Collect all items from all categories
-    final List<BriefingItem> allItems = [];
+    // Flatten all items into a single unified intelligence feed
+    final List<MapEntry<String, BriefingItem>> itemsWithCategories = [];
+    
     briefing.data.forEach((catName, catData) {
-      allItems.addAll(catData.items);
+      for (var item in catData.items) {
+        // Skip items that don't have a title (e.g. pure stock data)
+        if (item.title != null) {
+          itemsWithCategories.add(MapEntry(catName, item));
+        }
+      }
     });
+
+    if (itemsWithCategories.isEmpty) {
+      return const SliverToBoxAdapter(
+        child: Padding(
+          padding: EdgeInsets.all(40),
+          child: Center(child: Text('No intelligence found.', style: TextStyle(color: Colors.white24))),
+        ),
+      );
+    }
 
     return SliverList(
       delegate: SliverChildBuilderDelegate(
         (context, index) {
-          final item = allItems[index];
-          // Skip items that are just tickers (dealt with in Nexus/Detail)
-          if (item.title == null) return const SizedBox.shrink();
-          
-          return _NewsCard(item: item);
+          final entry = itemsWithCategories[index];
+          return _NewsCard(categoryName: entry.key, item: entry.value);
         },
-        childCount: allItems.length,
+        childCount: itemsWithCategories.length,
       ),
     );
   }
 }
 
-class _NewsCard extends StatelessWidget {
+class _NewsCard extends ConsumerWidget {
+  final String categoryName;
   final BriefingItem item;
-  const _NewsCard({required this.item});
+  const _NewsCard({required this.categoryName, required this.item});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final color = (item.sentiment ?? 0) > 0 ? AppTheme.goldAmber : AppTheme.softCrimson;
+    final savedArticles = ref.watch(savedArticlesProvider);
+    final isSaved = savedArticles.contains(item.title ?? '');
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
@@ -151,7 +135,7 @@ class _NewsCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (item.img != null)
+            if (item.img != null && item.img!.isNotEmpty)
               ClipRRect(
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
                 child: Image.network(
@@ -174,19 +158,39 @@ class _NewsCard extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: color.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(6),
-                          border: Border.all(color: color.withOpacity(0.2)),
-                        ),
-                        child: Text(
-                          '${(item.sentiment ?? 0).toStringAsFixed(1)} SNT',
-                          style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 10),
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: color.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(6),
+                              border: Border.all(color: color.withOpacity(0.2)),
+                            ),
+                            child: Text(
+                              '${(item.sentiment ?? 0).toStringAsFixed(1)} SNT',
+                              style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 10),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            categoryName.toUpperCase(),
+                            style: const TextStyle(color: Colors.white24, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1),
+                          ),
+                        ],
+                      ),
+                      GestureDetector(
+                        onTap: () {
+                          if (item.title != null) {
+                            ref.read(savedArticlesProvider.notifier).toggle(item.title!);
+                          }
+                        },
+                        child: Icon(
+                          isSaved ? Icons.bookmark_rounded : Icons.bookmark_outline_rounded,
+                          color: isSaved ? AppTheme.goldAmber : Colors.white24,
+                          size: 22,
                         ),
                       ),
-                      const Icon(Icons.bookmark_outline_rounded, color: Colors.white24, size: 20),
                     ],
                   ),
                   const SizedBox(height: 12),

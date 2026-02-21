@@ -1,64 +1,14 @@
 {
-  "Macro-Market Nexus": {
-    "sentiment_score": 0.65,
-    "summary": "Equities showing strong momentum driven by AI sector performance, despite mixed inflation signals.",
-    "items": [
-      {
-        "ticker": "NVDA",
-        "name": "NVIDIA Corp",
-        "price": 785.42,
-        "change": 4.2,
-        "sentiment": 0.9,
-        "analysis": "Explosive growth in data center revenue continues to exceed analyst expectations."
-      },
-      {
-        "ticker": "AAPL",
-        "name": "Apple Inc",
-        "price": 182.31,
-        "change": -0.5,
-        "sentiment": 0.2,
-        "analysis": "Trading sideways as market awaits new hardware cycle announcements."
-      }
-    ]
-  },
-  "Israel Geopolitics": {
-    "sentiment_score": -0.82,
-    "summary": "High tension and logistical disruptions reported in the northern region, impacting regional tech stability.",
-    "items": [
-      {
-        "title": "Logistics Corridor Disruption",
-        "l": "https://example.com/news/intel-1",
-        "sentiment": -0.9,
-        "img": "https://example.com/img/geo-1.jpg",
-        "takeaway": "Supply chain delays expected to persist for the next 48-72 hours."
-      },
-      {
-        "title": "Diplomatic Stance Update",
-        "l": "https://example.com/news/intel-2",
-        "sentiment": -0.6,
-        "img": "https://example.com/img/geo-2.jpg",
-        "takeaway": "Negotiations ongoing but reaching critical deadlock points."
-      }
-    ]
-  },
-  "Pulse of the World": {
-    "sentiment_score": 0.15,
-    "summary": "Global sentiment remains cautiously optimistic with a focus on sustainable energy breakthroughs.",
-    "items": [
-      {
-        "title": "Fusion Energy Milestone",
-        "l": "https://example.com/news/bright-side-1",
-        "sentiment": 0.95,
-        "img": "https://example.com/img/science-1.jpg",
-        "takeaway": "New containment record suggests commercial viability is 10 years closer than previously thought."
-      },
-      {
-        "title": "Global Logistics Report",
-        "l": "https://example.com/news/pulse-1",
-        "sentiment": -0.1,
-        "img": "https://example.com/img/log-1.jpg",
-        "takeaway": "Shipping rates normalizing but remain 15% above pre-2024 levels."
-      }
-    ]
-  }
+	"success": true,
+	"data": [
+		{
+			"success": true,
+			"data": "```json\n{\n  \"categories\": [\n    {\n      \"category\": \"Critical Geopolitical Intel\",\n      \"sentiment_score\": -0.8,\n      \"summary\": \"Major tech intervention in geopolitical conflicts as Microsoft restricts military access to its technology, highlighting heightened ESG and regulatory risks for global tech leaders.\",\n      \"items\": [\n        {\n          \"title\": \"Microsoft block Israel's military unit from using its technology - Amnesty International\",\n          \"l\": \"https://news.google.com/rss/articles/CBMirwFBVV95cUxQdUpBaVA3RzRia01LWXI3Y2RkckN0bmRXUDN5T0p1dFhXLXpxLXhhUWVTUUhrUTQ5UHlMSDlEd1ZEcFBZRVdGdWluTENoVU9VcEVRbVNENHBOdHlCUXNBZnZiMkxmQjI2eFlEa2tHdVRxSEZTUjZxTWtBb0RzOThSWm1HZDQwV0VGVmJYYmZLaGtNTnJxV2pOVG1hNFAycFlEVlNCcUJGYUNfakdxOGtZ?oc=5\",\n          \"sentiment\": -0.8,\n          \"img\": \"https://news.google.com/rss/articles/CBMirwFBVV95cUxQdUpBaVA3RzRia01LWXI3Y2RkckN0bmRXUDN5T0p1dFhXLXpxLXhhUWVTUUhrUTQ5UHlMSDlEd1ZEcFBZRVdGdWluTENoVU9VcEVRbVNENHBOdHlCUXNBZnZiMkxmQjI2eFlEa2tHdVRxSEZTUjZxTWtBb0RzOThSWm1HZDQwV0VGVmJYYmZLaGtNTnJxV2pOVG1hNFAycFlEVlNCcUJGYUNfakdxOGtZ?oc=5\",\n          \"takeaway\": \"Signals significant corporate intervention in geopolitical conflict and increased human rights compliance pressure on Big Tech.\"\n        }\n      ]\n    },\n    {\n      \"category\": \"High-Velocity Market Movers\",\n      \"sentiment_score\": 0.85,\n      \"summary\": \"Extreme bullish activity in the technology services sector led by Rackspace, alongside steady recovery gains in semiconductor manufacturing.\",\n      \"items\": [\n        {\n          \"ticker\": \"RXT\",\n          \"name\": \"Rackspace Technology, Inc.\",\n          \"price\": \"3.14\",\n          \"change\": \"+37.14%\",\n          \"sentiment\": 0.9,\n          \"analysis\": \"Exceptional price surge on massive volume (206M). Breakout suggests a major fundamental catalyst or short squeeze, though high volatility is expected.\"\n        },\n        {\n          \"ticker\": \"MU\",\n          \"name\": \"Micron Technology, Inc.\",\n          \"price\": \"108.45\",\n          \"change\": \"+2.59%\",\n          \"sentiment\": 0.8,\n          \"analysis\": \"Strong bullish momentum holding the 50-day moving average. Sector leadership remains intact despite broader tech geopolitical headlines.\"\n        }\n      ]\n    },\n    {\n      \"category\": \"Digital Asset & Infrastructure Stability\",\n      \"sentiment_score\": 0.5,\n      \"summary\": \"Consolidation patterns emerge in Bitcoin and data storage infrastructure, reflecting a 'wait-and-see' approach from institutional holders.\",\n      \"items\": [\n        {\n          \"ticker\": \"BTC-USD\",\n          \"name\": \"Bitcoin USD\",\n          \"price\": \"68420.50\",\n          \"change\": \"-0.15%\",\n          \"sentiment\": 0.6,\n          \"analysis\": \"Maintaining support above $68k. High liquidity ($34B volume) suggests strong holding patterns before the next directional leg.\"\n        },\n        {\n          \"ticker\": \"STX\",\n          \"name\": \"Seagate Technology\",\n          \"price\": \"92.30\",\n          \"change\": \"+0.45%\",\n          \"sentiment\": 0.4,\n          \"analysis\": \"Modest positive movement and stability at MA50 indicates healthy consolidation and steady demand for storage solutions.\"\n        }\n      ]\n    }\n  ]\n}\n```",
+			"message": "Briefing saved successfully."
+		}
+	],
+	"metadata": {
+		"id": "6999c598007170ed1f786432",
+		"createdAt": "2026-02-21T14:47:52.142Z"
+	}
 }

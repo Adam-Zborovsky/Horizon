@@ -10,29 +10,92 @@ part 'briefing_repository.g.dart';
 class BriefingRepository extends _$BriefingRepository {
   @override
   Future<BriefingData> build() async {
-    final response = await http.get(Uri.parse(ApiConfig.briefingEndpoint));
-    
-    if (response.statusCode == 200) {
-      final Map<String, dynamic> jsonResponse = jsonDecode(response.body);
+    try {
+      final response = await http
+          .get(Uri.parse(ApiConfig.briefingEndpoint))
+          .timeout(const Duration(seconds: 10));
       
-      // Handle case where 'data' might be returned as a string (common with n8n/webhook integrations)
-      if (jsonResponse['data'] is String) {
-        try {
-          jsonResponse['data'] = jsonDecode(jsonResponse['data']);
-        } catch (e) {
-          // If it's not JSON, we'll let fromJson handle the error or provide an empty map
-          jsonResponse['data'] = <String, dynamic>{};
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> topLevel = jsonDecode(response.body);
+        
+        // 1. Get the first element of the 'data' list
+        final dynamic dataList = topLevel['data'];
+        if (dataList == null || dataList is! List || dataList.isEmpty) {
+          return const BriefingData(data: {}, success: true, message: 'No briefing data found.');
         }
-      }
-      
-      // Ensure data is a Map
-      if (jsonResponse['data'] == null) {
-        jsonResponse['data'] = <String, dynamic>{};
-      }
+        
+        final Map<String, dynamic> firstBriefing = dataList.first as Map<String, dynamic>;
+        
+        // 2. Extract and clean the nested 'data' string which contains Markdown-wrapped JSON
+        String rawContent = firstBriefing['data'] as String? ?? '';
+        
+        // Use regex to extract the first JSON block found in the string
+        final RegExp jsonRegex = RegExp(r'\{[\s\S]*\}');
+        final match = jsonRegex.firstMatch(rawContent);
+        
+        if (match != null) {
+          rawContent = match.group(0)!;
+        } else {
+          // Fallback to simple cleaning if regex fails
+          rawContent = rawContent.replaceAll('```json', '').replaceAll('```', '').trim();
+        }
+        
+        if (rawContent.isEmpty) {
+          return const BriefingData(data: {}, success: true, message: 'Empty briefing content.');
+        }
 
-      return BriefingData.fromJson(jsonResponse);
-    } else {
-      throw Exception('Failed to load briefing from ${ApiConfig.briefingEndpoint}: Status ${response.statusCode}');
+        // 3. Decode the actual intelligence content
+        Map<String, dynamic> decodedContent;
+        try {
+          decodedContent = jsonDecode(rawContent);
+        } catch (e) {
+          return const BriefingData(data: {}, success: true, message: 'JSON Decode failed on nested data.');
+        }
+
+        final List<dynamic> categoriesList = decodedContent['categories'] as List? ?? [];
+
+        // 4. Map the list of category objects into our expected Map structure for the UI
+        final Map<String, CategoryData> categoriesMap = {};
+        
+        for (final catJson in categoriesList) {
+          if (catJson is Map<String, dynamic>) {
+            final String name = catJson['category'] as String? ?? 'General Intelligence';
+            
+            try {
+              // Ensure numbers are doubles even if they arrive as ints
+              final sentiment = catJson['sentiment_score'];
+              final List<dynamic> items = catJson['items'] as List? ?? [];
+              
+              categoriesMap[name] = CategoryData(
+                sentimentScore: (sentiment is num) ? sentiment.toDouble() : 0.0,
+                summary: catJson['summary'] as String? ?? 'No summary.',
+                items: items.whereType<Map<String, dynamic>>().map((i) {
+                  // Pre-process item numbers to avoid type errors
+                  final itemSentiment = i['sentiment'];
+                  final processedItem = Map<String, dynamic>.from(i);
+                  if (itemSentiment is num) {
+                    processedItem['sentiment'] = itemSentiment.toDouble();
+                  }
+                  return BriefingItem.fromJson(processedItem);
+                }).toList(),
+              );
+            } catch (e) {
+              // Log or skip broken categories
+            }
+          }
+        }
+
+        return BriefingData(
+          data: categoriesMap,
+          success: topLevel['success'] as bool? ?? true,
+          message: firstBriefing['message'] as String?,
+        );
+      } else {
+        throw Exception('Server error: ${response.statusCode}');
+      }
+    } catch (e) {
+      // Re-throw to let Riverpod handle the error state in the UI
+      rethrow;
     }
   }
 }
