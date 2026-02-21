@@ -9,7 +9,7 @@ part 'briefing_repository.g.dart';
 @riverpod
 class BriefingRepository extends _$BriefingRepository {
   // Replace with your actual n8n or intelligence API endpoint
-  static const String _apiEndpoint = 'http://homeserver:3001/api/v1/briefing';
+  static const String _apiEndpoint = 'https://alpha-horizon-backend.adamzborovsky.com/api/v1/briefing';
 
   @override
   Future<Map<String, BriefingCategory>> build() async {

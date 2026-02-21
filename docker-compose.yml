@@ -1,19 +1,20 @@
 services:
   alpha-horizon-backend:
-    build: .
-    container_name: alpha-horizon-api
+    build: ./backend
+    container_name: alpha-horizon-backend
     restart: unless-stopped
     ports:
-      - "3001:3001"
+      - "8181:8181"
     environment:
-      - PORT=3001
+      - PORT=8181
       - NODE_ENV=production
-      - MONGODB_URI=mongodb://mongodb:27017/alpha-horizon
+      - MONGODB_URI=mongodb://localhost:27017/alpha-horizon
       - API_PREFIX=/api/v1
     depends_on:
       - mongodb
     networks:
       - alpha-horizon-network
+      - adam
 
   mongodb:
     image: mongo:latest
@@ -28,6 +29,8 @@ networks:
   alpha-horizon-network:
     name: alpha-horizon-network
     driver: bridge
+  adam:
+    external: true
 
 volumes:
   mongodb_data:
