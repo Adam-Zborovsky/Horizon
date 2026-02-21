@@ -3,8 +3,8 @@
   "nodes": [
     {
       "parameters": {
-        "httpMethod": "POST",
-        "path": "update-briefing-config",
+        "httpMethod": "PUT",
+        "path": "briefing/config",
         "options": {
           "binaryData": false
         }
@@ -17,7 +17,7 @@
         80208,
         2800
       ],
-      "webhookId": "update-briefing-config"
+      "webhookId": "briefing-config"
     },
     {
       "parameters": {
