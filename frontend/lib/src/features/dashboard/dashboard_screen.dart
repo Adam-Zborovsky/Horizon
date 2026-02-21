@@ -38,7 +38,7 @@ class DashboardScreen extends ConsumerWidget {
                 child: briefingAsync.when(
                   data: (briefing) => _DailyBriefingSummary(briefing: briefing),
                   loading: () => const _ShimmerCard(height: 200),
-                  error: (err, stack) => Center(child: Text('Error loading briefing: $err')),
+                  error: (err, stack) => _ErrorWidget(error: err.toString()),
                 ),
               ),
             ),
@@ -56,7 +56,7 @@ class DashboardScreen extends ConsumerWidget {
             stocksAsync.when(
               data: (stocks) => _MarketNexusList(stocks: stocks),
               loading: () => const SliverToBoxAdapter(child: Center(child: CircularProgressIndicator())),
-              error: (err, stack) => const SliverToBoxAdapter(child: SizedBox.shrink()),
+              error: (err, stack) => SliverToBoxAdapter(child: Center(child: Text('Stock error: $err', style: const TextStyle(color: Colors.white24)))),
             ),
             const SliverToBoxAdapter(child: SizedBox(height: 150)),
           ],
@@ -66,20 +66,61 @@ class DashboardScreen extends ConsumerWidget {
   }
 }
 
+class _ErrorWidget extends StatelessWidget {
+  final String error;
+  const _ErrorWidget({required this.error});
+
+  @override
+  Widget build(BuildContext context) {
+    return GlassCard(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        children: [
+          const Icon(Icons.error_outline_rounded, color: AppTheme.softCrimson, size: 32),
+          const SizedBox(height: 12),
+          Text(
+            'Connection Error',
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(color: AppTheme.softCrimson),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            error,
+            textAlign: TextAlign.center,
+            style: const TextStyle(color: Colors.white38, fontSize: 12),
+          ),
+          const SizedBox(height: 16),
+          ElevatedButton(
+            onPressed: () => ProviderScope.containerOf(context).invalidate(briefingRepositoryProvider),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.white10,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Retry'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _WarRoomHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SliverAppBar(
-      expandedHeight: 120,
+      expandedHeight: 80,
       backgroundColor: Colors.transparent,
       elevation: 0,
       pinned: true,
+      stretch: true,
       flexibleSpace: FlexibleSpaceBar(
         centerTitle: false,
         titlePadding: const EdgeInsets.only(left: 20, bottom: 16),
         title: Text(
           'War Room',
-          style: Theme.of(context).textTheme.displayMedium,
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+            fontWeight: FontWeight.bold,
+            letterSpacing: -0.5,
+          ),
         ),
       ),
       actions: [
@@ -120,8 +161,11 @@ class _SectionHeader extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(title, style: Theme.of(context).textTheme.titleLarge),
-              Icon(Icons.arrow_forward_ios_rounded, size: 14, color: AppTheme.goldAmber.withOpacity(0.5)),
+              Text(title, style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: Colors.white70,
+              )),
+              Icon(Icons.arrow_forward_ios_rounded, size: 12, color: AppTheme.goldAmber.withOpacity(0.5)),
             ],
           ),
         ),
@@ -138,14 +182,19 @@ class _DailyBriefingSummary extends StatelessWidget {
   Widget build(BuildContext context) {
     if (briefing.data.isEmpty) {
       return const GlassCard(
-        child: Center(
-          child: Text('No intelligence available for this period.', style: TextStyle(color: Colors.white24)),
+        child: Padding(
+          padding: EdgeInsets.all(40),
+          child: Center(
+            child: Text('No intelligence available for this period.', style: TextStyle(color: Colors.white24)),
+          ),
         ),
       );
     }
 
-    final summary = briefing.data.values.first.summary;
-    final score = briefing.data.values.first.sentimentScore;
+    // Get the first category
+    final category = briefing.data.values.first;
+    final summary = category.summary;
+    final score = category.sentimentScore;
 
     return GlassCard(
       padding: const EdgeInsets.all(24),
@@ -155,20 +204,27 @@ class _DailyBriefingSummary extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Daily Analysis',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: AppTheme.goldAmber,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 1.2,
-                        ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text('Tactical Overview', style: Theme.of(context).textTheme.titleLarge),
-                ],
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Daily Analysis',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: AppTheme.goldAmber,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 1.2,
+                          ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      briefing.data.keys.first, 
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(fontSize: 18),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
               ),
               _SentimentRing(score: (score + 1) / 2),
             ],
@@ -176,7 +232,7 @@ class _DailyBriefingSummary extends StatelessWidget {
           const SizedBox(height: 20),
           Text(
             summary,
-            style: Theme.of(context).textTheme.bodyLarge,
+            style: Theme.of(context).textTheme.bodyLarge?.copyWith(height: 1.4),
             maxLines: 4,
             overflow: TextOverflow.ellipsis,
           ),
@@ -298,7 +354,7 @@ class _IntelCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(
-              name.contains('Semi') ? Icons.memory : Icons.public,
+              name.toLowerCase().contains('semi') ? Icons.memory : name.toLowerCase().contains('geo') ? Icons.public : Icons.hub_outlined,
               color: color,
               size: 18,
             ),
@@ -325,7 +381,7 @@ class _IntelCard extends StatelessWidget {
                 ),
                 child: FractionallySizedBox(
                   alignment: Alignment.centerLeft,
-                  widthFactor: (score + 1) / 2,
+                  widthFactor: ((score + 1) / 2).clamp(0.0, 1.0),
                   child: Container(
                     decoration: BoxDecoration(
                       color: color,
@@ -360,6 +416,17 @@ class _MarketNexusList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (stocks.isEmpty) {
+      return const SliverToBoxAdapter(
+        child: Center(
+          child: Padding(
+            padding: EdgeInsets.all(20),
+            child: Text('No active market nexus identified.', style: TextStyle(color: Colors.white24, fontSize: 12)),
+          ),
+        ),
+      );
+    }
+
     return SliverList(
       delegate: SliverChildBuilderDelegate(
         (context, index) {
@@ -396,7 +463,7 @@ class _MarketNexusList extends StatelessWidget {
                       width: 70,
                       child: _MiniSparkline(
                         data: stock.history, 
-                        color: stock.changePercent > 0 ? AppTheme.goldAmber : AppTheme.softCrimson
+                        color: stock.changePercent >= 0 ? AppTheme.goldAmber : AppTheme.softCrimson
                       ),
                     ),
                     const SizedBox(width: 20),
@@ -412,11 +479,11 @@ class _MarketNexusList extends StatelessWidget {
                           ),
                         ),
                         Text(
-                          '${stock.changePercent > 0 ? "+" : ""}${stock.changePercent}%',
+                          '${stock.changePercent >= 0 ? "+" : ""}${stock.changePercent}%',
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
-                            color: stock.changePercent > 0 ? AppTheme.goldAmber : AppTheme.softCrimson,
+                            color: stock.changePercent >= 0 ? AppTheme.goldAmber : AppTheme.softCrimson,
                           ),
                         ),
                       ],
@@ -445,8 +512,6 @@ class _MiniSparkline extends StatelessWidget {
     final minVal = data.reduce((a, b) => a < b ? a : b);
     final maxVal = data.reduce((a, b) => a > b ? a : b);
     final range = maxVal - minVal;
-    
-    // Add 10% padding to the range to make the chart look tactical and not hit the edges
     final padding = range == 0 ? 1.0 : range * 0.1;
 
     return LineChart(

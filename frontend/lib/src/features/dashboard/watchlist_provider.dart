@@ -8,8 +8,8 @@ part 'watchlist_provider.g.dart';
 class Watchlist extends _$Watchlist {
   @override
   Set<String> build() {
-    // Initial tickers from your backend examples
-    return {'MU', 'NVDA', 'INTC', 'TSMC'};
+    // Return empty set to ensure it's live and user-driven
+    return {};
   }
 
   void add(String ticker) {
@@ -27,7 +27,8 @@ class Watchlist extends _$Watchlist {
 class FollowedTopics extends _$FollowedTopics {
   @override
   Set<String> build() {
-    return {'Semiconductors', 'Geopolitics', 'Sovereign AI'};
+    // Return empty set to ensure it's live and user-driven
+    return {};
   }
 
   void toggle(String topic) {

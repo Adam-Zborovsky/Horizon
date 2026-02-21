@@ -15,6 +15,8 @@ class IntelligenceVaultScreen extends ConsumerStatefulWidget {
 }
 
 class _IntelligenceVaultScreenState extends ConsumerState<IntelligenceVaultScreen> {
+  String _selectedCategory = 'All';
+
   @override
   Widget build(BuildContext context) {
     final briefingAsync = ref.watch(briefingRepositoryProvider);
@@ -36,9 +38,51 @@ class _IntelligenceVaultScreenState extends ConsumerState<IntelligenceVaultScree
           slivers: [
             const _VaultHeader(),
             briefingAsync.when(
-              data: (briefing) => _NewsList(briefing: briefing),
+              data: (briefing) {
+                final categories = ['All', ...briefing.data.keys];
+                return SliverToBoxAdapter(
+                  child: _CategoryPills(
+                    categories: categories,
+                    selectedCategory: _selectedCategory,
+                    onCategorySelected: (category) {
+                      setState(() {
+                        _selectedCategory = category;
+                      });
+                    },
+                  ),
+                );
+              },
+              loading: () => const SliverToBoxAdapter(child: SizedBox.shrink()),
+              error: (e, s) => const SliverToBoxAdapter(child: SizedBox.shrink()),
+            ),
+            briefingAsync.when(
+              data: (briefing) => _NewsList(
+                briefing: briefing,
+                selectedCategory: _selectedCategory,
+              ),
               loading: () => const SliverFillRemaining(child: Center(child: CircularProgressIndicator())),
-              error: (err, stack) => SliverToBoxAdapter(child: Center(child: Text('Error: $err'))),
+              error: (err, stack) => SliverFillRemaining(
+                child: Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(40),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.wifi_off_rounded, color: Colors.white24, size: 48),
+                        const SizedBox(height: 16),
+                        Text('Intel feed offline', style: Theme.of(context).textTheme.titleMedium),
+                        const SizedBox(height: 8),
+                        Text(err.toString(), textAlign: TextAlign.center, style: const TextStyle(color: Colors.white24, fontSize: 12)),
+                        const SizedBox(height: 24),
+                        ElevatedButton(
+                          onPressed: () => ref.invalidate(briefingRepositoryProvider),
+                          child: const Text('Reconnect'),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
             ),
             const SliverToBoxAdapter(child: SizedBox(height: 120)),
           ],
@@ -54,16 +98,20 @@ class _VaultHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SliverAppBar(
-      expandedHeight: 120,
+      expandedHeight: 80,
       backgroundColor: Colors.transparent,
       elevation: 0,
       pinned: true,
+      stretch: true,
       flexibleSpace: FlexibleSpaceBar(
         centerTitle: false,
         titlePadding: const EdgeInsets.only(left: 24, bottom: 16),
         title: Text(
           'Intelligence Vault',
-          style: Theme.of(context).textTheme.displayMedium,
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+            fontWeight: FontWeight.bold,
+            letterSpacing: -0.5,
+          ),
         ),
       ),
       actions: [
@@ -77,30 +125,102 @@ class _VaultHeader extends StatelessWidget {
   }
 }
 
-class _NewsList extends StatelessWidget {
-  final BriefingData briefing;
+class _CategoryPills extends StatelessWidget {
+  final List<String> categories;
+  final String selectedCategory;
+  final Function(String) onCategorySelected;
 
-  const _NewsList({required this.briefing});
+  const _CategoryPills({
+    required this.categories,
+    required this.selectedCategory,
+    required this.onCategorySelected,
+  });
 
   @override
   Widget build(BuildContext context) {
-    // Flatten all items into a single unified intelligence feed
+    return Container(
+      height: 36,
+      margin: const EdgeInsets.only(bottom: 20, top: 10),
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 24),
+        itemCount: categories.length,
+        itemBuilder: (context, index) {
+          final category = categories[index];
+          final isActive = category == selectedCategory;
+          
+          return GestureDetector(
+            onTap: () => onCategorySelected(category),
+            child: Container(
+              margin: const EdgeInsets.only(right: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: isActive ? AppTheme.goldAmber : AppTheme.glassWhite,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: isActive ? AppTheme.goldAmber : Colors.white10),
+              ),
+              child: Text(
+                category.toUpperCase(),
+                style: TextStyle(
+                  color: isActive ? Colors.black : Colors.white60,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 10,
+                  letterSpacing: 1,
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _NewsList extends StatelessWidget {
+  final BriefingData briefing;
+  final String selectedCategory;
+
+  const _NewsList({
+    required this.briefing,
+    required this.selectedCategory,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     final List<MapEntry<String, BriefingItem>> itemsWithCategories = [];
     
-    briefing.data.forEach((catName, catData) {
-      for (var item in catData.items) {
-        // Skip items that don't have a title (e.g. pure stock data)
-        if (item.title != null) {
-          itemsWithCategories.add(MapEntry(catName, item));
+    if (selectedCategory == 'All') {
+      briefing.data.forEach((catName, catData) {
+        for (var item in catData.items) {
+          if (item.title != null) {
+            itemsWithCategories.add(MapEntry(catName, item));
+          }
+        }
+      });
+    } else {
+      final catData = briefing.data[selectedCategory];
+      if (catData != null) {
+        for (var item in catData.items) {
+          if (item.title != null) {
+            itemsWithCategories.add(MapEntry(selectedCategory, item));
+          }
         }
       }
-    });
+    }
 
     if (itemsWithCategories.isEmpty) {
       return const SliverToBoxAdapter(
         child: Padding(
-          padding: EdgeInsets.all(40),
-          child: Center(child: Text('No intelligence found.', style: TextStyle(color: Colors.white24))),
+          padding: EdgeInsets.all(60),
+          child: Column(
+            children: [
+              Icon(Icons.auto_awesome_mosaic_outlined, color: Colors.white10, size: 48),
+              SizedBox(height: 16),
+              Text('The vault is currently empty.', style: TextStyle(color: Colors.white24)),
+              Text('Awaiting next briefing cycles...', style: TextStyle(color: Colors.white12, fontSize: 12)),
+            ],
+          ),
         ),
       );
     }
@@ -131,107 +251,84 @@ class _NewsCard extends ConsumerWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
       child: GlassCard(
-        padding: EdgeInsets.zero,
+        padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (item.img != null && item.img!.isNotEmpty)
-              ClipRRect(
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-                child: Image.network(
-                  item.img!,
-                  height: 180,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
-                  errorBuilder: (c, e, s) => Container(
-                    height: 180,
-                    color: AppTheme.glassWhite,
-                    child: const Icon(Icons.image_outlined, color: Colors.white24, size: 40),
-                  ),
-                ),
-              ),
-            Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: color.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(6),
-                              border: Border.all(color: color.withOpacity(0.2)),
-                            ),
-                            child: Text(
-                              '${(item.sentiment ?? 0).toStringAsFixed(1)} SNT',
-                              style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 10),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            categoryName.toUpperCase(),
-                            style: const TextStyle(color: Colors.white24, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1),
-                          ),
-                        ],
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: color.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(color: color.withOpacity(0.2)),
                       ),
-                      GestureDetector(
-                        onTap: () {
-                          if (item.title != null) {
-                            ref.read(savedArticlesProvider.notifier).toggle(item.title!);
-                          }
-                        },
-                        child: Icon(
-                          isSaved ? Icons.bookmark_rounded : Icons.bookmark_outline_rounded,
-                          color: isSaved ? AppTheme.goldAmber : Colors.white24,
-                          size: 22,
-                        ),
+                      child: Text(
+                        '${(item.sentiment ?? 0).toStringAsFixed(1)} SNT',
+                        style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 10),
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    item.title ?? "Untitled Intelligence",
-                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
-                    maxLines: 3,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  if (item.takeaway != null) ...[
-                    const SizedBox(height: 20),
-                    Row(
-                      children: [
-                        Container(
-                          width: 2,
-                          height: 30,
-                          color: AppTheme.goldAmber,
-                        ),
-                        const SizedBox(width: 12),
-                        const Text(
-                          'TAKEAWAY',
-                          style: TextStyle(
-                            color: AppTheme.goldAmber,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 10,
-                            letterSpacing: 1.5,
-                          ),
-                        ),
-                      ],
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(width: 8),
                     Text(
-                      item.takeaway!,
-                      style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 13, height: 1.4),
-                      maxLines: 3,
-                      overflow: TextOverflow.ellipsis,
+                      categoryName.toUpperCase(),
+                      style: const TextStyle(color: Colors.white24, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1),
                     ),
                   ],
+                ),
+                GestureDetector(
+                  onTap: () {
+                    if (item.title != null) {
+                      ref.read(savedArticlesProvider.notifier).toggle(item.title!);
+                    }
+                  },
+                  child: Icon(
+                    isSaved ? Icons.bookmark_rounded : Icons.bookmark_outline_rounded,
+                    color: isSaved ? AppTheme.goldAmber : Colors.white24,
+                    size: 22,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Text(
+              item.title ?? "Untitled Intelligence",
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white, height: 1.3),
+              maxLines: 3,
+              overflow: TextOverflow.ellipsis,
+            ),
+            if (item.takeaway != null) ...[
+              const SizedBox(height: 20),
+              Row(
+                children: [
+                  Container(
+                    width: 2,
+                    height: 30,
+                    color: AppTheme.goldAmber,
+                  ),
+                  const SizedBox(width: 12),
+                  const Text(
+                    'TAKEAWAY',
+                    style: TextStyle(
+                      color: AppTheme.goldAmber,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 10,
+                      letterSpacing: 1.5,
+                    ),
+                  ),
                 ],
               ),
-            ),
+              const SizedBox(height: 8),
+              Text(
+                item.takeaway!,
+                style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 13, height: 1.4),
+                maxLines: 4,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
           ],
         ),
       ),

@@ -41,7 +41,7 @@ final class WatchlistProvider
   }
 }
 
-String _$watchlistHash() => r'b2e05ee4124f46122d2d049879250816ed0ddff3';
+String _$watchlistHash() => r'dbb253de45261e2721d3434afa12b06d68f33c65';
 
 abstract class _$Watchlist extends $Notifier<Set<String>> {
   Set<String> build();
@@ -93,7 +93,7 @@ final class FollowedTopicsProvider
   }
 }
 
-String _$followedTopicsHash() => r'bbaa134d6177649a9ea900bc20cff4f081ba844f';
+String _$followedTopicsHash() => r'7e0aa79f861c42ac8ead02f75b30d70a82ea9525';
 
 abstract class _$FollowedTopics extends $Notifier<Set<String>> {
   Set<String> build();
