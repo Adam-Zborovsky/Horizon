@@ -7,13 +7,13 @@
         "path": "update-briefing-config",
         "options": {}
       },
-      "id": "5caaee18-6f54-4002-a998-0c58eff83a86",
+      "id": "01f0f4ef-323f-401d-97ab-7f1b4cd316fb",
       "name": "Webhook: Update Config",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 1,
       "position": [
-        80320,
-        3664
+        81136,
+        3344
       ],
       "webhookId": "update-briefing-config"
     },
@@ -21,41 +21,28 @@
       "parameters": {
         "filePath": "/home/adam/n8n/AI_Briefing/briefing_config.json"
       },
-      "id": "173c4dbd-4b52-445d-9dbd-bf760260a89d",
+      "id": "126b5551-d342-43eb-af54-618d4d1b6c3f",
       "name": "Load Existing Config",
       "type": "n8n-nodes-base.readBinaryFile",
       "typeVersion": 1,
       "position": [
-        80528,
-        3664
+        81344,
+        3344
       ],
       "onError": "continueErrorOutput"
-    },
-    {
-      "parameters": {
-        "jsCode": "const body = $(\"Webhook: Update Config\").first().json.body || $(\"Webhook: Update Config\").first().json;\nlet existing = { topics: [], tickers: [] };\n\ntry {\n  const binaryData = $input.first().binary?.data;\n  if (binaryData) {\n    const buffer = Buffer.from(binaryData.data, 'base64');\n    existing = JSON.parse(buffer.toString());\n  }\n} catch (e) {\n  // No existing config\n}\n\n// Reset functionality\nif (body.clear === true || body.reset === true) {\n  existing = { topics: [], tickers: [] };\n} else {\n  // Toggle logic for topics\n  if (Array.isArray(body.topics)) {\n    body.topics.forEach(t => {\n      const index = existing.topics.indexOf(t);\n      if (index > -1) existing.topics.splice(index, 1);\n      else existing.topics.push(t);\n    });\n  }\n  \n  // Toggle logic for tickers\n  if (Array.isArray(body.tickers)) {\n    body.tickers.forEach(t => {\n      const index = existing.tickers.indexOf(t);\n      if (index > -1) existing.tickers.splice(index, 1);\n      else existing.tickers.push(t);\n    });\n  }\n}\n\nreturn {\n  binary: {\n    data: {\n      data: Buffer.from(JSON.stringify(existing)).toString('base64'),\n      mimeType: 'application/json',\n      fileName: 'briefing_config.json'\n    }\n  },\n  // Return the new state so the user can see what's currently active\n  new_config: existing\n};"
-      },
-      "id": "bb3b81b2-8e8b-442a-9930-3b46ff657606",
-      "name": "Format Config Binary",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        80736,
-        3648
-      ]
     },
     {
       "parameters": {
         "fileName": "/home/adam/n8n/AI_Briefing/briefing_config.json",
         "options": {}
       },
-      "id": "2e5ad97e-12f6-498f-be87-6c6ff91addd3",
+      "id": "af5b1a26-bb15-4e3f-8b30-dd08074f740f",
       "name": "Save Config File",
       "type": "n8n-nodes-base.writeBinaryFile",
       "typeVersion": 1,
       "position": [
-        80944,
-        3648
+        81760,
+        3328
       ]
     },
     {
@@ -66,26 +53,26 @@
           ]
         }
       },
-      "id": "712660f1-693d-41dc-ab58-13c7b2e111ac",
+      "id": "51630d8d-cf55-4409-9743-ebe92e634478",
       "name": "Schedule Trigger",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.1,
       "position": [
-        80704,
-        3248
+        81520,
+        2928
       ]
     },
     {
       "parameters": {
         "filePath": "/home/adam/n8n/AI_Briefing/briefing_config.json"
       },
-      "id": "0a3e588b-d130-4069-b373-a845e1255517",
+      "id": "0ace7727-a833-4ae2-89c2-6392175c2065",
       "name": "Read Config File",
       "type": "n8n-nodes-base.readBinaryFile",
       "typeVersion": 1,
       "position": [
-        80848,
-        3248
+        81664,
+        2928
       ],
       "onError": "continueErrorOutput"
     },
@@ -93,13 +80,13 @@
       "parameters": {
         "jsCode": "\nconst topics = $input.first().json.data.topics || [];\nconst tickers =$input.first().json.data.tickers || [];\n\nreturn {\n  topics,\n  tickers,\n  rssQuery: topics.length > 0 ? topics.join(' OR ') : \"market news\"\n};"
       },
-      "id": "962425f6-e8f7-446f-9462-63e218ce2d1e",
+      "id": "fdd892b7-0f52-432d-b748-368293ab8306",
       "name": "Config",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        81152,
-        3440
+        81968,
+        3120
       ]
     },
     {
@@ -107,13 +94,13 @@
         "fieldToSplitOut": "tickers",
         "options": {}
       },
-      "id": "53ee52b3-c98c-4c7a-8b0e-f2a7f3ddf8ba",
+      "id": "af484403-1368-4680-aced-c2e43dbc4436",
       "name": "Split Tickers",
       "type": "n8n-nodes-base.itemLists",
       "typeVersion": 3,
       "position": [
-        81296,
-        3296
+        82112,
+        2976
       ]
     },
     {
@@ -130,13 +117,13 @@
         },
         "options": {}
       },
-      "id": "3fca5f27-08b4-458a-afb1-7389ea95abd2",
+      "id": "8c1c23de-7c26-452d-97bc-15b509c6dafb",
       "name": "Fetch Stocks",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.1,
       "position": [
-        81472,
-        3296
+        82288,
+        2976
       ]
     },
     {
@@ -144,26 +131,26 @@
         "url": "=https://news.google.com/rss/search?q={{ $node[\"Config\"].json[\"rssQuery\"] }}&hl=en-US&gl=US&ceid=US:en",
         "options": {}
       },
-      "id": "39fe2570-943f-465b-ac9b-6131508eabbb",
+      "id": "ddaa0629-4dcf-400d-9113-f3d9996899fd",
       "name": "Fetch News RSS",
       "type": "n8n-nodes-base.rssFeedRead",
       "typeVersion": 1,
       "position": [
-        81296,
-        3568
+        82112,
+        3248
       ]
     },
     {
       "parameters": {
-        "jsCode": "return {\n  chart: $input.all().map(item => item.json.chart)\n};"
+        "jsCode": "return {\n  chart: $input.all().map(item => item.json.chart)\n}"
       },
-      "id": "185bd88c-466e-460c-88e7-0495849e5ecd",
+      "id": "7920ddba-e101-42a6-af56-be9290865007",
       "name": "Aggregate Stocks",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        81632,
-        3296
+        82448,
+        2976
       ],
       "executeOnce": true
     },
@@ -171,13 +158,13 @@
       "parameters": {
         "jsCode": "const items = $input.all();\nreturn {\n  title: items.map(i => i.json.title),\n  link: items.map(i => i.json.link),\n  content: items.map(i => i.json.content),\n  media: items.map(i => i.json.thumbnail || i.json.enclosure?.url || \"\")\n};"
       },
-      "id": "f2a9b2d7-0318-492a-9cf0-fd06e5d47cd6",
+      "id": "84709116-2ce2-4096-b794-cdbb3322fd55",
       "name": "Aggregate News",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        81632,
-        3568
+        82448,
+        3248
       ],
       "executeOnce": true
     },
@@ -187,26 +174,26 @@
         "combinationMode": "mergeByPosition",
         "options": {}
       },
-      "id": "c79b20c8-0665-40ba-a550-4bfe509e8f50",
+      "id": "17805639-6732-4cec-8449-061c911d3166",
       "name": "Merge Data",
       "type": "n8n-nodes-base.merge",
       "typeVersion": 2.1,
       "position": [
-        81824,
-        3472
+        82640,
+        3152
       ]
     },
     {
       "parameters": {
         "jsCode": "// DATA PRE-PROCESSOR\nconst config = $(\"Config\").first().json;\n\n// Safely get Stocks data\nlet stocks = [];\ntry {\n  const stocksData = $(\"Aggregate Stocks\").first().json;\n  const rawCharts = Array.isArray(stocksData.chart) ? stocksData.chart : [];\n  for (let i = 0; i < rawCharts.length; i++) {\n    const chart = rawCharts[i];\n    if (!chart) continue;\n    const res = chart.result && chart.result[0];\n    if (!res) continue;\n    const meta = res.meta || {};\n    const indicators = res.indicators || {};\n    const quote = (indicators.quote && indicators.quote[0]) || {};\n    const close = (quote.close && quote.close[0]) || meta.regularMarketPrice;\n    const prevClose = meta.chartPreviousClose;\n    stocks.push({\n      ticker: meta.symbol,\n      name: meta.longName || meta.symbol,\n      price: close,\n      change: prevClose ? parseFloat(((close - prevClose) / prevClose * 100).toFixed(2)) : 0,\n      volume: (quote.volume && quote.volume[0]) || meta.regularMarketVolume,\n      ma50: close\n    });\n  }\n} catch (e) { console.log('Stocks data processing error', e); }\n\n// Safely get News data\nlet news = [];\ntry {\n  const newsJson = $(\"Aggregate News\").first().json;\n  const titles = newsJson.title || [];\n  const links = newsJson.link || [];\n  const contents = newsJson.content || [];\n  const media = newsJson.media || [];\n\n  news = titles.map((title, i) => ({\n    title: Array.isArray(title) ? title[0] : title,\n    l: Array.isArray(links[i]) ? links[i][0] : links[i] || \"\",\n    takeaway: (Array.isArray(contents[i]) ? contents[i][0] : contents[i] || \"\").replace(/<[^>]*>?/gm, '').slice(0, 500),\n    img: Array.isArray(media[i]) ? media[i][0] : media[i] || \"\"\n  })).filter(item => item.title);\n} catch (e) {\n  console.log(\"News data not available\", e);\n}\n\nif (stocks.length === 0 && news.length === 0) {\n  throw new Error(\"No data available from either Stocks or News. Check your configuration.\");\n}\n\nconst suffix = \"Return ONLY raw JSON. No talk, no preamble, no tools.\";\n\nconst getCommand = (prompt, data) => {\n  return `cd /home/adam/n8n && cat <<'EOF' | gemini -p \"\" --yolo\\n${prompt} ${suffix}\\nInput: ${JSON.stringify(data)}\\nEOF`;\n};\n\nreturn {\n  stocks,\n  news: news.slice(0, 30),\n  cmd_news: getCommand(\"Act as a News Intelligence Agent. Analyze and bucket news into: 1. Critical Intel, 2. Market Pulse, 3. Strategic Trends. Include sentiment (-1.0 to 1.0).\", news.slice(0, 20)),\n  cmd_market: getCommand(\"Act as a Market Analyst. Provide analysis for these stocks: \" + stocks.map(s => s.ticker).join(', ') + \". Include sentiment (-1.0 to 1.0).\", stocks),\n  cmd_macro: getCommand(\"Act as an Opportunity Scout. Cross-reference stocks and news. Include sentiment.\", { stocks, news: news.slice(0, 10) })\n};"
       },
-      "id": "355188a3-4eb5-4122-ad88-ac81f6f7d595",
+      "id": "f704a560-5eab-4432-b930-b85bd2a72e85",
       "name": "Data Pre-processor",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        82032,
-        3472
+        82848,
+        3152
       ],
       "executeOnce": true
     },
@@ -214,13 +201,13 @@
       "parameters": {
         "command": "={{ $json.cmd_news }}"
       },
-      "id": "a155d987-2f44-495b-b36a-ecefe97cf511",
+      "id": "fe3f976d-ec44-4d5b-9c26-a226ddb5080a",
       "name": "Agent: News Intel",
       "type": "n8n-nodes-base.ssh",
       "typeVersion": 1,
       "position": [
-        82224,
-        3328
+        83040,
+        3008
       ],
       "credentials": {
         "sshPassword": {
@@ -233,13 +220,13 @@
       "parameters": {
         "command": "={{ $json.cmd_market }}"
       },
-      "id": "70004f85-f916-41d3-98c7-4db430b2cf7c",
+      "id": "964639a3-5d2a-4fa2-a021-cd400fc4a2f6",
       "name": "Agent: Market Analyst",
       "type": "n8n-nodes-base.ssh",
       "typeVersion": 1,
       "position": [
-        82224,
-        3472
+        83040,
+        3152
       ],
       "credentials": {
         "sshPassword": {
@@ -252,13 +239,13 @@
       "parameters": {
         "command": "={{ $json.cmd_macro }}"
       },
-      "id": "aabcc3aa-32e2-4531-850d-d18309805820",
+      "id": "2b783d45-53e8-4318-bba9-5136737428e9",
       "name": "Agent: Opportunity Scout",
       "type": "n8n-nodes-base.ssh",
       "typeVersion": 1,
       "position": [
-        82224,
-        3616
+        83040,
+        3296
       ],
       "credentials": {
         "sshPassword": {
@@ -273,13 +260,13 @@
         "combinationMode": "mergeByPosition",
         "options": {}
       },
-      "id": "ccf753ad-35a6-492f-b153-43e9dea7db1b",
+      "id": "c53022b6-cc4e-4821-8a4c-288e57f75740",
       "name": "Merge Agents 1",
       "type": "n8n-nodes-base.merge",
       "typeVersion": 2.1,
       "position": [
-        82400,
-        3392
+        83216,
+        3072
       ]
     },
     {
@@ -288,26 +275,26 @@
         "combinationMode": "mergeByPosition",
         "options": {}
       },
-      "id": "343b411d-58b9-40db-a43d-516e985a240d",
+      "id": "54feb57d-4945-49db-a9b9-38af43b23c7c",
       "name": "Merge Agents 2",
       "type": "n8n-nodes-base.merge",
       "typeVersion": 2.1,
       "position": [
-        82576,
-        3472
+        83392,
+        3152
       ]
     },
     {
       "parameters": {
         "jsCode": "const results = {\n  agent_results: {\n    news_intel: $(\"Agent: News Intel\").first().json,\n    market_analyst: $(\"Agent: Market Analyst\").first().json,\n    opportunity_scout: $(\"Agent: Opportunity Scout\").first().json\n  }\n};\n\nconst suffix = \"Return ONLY raw JSON. No talk, no preamble, no tools.\";\nconst architectPrompt = \"Act as the Lead Architect. Your goal is to produce the final Daily Briefing JSON. 1. Create 3-5 descriptive top-level categories. 2. For each category, provide: 'sentiment_score' (float -1.0 to 1.0), 'summary' (high-level overview), and 'items' (an array). NEWS ITEMS in 'items' must have: 'title', 'l' (link), 'sentiment' (float), 'img' (image URL), and 'takeaway'. STOCK ITEMS in 'items' must have: 'ticker', 'name', 'price', 'change', 'sentiment' (float), and 'analysis'. Use 'items' array for all entities. Ensure the output is ONLY the raw JSON object matching the Alpha-Horizon schema.\";\n\nconst command = `cd /home/adam/n8n && cat <<'EOF' | gemini -p \"\" --yolo\\n${architectPrompt} ${suffix}\\nInput: ${JSON.stringify(results)}\\nEOF`;\n\nreturn {\n  ...results,\n  cmd_architect: command\n};"
       },
-      "id": "f9e80c1f-154a-4fa5-8b6b-ef595a036474",
+      "id": "1437a2c5-3357-4c56-b76c-136050f62a84",
       "name": "Aggregate Agent Results",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        82768,
-        3472
+        83584,
+        3152
       ],
       "executeOnce": true
     },
@@ -315,13 +302,13 @@
       "parameters": {
         "command": "={{ $json.cmd_architect }}"
       },
-      "id": "4c385434-e4cc-47f7-8271-500225aa7bb2",
+      "id": "1ed43fa9-4d03-42a4-a17d-f7e2ebb80e49",
       "name": "Agent: Lead Architect",
       "type": "n8n-nodes-base.ssh",
       "typeVersion": 1,
       "position": [
-        82960,
-        3472
+        83776,
+        3152
       ],
       "credentials": {
         "sshPassword": {
@@ -358,13 +345,13 @@
         },
         "options": {}
       },
-      "id": "be552de1-8bfc-4da7-b24e-13108e48084a",
+      "id": "3605c8f2-574e-4126-9247-ff583131d0a4",
       "name": "POST Briefing to Web",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.1,
       "position": [
-        83136,
-        3472
+        83952,
+        3152
       ]
     },
     {
@@ -375,11 +362,25 @@
       "type": "n8n-nodes-base.extractFromFile",
       "typeVersion": 1.1,
       "position": [
-        81008,
-        3232
+        81824,
+        2912
       ],
-      "id": "d47dde7f-b659-4857-96c0-919644f013be",
+      "id": "283c73ad-cfe3-4d97-af90-30e63ea389ee",
       "name": "Extract from File"
+    },
+    {
+      "parameters": {
+        "operation": "fromJson",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.1,
+      "position": [
+        81584,
+        3328
+      ],
+      "id": "c4f2a6bb-7586-4d3e-b714-c078b9db4a56",
+      "name": "Extract from File1"
     }
   ],
   "pinData": {},
@@ -399,18 +400,7 @@
       "main": [
         [
           {
-            "node": "Format Config Binary",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Format Config Binary": {
-      "main": [
-        [
-          {
-            "node": "Save Config File",
+            "node": "Extract from File1",
             "type": "main",
             "index": 0
           }
@@ -629,6 +619,17 @@
           }
         ]
       ]
+    },
+    "Extract from File1": {
+      "main": [
+        [
+          {
+            "node": "Save Config File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": true,
@@ -640,7 +641,7 @@
     "callerPolicy": "workflowsFromSameOwner",
     "timeSavedPerExecution": 25
   },
-  "versionId": "0691c83c-3e69-4579-9225-c86ea3f8fdf8",
+  "versionId": "e449dcd1-4bca-419a-b93d-48f30e63a3aa",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "462f72c1cb99079f620d4944d8321993a68403a9c985b9412cdd835b5280d81a"
