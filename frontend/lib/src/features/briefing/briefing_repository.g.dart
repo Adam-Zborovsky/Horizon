@@ -13,11 +13,7 @@ part of 'briefing_repository.dart';
 final briefingRepositoryProvider = BriefingRepositoryProvider._();
 
 final class BriefingRepositoryProvider
-    extends
-        $AsyncNotifierProvider<
-          BriefingRepository,
-          Map<String, BriefingCategory>
-        > {
+    extends $AsyncNotifierProvider<BriefingRepository, BriefingData> {
   BriefingRepositoryProvider._()
     : super(
         from: null,
@@ -38,28 +34,19 @@ final class BriefingRepositoryProvider
 }
 
 String _$briefingRepositoryHash() =>
-    r'ba1390505289ad1312fa9ceed500c34cebd2e9da';
+    r'6a966a99c6997efb2c9c6917fb1418c83ff1d64e';
 
-abstract class _$BriefingRepository
-    extends $AsyncNotifier<Map<String, BriefingCategory>> {
-  FutureOr<Map<String, BriefingCategory>> build();
+abstract class _$BriefingRepository extends $AsyncNotifier<BriefingData> {
+  FutureOr<BriefingData> build();
   @$mustCallSuper
   @override
   void runBuild() {
-    final ref =
-        this.ref
-            as $Ref<
-              AsyncValue<Map<String, BriefingCategory>>,
-              Map<String, BriefingCategory>
-            >;
+    final ref = this.ref as $Ref<AsyncValue<BriefingData>, BriefingData>;
     final element =
         ref.element
             as $ClassProviderElement<
-              AnyNotifier<
-                AsyncValue<Map<String, BriefingCategory>>,
-                Map<String, BriefingCategory>
-              >,
-              AsyncValue<Map<String, BriefingCategory>>,
+              AnyNotifier<AsyncValue<BriefingData>, BriefingData>,
+              AsyncValue<BriefingData>,
               Object?,
               Object?
             >;
