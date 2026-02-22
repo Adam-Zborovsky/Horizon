@@ -107,7 +107,23 @@ class BriefingService {
     const cleanData = data.data || data;
     const { topics: newTopics, tickers } = cleanData;
 
-    let config = await BriefingConfig.findOne();
+    let config;
+    try {
+      // If the document in the DB is corrupted (e.g. topics is a string), 
+      // findOne() will throw a ValidationError during document initialization.
+      config = await BriefingConfig.findOne();
+      
+      // Secondary check: ensure topics is actually an array
+      if (config && (!config.topics || !Array.isArray(config.topics))) {
+        throw new Error('Topics field is not an array');
+      }
+    } catch (err) {
+      console.warn('⚠️ BriefingService: Configuration corruption detected. Wiping and resetting defaults.');
+      console.warn(`Reason: ${err.message}`);
+      await BriefingConfig.deleteMany({});
+      config = new BriefingConfig();
+    }
+
     if (!config) {
       console.log('BriefingService: No existing config found, creating new one.');
       config = new BriefingConfig();
@@ -115,10 +131,6 @@ class BriefingService {
 
     if (newTopics && Array.isArray(newTopics)) {
       console.log(`BriefingService: Updating ${newTopics.length} topics.`);
-      
-      // Clear existing topics and rebuild to ensure order and state match exactly
-      // Mongoose subdocument arrays are better managed by clearing and re-adding 
-      // if the entire state is sent from the frontend.
       config.topics = [];
       for (const newTopic of newTopics) {
         if (newTopic && newTopic.name) {
@@ -146,22 +158,26 @@ class BriefingService {
    * @param {boolean} enabled - The desired enabled status.
    */
   async toggleTopic(topicName, enabled) {
-    let config = await BriefingConfig.findOne();
-    if (!config) {
-      // If no config exists, create one with default topics and the specified topic toggled
-      config = new BriefingConfig();
-      const topicToToggle = config.topics.find(t => t.name === topicName);
-      if (topicToToggle) {
-        topicToToggle.enabled = enabled;
-      } else {
-        config.topics.push({ name: topicName, enabled: enabled });
+    let config;
+    try {
+      config = await BriefingConfig.findOne();
+      if (config && (!config.topics || !Array.isArray(config.topics))) {
+        throw new Error('Topics field is not an array');
       }
+    } catch (err) {
+      console.warn('⚠️ BriefingService: Configuration corruption detected during toggle. Resetting.');
+      await BriefingConfig.deleteMany({});
+      config = new BriefingConfig();
+    }
+
+    if (!config) {
+      config = new BriefingConfig();
+      config.topics.push({ name: topicName, enabled: enabled });
     } else {
       const topic = config.topics.find(t => t.name === topicName);
       if (topic) {
         topic.enabled = enabled;
       } else {
-        // If topic doesn't exist, add it.
         config.topics.push({ name: topicName, enabled: enabled });
       }
     }
@@ -172,7 +188,17 @@ class BriefingService {
    * Get the global briefing configuration
    */
   async getConfig() {
-    return await BriefingConfig.findOne();
+    try {
+      const config = await BriefingConfig.findOne();
+      if (config && (!config.topics || !Array.isArray(config.topics))) {
+        throw new Error('Topics field is not an array');
+      }
+      return config;
+    } catch (err) {
+      console.warn('⚠️ BriefingService: Configuration corruption detected during fetch. Resetting.');
+      await BriefingConfig.deleteMany({});
+      return new BriefingConfig();
+    }
   }
 
   /**

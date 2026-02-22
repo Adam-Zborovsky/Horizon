@@ -486,13 +486,13 @@ return $default(_that.sentimentScore,_that.summary,_that.items);case _:
 @JsonSerializable()
 
 class _CategoryData implements CategoryData {
-  const _CategoryData({@JsonKey(name: 'sentiment_score') required this.sentimentScore, required this.summary, required final  List<BriefingItem> items}): _items = items;
+  const _CategoryData({@JsonKey(name: 'sentiment_score') this.sentimentScore = 0.0, this.summary = '', final  List<BriefingItem> items = const []}): _items = items;
   factory _CategoryData.fromJson(Map<String, dynamic> json) => _$CategoryDataFromJson(json);
 
 @override@JsonKey(name: 'sentiment_score') final  double sentimentScore;
-@override final  String summary;
+@override@JsonKey() final  String summary;
  final  List<BriefingItem> _items;
-@override List<BriefingItem> get items {
+@override@JsonKey() List<BriefingItem> get items {
   if (_items is EqualUnmodifiableListView) return _items;
   // ignore: implicit_dynamic_type
   return EqualUnmodifiableListView(_items);

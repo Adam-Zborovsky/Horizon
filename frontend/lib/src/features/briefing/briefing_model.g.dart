@@ -24,11 +24,13 @@ Map<String, dynamic> _$BriefingDataToJson(_BriefingData instance) =>
 
 _CategoryData _$CategoryDataFromJson(Map<String, dynamic> json) =>
     _CategoryData(
-      sentimentScore: (json['sentiment_score'] as num).toDouble(),
-      summary: json['summary'] as String,
-      items: (json['items'] as List<dynamic>)
-          .map((e) => BriefingItem.fromJson(e as Map<String, dynamic>))
-          .toList(),
+      sentimentScore: (json['sentiment_score'] as num?)?.toDouble() ?? 0.0,
+      summary: json['summary'] as String? ?? '',
+      items:
+          (json['items'] as List<dynamic>?)
+              ?.map((e) => BriefingItem.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          const [],
     );
 
 Map<String, dynamic> _$CategoryDataToJson(_CategoryData instance) =>
