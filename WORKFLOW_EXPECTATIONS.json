@@ -1,0 +1,25 @@
+{
+  "workflow": {
+    "name": "AI Daily Briefing",
+    "expected_web_behavior": {
+      "dashboard_updates": "Real-time or polling-based updates when a new briefing is saved.",
+      "sentiment_visualization": {
+        "positive": { "threshold": "> 0.3", "color": "#00C805", "effect": "glow" },
+        "negative": { "threshold": "< -0.3", "color": "#FF3B30", "effect": "glow" },
+        "neutral": { "threshold": "-0.3 to 0.3", "color": "Cyan/Blue" }
+      },
+      "configuration_sync": "Updates to topics/tickers via PUT /api/v1/briefing/config must be persisted and reflected in the UI."
+    },
+    "expected_webhook_behavior": {
+      "endpoint": "https://alpha-horizon-backend.adamzborovsky.com/api/v1/briefing",
+      "method": "POST",
+      "authentication": "Uses a unique webhook ID in the URL as a secret.",
+      "validation": "Must receive valid JSON with a 'data' structure containing briefing details.",
+      "responses": {
+        "201": "Briefing saved successfully.",
+        "422": "Workflow is disabled.",
+        "404": "Webhook ID not found."
+      }
+    }
+  }
+}
