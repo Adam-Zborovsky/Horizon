@@ -49,7 +49,7 @@
     },
     {
       "parameters": {
-        "jsCode": "\nconst topics = $input.first().json.data.topics || [];\nconst tickers =$input.first().json.data.tickers || [];\n\nreturn {\n  topics,\n  tickers,\n  rssQuery: topics.length > 0 ? topics.join(' OR ') : \"market news\"\n};"
+        "jsCode": "\n// Handle both API response format (with .data) and direct file format\nconst inputData = $input.first().json.data || $input.first().json;\n\nlet rawTopics = inputData.topics || [];\nconst tickers = inputData.tickers || [];\n\n// Extract names from objects if necessary and filter for enabled topics\nconst topics = rawTopics.map(t => {\n  if (typeof t === 'string') return t;\n  return t.enabled !== false ? t.name : null;\n}).filter(t => t !== null);\n\nreturn {\n  topics,\n  tickers,\n  rssQuery: topics.length > 0 ? topics.join(' OR ') : \"market news\"\n};"
       },
       "id": "0f0b2f51-1f91-47ae-8e0c-f6a2c6857da5",
       "name": "Config",
@@ -338,10 +338,61 @@
       ],
       "id": "dd2c4900-7168-486c-ab6e-1f82e5e2bfa2",
       "name": "Extract from File"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "trigger-briefing",
+        "options": {}
+      },
+      "id": "webhook-trigger-node",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        80000,
+        1800
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://alpha-horizon-backend.adamzborovsky.com/api/v1/briefing/config",
+        "options": {}
+      },
+      "id": "fetch-web-config-node",
+      "name": "Fetch Web Config",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        80200,
+        1850
+      ]
     }
   ],
   "pinData": {},
   "connections": {
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Fetch Web Config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Web Config": {
+      "main": [
+        [
+          {
+            "node": "Config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
     "Schedule Trigger": {
       "main": [
         [
