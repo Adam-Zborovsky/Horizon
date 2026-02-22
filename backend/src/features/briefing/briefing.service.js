@@ -29,35 +29,39 @@ class BriefingService {
       }
     }
 
-    // Filter briefing data based on enabled topics if it's an object/map
-    if (config && config.topics && typeof briefingData === 'object' && briefingData !== null && !Array.isArray(briefingData)) {
-      console.log('BriefingService: Filtering briefing data. Total categories found:', Object.keys(briefingData).length);
-      const filteredData = {};
-      
+    // Filter briefing data based on enabled topics
+    if (config && config.topics) {
       const disabledTopicNames = config.topics
-        .filter(t => !t.enabled)
+        .filter(t => t.enabled === false)
         .map(t => t.name);
-      
-      console.log('BriefingService: Disabled topics:', disabledTopicNames);
 
-      Object.keys(briefingData).forEach(categoryName => {
-        if (!disabledTopicNames.includes(categoryName)) {
-          filteredData[categoryName] = briefingData[categoryName];
-        } else {
-          console.log(`BriefingService: Category "${categoryName}" is disabled and filtered out.`);
+      if (typeof briefingData === 'object' && briefingData !== null && !Array.isArray(briefingData)) {
+        const allCategories = Object.keys(briefingData);
+        console.log('BriefingService: Incoming categories from AI:', allCategories);
+        
+        if (disabledTopicNames.length > 0) {
+          console.log('BriefingService: Explicitly disabled topics in config:', disabledTopicNames);
         }
-      });
-      briefingData = filteredData;
-      console.log(`BriefingService: Final filtered briefing count: ${Object.keys(briefingData).length}`);
+
+        const filteredData = {};
+        allCategories.forEach(categoryName => {
+          // If it's NOT in the disabled list, let it through (Blacklist approach)
+          if (!disabledTopicNames.includes(categoryName)) {
+            filteredData[categoryName] = briefingData[categoryName];
+          } else {
+            console.log(`BriefingService: Filtered OUT disabled category: "${categoryName}"`);
+          }
+        });
+        briefingData = filteredData;
+      } 
+      else if (Array.isArray(briefingData)) {
+        briefingData = briefingData.filter(category => {
+          const categoryName = Object.keys(category)[0];
+          return !disabledTopicNames.includes(categoryName);
+        });
+      }
+      console.log(`BriefingService: Final allowed categories: ${Object.keys(briefingData).join(', ') || 'NONE'}`);
     } 
-    else if (config && config.topics && Array.isArray(briefingData)) {
-      // Handle array format if it ever appears
-      briefingData = briefingData.filter(category => {
-        const categoryName = Object.keys(category)[0];
-        const enabledTopic = config.topics.find(t => t.name === categoryName);
-        return enabledTopic ? enabledTopic.enabled : false;
-      });
-    }
 
     return {
       _id: briefing._id,
@@ -73,9 +77,19 @@ class BriefingService {
    * @param {Object} data - The briefing data received from agents/n8n
    */
   async save(data) {
-    // If the data is wrapped in another object (common from n8n), extract it
     const cleanData = data.data || data;
     
+    // Validate JSON if it's a string
+    if (typeof cleanData === 'string' && (cleanData.trim().startsWith('{') || cleanData.trim().startsWith('['))) {
+      try {
+        JSON.parse(cleanData);
+      } catch (e) {
+        console.warn('⚠️ BriefingService: Incoming briefing is INVALID JSON. Likely truncated by AI.');
+        console.warn(`Details: ${e.message}`);
+        console.warn(`Preview (end of string): ...${cleanData.slice(-100)}`);
+      }
+    }
+
     const briefing = new Briefing({
       data: cleanData,
       source: 'n8n',

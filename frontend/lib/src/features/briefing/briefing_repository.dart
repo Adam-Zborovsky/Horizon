@@ -110,6 +110,18 @@ class BriefingRepository extends _$BriefingRepository {
                     debugPrint('BriefingRepository: Failed to parse category $key: $e');
                   }
                 }
+              } 
+              // Handle case where category is just a list of items (e.g., strategic_opportunities)
+              else if (value is List) {
+                try {
+                  categoriesMap[key] = CategoryData(
+                    sentimentScore: 0.0,
+                    summary: 'Direct item list',
+                    items: value.map((i) => BriefingItem.fromJson(i as Map<String, dynamic>)).toList(),
+                  );
+                } catch (e) {
+                  debugPrint('BriefingRepository: Failed to parse list category $key: $e');
+                }
               }
             });
           }
