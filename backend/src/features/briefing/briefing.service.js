@@ -6,70 +6,62 @@ class BriefingService {
    * Get the most recent briefing
    */
   async getLatest() {
-    const briefing = await Briefing.findOne().sort({ createdAt: -1 });
-    const config = await BriefingConfig.findOne();
-
-    if (!briefing) {
-      console.log('BriefingService: No latest briefing found in database.');
-      return null;
-    }
-
-    console.log(`BriefingService: Found latest briefing from ${briefing.createdAt}`);
-
-    let briefingData = briefing.data;
-
-    // If data is a string (common from n8n), try to parse it if we need to filter
-    if (typeof briefingData === 'string') {
+    try {
+      const briefing = await Briefing.findOne().sort({ createdAt: -1 });
+      
+      let config;
       try {
-        briefingData = JSON.parse(briefingData);
-        console.log('BriefingService: Parsed briefing data string into object.');
+        config = await BriefingConfig.findOne();
       } catch (e) {
-        console.error('BriefingService: Failed to parse briefing data string:', e.message);
-        // Keep it as string if parsing fails, filtering will be skipped
+        console.warn('⚠️ BriefingService: Config corrupted in getLatest. Resetting DB config.');
+        await BriefingConfig.collection.deleteMany({});
+        config = null;
       }
-    }
 
-    // Filter briefing data based on enabled topics
-    if (config && config.topics) {
-      const disabledTopicNames = config.topics
-        .filter(t => t.enabled === false)
-        .map(t => t.name);
+      if (!briefing) {
+        console.log('BriefingService: No latest briefing found in database.');
+        return null;
+      }
 
-      if (typeof briefingData === 'object' && briefingData !== null && !Array.isArray(briefingData)) {
-        const allCategories = Object.keys(briefingData);
-        console.log('BriefingService: Incoming categories from AI:', allCategories);
-        
-        if (disabledTopicNames.length > 0) {
-          console.log('BriefingService: Explicitly disabled topics in config:', disabledTopicNames);
+      let briefingData = briefing.data;
+
+      // If data is a string (common from n8n), try to parse it
+      if (typeof briefingData === 'string') {
+        try {
+          briefingData = JSON.parse(briefingData);
+        } catch (e) {
+          console.error('BriefingService: Failed to parse briefing data string:', e.message);
         }
+      }
 
+      // Filter briefing data based on enabled topics
+      if (config && config.topics && typeof briefingData === 'object' && briefingData !== null && !Array.isArray(briefingData)) {
+        const disabledTopicNames = config.topics
+          .filter(t => t.enabled === false)
+          .map(t => t.name);
+
+        const allCategories = Object.keys(briefingData);
         const filteredData = {};
+        
         allCategories.forEach(categoryName => {
-          // If it's NOT in the disabled list, let it through (Blacklist approach)
           if (!disabledTopicNames.includes(categoryName)) {
             filteredData[categoryName] = briefingData[categoryName];
-          } else {
-            console.log(`BriefingService: Filtered OUT disabled category: "${categoryName}"`);
           }
         });
         briefingData = filteredData;
-      } 
-      else if (Array.isArray(briefingData)) {
-        briefingData = briefingData.filter(category => {
-          const categoryName = Object.keys(category)[0];
-          return !disabledTopicNames.includes(categoryName);
-        });
       }
-      console.log(`BriefingService: Final allowed categories: ${Object.keys(briefingData).join(', ') || 'NONE'}`);
-    } 
 
-    return {
-      _id: briefing._id,
-      data: briefingData,
-      source: briefing.source,
-      createdAt: briefing.createdAt,
-      updatedAt: briefing.updatedAt,
-    };
+      return {
+        _id: briefing._id,
+        data: briefingData,
+        source: briefing.source,
+        createdAt: briefing.createdAt,
+        updatedAt: briefing.updatedAt,
+      };
+    } catch (err) {
+      console.error('BriefingService: Error in getLatest:', err);
+      return null;
+    }
   }
 
   /**
@@ -84,9 +76,7 @@ class BriefingService {
       try {
         JSON.parse(cleanData);
       } catch (e) {
-        console.warn('⚠️ BriefingService: Incoming briefing is INVALID JSON. Likely truncated by AI.');
-        console.warn(`Details: ${e.message}`);
-        console.warn(`Preview (end of string): ...${cleanData.slice(-100)}`);
+        console.warn('⚠️ BriefingService: Incoming briefing is INVALID JSON.');
       }
     }
 
@@ -103,34 +93,28 @@ class BriefingService {
    * @param {Object} data - { topics: Array, tickers: Array }
    */
   async updateConfig(data) {
-    console.log('BriefingService: Updating config with data:', JSON.stringify(data, null, 2));
+    console.log('BriefingService: Updating config...');
     const cleanData = data.data || data;
     const { topics: newTopics, tickers } = cleanData;
 
     let config;
     try {
-      // If the document in the DB is corrupted (e.g. topics is a string), 
-      // findOne() will throw a ValidationError during document initialization.
       config = await BriefingConfig.findOne();
-      
-      // Secondary check: ensure topics is actually an array
+      // Test if document is valid by accessing its properties
       if (config && (!config.topics || !Array.isArray(config.topics))) {
-        throw new Error('Topics field is not an array');
+        throw new Error('Topics is not an array');
       }
     } catch (err) {
-      console.warn('⚠️ BriefingService: Configuration corruption detected. Wiping and resetting defaults.');
-      console.warn(`Reason: ${err.message}`);
-      await BriefingConfig.deleteMany({});
+      console.warn('⚠️ BriefingService: Corruption detected in updateConfig. Wiping.');
+      await BriefingConfig.collection.deleteMany({});
       config = new BriefingConfig();
     }
 
     if (!config) {
-      console.log('BriefingService: No existing config found, creating new one.');
       config = new BriefingConfig();
     }
 
     if (newTopics && Array.isArray(newTopics)) {
-      console.log(`BriefingService: Updating ${newTopics.length} topics.`);
       config.topics = [];
       for (const newTopic of newTopics) {
         if (newTopic && newTopic.name) {
@@ -143,13 +127,20 @@ class BriefingService {
     }
     
     if (tickers) {
-      console.log(`BriefingService: Updating ${tickers.length} tickers.`);
       config.tickers = tickers;
     }
 
-    const savedConfig = await config.save();
-    console.log('BriefingService: Config saved successfully.');
-    return savedConfig;
+    try {
+      return await config.save();
+    } catch (saveErr) {
+      console.error('⚠️ BriefingService: Save failed. Forcing reset and retry.');
+      await BriefingConfig.collection.deleteMany({});
+      const freshConfig = new BriefingConfig({ 
+        tickers: tickers || [],
+        topics: (newTopics || []).map(t => ({ name: t.name, enabled: t.enabled }))
+      });
+      return await freshConfig.save();
+    }
   }
 
   /**
@@ -162,11 +153,11 @@ class BriefingService {
     try {
       config = await BriefingConfig.findOne();
       if (config && (!config.topics || !Array.isArray(config.topics))) {
-        throw new Error('Topics field is not an array');
+        throw new Error('Topics is not an array');
       }
     } catch (err) {
-      console.warn('⚠️ BriefingService: Configuration corruption detected during toggle. Resetting.');
-      await BriefingConfig.deleteMany({});
+      console.warn('⚠️ BriefingService: Corruption in toggleTopic. Resetting.');
+      await BriefingConfig.collection.deleteMany({});
       config = new BriefingConfig();
     }
 
@@ -181,7 +172,16 @@ class BriefingService {
         config.topics.push({ name: topicName, enabled: enabled });
       }
     }
-    return await config.save();
+    
+    try {
+      return await config.save();
+    } catch (saveErr) {
+      console.error('⚠️ BriefingService: Toggle save failed. Resetting.');
+      await BriefingConfig.collection.deleteMany({});
+      const fresh = new BriefingConfig();
+      fresh.topics.push({ name: topicName, enabled: enabled });
+      return await fresh.save();
+    }
   }
 
   /**
@@ -191,12 +191,12 @@ class BriefingService {
     try {
       const config = await BriefingConfig.findOne();
       if (config && (!config.topics || !Array.isArray(config.topics))) {
-        throw new Error('Topics field is not an array');
+        throw new Error('Topics is not an array');
       }
       return config;
     } catch (err) {
-      console.warn('⚠️ BriefingService: Configuration corruption detected during fetch. Resetting.');
-      await BriefingConfig.deleteMany({});
+      console.warn('⚠️ BriefingService: Corruption in getConfig. Resetting.');
+      await BriefingConfig.collection.deleteMany({});
       return new BriefingConfig();
     }
   }
