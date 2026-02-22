@@ -131,7 +131,9 @@ class BriefingService {
     }
 
     try {
-      return await config.save();
+      const savedConfig = await config.save();
+      this.triggerWorkflow('config_updated');
+      return savedConfig;
     } catch (saveErr) {
       console.error('⚠️ BriefingService: Save failed. Forcing reset and retry.');
       await BriefingConfig.collection.deleteMany({});
@@ -139,7 +141,9 @@ class BriefingService {
         tickers: tickers || [],
         topics: (newTopics || []).map(t => ({ name: t.name, enabled: t.enabled }))
       });
-      return await freshConfig.save();
+      const savedConfig = await freshConfig.save();
+      this.triggerWorkflow('config_updated_after_reset');
+      return savedConfig;
     }
   }
 
@@ -174,13 +178,50 @@ class BriefingService {
     }
     
     try {
-      return await config.save();
+      const savedConfig = await config.save();
+      this.triggerWorkflow('topic_toggled');
+      return savedConfig;
     } catch (saveErr) {
       console.error('⚠️ BriefingService: Toggle save failed. Resetting.');
       await BriefingConfig.collection.deleteMany({});
       const fresh = new BriefingConfig();
       fresh.topics.push({ name: topicName, enabled: enabled });
-      return await fresh.save();
+      const savedConfig = await fresh.save();
+      this.triggerWorkflow('topic_toggled_after_reset');
+      return savedConfig;
+    }
+  }
+
+  /**
+   * Trigger the external n8n workflow
+   * @param {string} reason 
+   */
+  async triggerWorkflow(reason) {
+    const env = require('../../config/env');
+    if (!env.N8N_WEBHOOK_URL) {
+      console.log(`BriefingService: N8N_WEBHOOK_URL not set. Skipping workflow trigger for "${reason}".`);
+      return;
+    }
+
+    try {
+      console.log(`BriefingService: Triggering n8n workflow via ${env.N8N_WEBHOOK_URL} (Reason: ${reason})...`);
+      const response = await fetch(env.N8N_WEBHOOK_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          event: 'config_change',
+          reason: reason,
+          timestamp: new Date().toISOString()
+        })
+      });
+      
+      if (response.ok) {
+        console.log('BriefingService: n8n workflow triggered successfully.');
+      } else {
+        console.warn(`BriefingService: n8n trigger failed with status ${response.status}.`);
+      }
+    } catch (err) {
+      console.error('BriefingService: Failed to trigger n8n workflow:', err.message);
     }
   }
 

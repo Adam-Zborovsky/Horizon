@@ -8,6 +8,7 @@ const envSchema = zod.object({
   NODE_ENV: zod.enum(['development', 'production', 'test']).default('development'),
   MONGODB_URI: zod.string().url(),
   API_PREFIX: zod.string().default('/api/v1'),
+  N8N_WEBHOOK_URL: zod.string().url().optional(),
 });
 
 const parsed = envSchema.safeParse(process.env);
