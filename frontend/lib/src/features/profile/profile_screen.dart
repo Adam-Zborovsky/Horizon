@@ -122,6 +122,41 @@ class ProfileScreen extends ConsumerWidget {
                       _SettingsItem(icon: Icons.language_outlined, title: 'Language', trailing: const Text('English', style: TextStyle(color: Colors.white38))),
                     ],
                   ),
+                  const SizedBox(height: 20),
+                  _SettingsGroup(
+                    title: 'ALPHA HORIZON CONFIG',
+                    items: [
+                      _SettingsItem(
+                        icon: Icons.refresh_rounded, 
+                        title: 'Manual Intelligence Refresh',
+                        onTap: () async {
+                          try {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Triggering Alpha Intelligence...'), backgroundColor: AppTheme.obsidian),
+                            );
+                            await ref.read(briefingRepositoryProvider.notifier).triggerBriefing();
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Intelligence workflow started. Check back soon.'), backgroundColor: Colors.green),
+                            );
+                          } catch (e) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('Trigger failed: $e'), backgroundColor: AppTheme.softCrimson),
+                            );
+                          }
+                        },
+                      ),
+                      _SettingsItem(
+                        icon: Icons.topic_rounded, 
+                        title: 'Manage Intelligence Topics',
+                        onTap: () => context.push('/manage-topics'),
+                      ),
+                      _SettingsItem(
+                        icon: Icons.list_alt_rounded, 
+                        title: 'Manage Global Watchlist',
+                        onTap: () => context.push('/manage-watchlist'),
+                      ),
+                    ],
+                  ),
                   const SizedBox(height: 40),
                   OutlinedButton(
                     onPressed: () {},
@@ -243,31 +278,36 @@ class _SettingsItem extends StatelessWidget {
   final IconData icon;
   final String title;
   final Widget? trailing;
+  final VoidCallback? onTap;
 
-  const _SettingsItem({required this.icon, required this.title, this.trailing});
+  const _SettingsItem({required this.icon, required this.title, this.trailing, this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-      decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(color: Colors.white.withOpacity(0.05))),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, color: Colors.white70, size: 22),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Text(
-              title,
-              style: const TextStyle(fontSize: 15, color: Colors.white),
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        decoration: BoxDecoration(
+          border: Border(bottom: BorderSide(color: Colors.white.withOpacity(0.05))),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, color: Colors.white70, size: 22),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Text(
+                title,
+                style: const TextStyle(fontSize: 15, color: Colors.white),
+              ),
             ),
-          ),
-          if (trailing != null)
-            trailing!
-          else
-            Icon(Icons.arrow_forward_ios_rounded, size: 14, color: Colors.white.withOpacity(0.3)),
-        ],
+            if (trailing != null)
+              trailing!
+            else
+              Icon(Icons.arrow_forward_ios_rounded, size: 14, color: Colors.white.withOpacity(0.3)),
+          ],
+        ),
       ),
     );
   }

@@ -1,6 +1,7 @@
 class ApiConfig {
   static const String baseUrl = 'https://alpha-horizon-backend.adamzborovsky.com/api/v1';
   static const String briefingEndpoint = '$baseUrl/briefing';
+  static const String briefingTriggerEndpoint = '$baseUrl/briefing/trigger';
   static const String briefingConfigEndpoint = '$baseUrl/briefing/config';
   
   // N8N Webhook for configuration updates

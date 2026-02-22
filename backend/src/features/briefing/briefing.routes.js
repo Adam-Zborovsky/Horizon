@@ -16,6 +16,12 @@ router.get('/', briefingController.getLatest);
 router.post('/', briefingController.save);
 
 /**
+ * @route POST /api/v1/briefing/trigger
+ * Manually triggers the briefing generation workflow
+ */
+router.post('/trigger', briefingController.triggerManual);
+
+/**
  * @route GET /api/v1/briefing/config
  * Returns the current configuration (topics, tickers)
  */

@@ -96,6 +96,23 @@ class BriefingController {
   }
 
   /**
+   * POST /api/v1/briefing/trigger
+   * Manually triggers the briefing generation workflow
+   */
+  async triggerManual(req, res, next) {
+    try {
+      await briefingService.triggerWorkflow('manual_trigger');
+      
+      res.status(200).json({
+        success: true,
+        message: 'Briefing generation triggered successfully.',
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  /**
    * GET /api/v1/briefing/config
    * Returns the current topics and tickers configuration
    */

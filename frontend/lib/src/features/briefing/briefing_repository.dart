@@ -144,4 +144,11 @@ class BriefingRepository extends _$BriefingRepository {
       rethrow;
     }
   }
+
+  Future<void> triggerBriefing() async {
+    final response = await http.post(Uri.parse(ApiConfig.briefingTriggerEndpoint));
+    if (response.statusCode != 200) {
+      throw Exception('Failed to trigger briefing: ${response.statusCode}');
+    }
+  }
 }
