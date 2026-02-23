@@ -44,7 +44,7 @@ _BriefingItem _$BriefingItemFromJson(Map<String, dynamic> json) =>
     _BriefingItem(
       title: json['title'] as String?,
       l: json['l'] as String?,
-      sentiment: (json['sentiment'] as num?)?.toDouble(),
+      sentiment: json['sentiment'],
       img: json['img'] as String?,
       takeaway: json['takeaway'] as String?,
       ticker: json['ticker'] as String?,
@@ -54,6 +54,14 @@ _BriefingItem _$BriefingItemFromJson(Map<String, dynamic> json) =>
       analysis: json['analysis'] as String?,
       explanation: json['explanation'] as String?,
       horizon: json['horizon'] as String?,
+      catalysts: (json['catalysts'] as List<dynamic>?)
+          ?.map((e) => e as String)
+          .toList(),
+      risks: (json['risks'] as List<dynamic>?)
+          ?.map((e) => e as String)
+          .toList(),
+      potentialPriceAction: json['potential_price_action'] as String?,
+      sentimentScore: (json['sentiment_score'] as num?)?.toDouble(),
     );
 
 Map<String, dynamic> _$BriefingItemToJson(_BriefingItem instance) =>
@@ -70,4 +78,8 @@ Map<String, dynamic> _$BriefingItemToJson(_BriefingItem instance) =>
       'analysis': instance.analysis,
       'explanation': instance.explanation,
       'horizon': instance.horizon,
+      'catalysts': instance.catalysts,
+      'risks': instance.risks,
+      'potential_price_action': instance.potentialPriceAction,
+      'sentiment_score': instance.sentimentScore,
     };

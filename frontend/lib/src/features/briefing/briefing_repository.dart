@@ -85,46 +85,90 @@ class BriefingRepository extends _$BriefingRepository {
         final Map<String, CategoryData> categoriesMap = {};
 
         if (decodedContent is Map<String, dynamic>) {
-          // Pattern A: categories list
-          if (decodedContent.containsKey('categories') && decodedContent['categories'] is List) {
-            final List<dynamic> list = decodedContent['categories'];
-            for (final item in list) {
-              if (item is Map<String, dynamic>) {
-                final String name = item['category'] ?? item['name'] ?? 'General';
-                try {
-                  categoriesMap[name] = CategoryData.fromJson(item);
-                } catch (e) {
-                  debugPrint('BriefingRepository: Failed to parse category $name: $e');
-                }
-              }
-            }
-          } 
-          // Pattern B: direct map (keys are category names)
-          else {
-            decodedContent.forEach((key, value) {
-              if (value is Map<String, dynamic>) {
-                // Heuristic: check if it looks like a category (has items or sentiment)
-                if (value.containsKey('items') || value.containsKey('sentiment_score') || value.containsKey('summary')) {
-                  try {
-                    categoriesMap[key] = CategoryData.fromJson(value);
-                  } catch (e) {
-                    debugPrint('BriefingRepository: Failed to parse category $key: $e');
-                  }
-                }
-              } 
-              // Handle case where category is just a list of items (e.g., strategic_opportunities)
-              else if (value is List) {
+          // Handle the new structure: news_categories, market_analysis, opportunities
+          if (decodedContent.containsKey('news_categories')) {
+            final Map<String, dynamic> newsCats = decodedContent['news_categories'];
+            newsCats.forEach((key, value) {
+              if (value is List) {
                 try {
                   categoriesMap[key] = CategoryData(
-                    sentimentScore: 0.0,
-                    summary: 'Direct item list',
+                    sentimentScore: 0.0, // Default for now
+                    summary: 'Strategic news analysis for $key.',
                     items: value.map((i) => BriefingItem.fromJson(i as Map<String, dynamic>)).toList(),
                   );
                 } catch (e) {
-                  debugPrint('BriefingRepository: Failed to parse list category $key: $e');
+                  debugPrint('BriefingRepository: Failed to parse news category $key: $e');
                 }
               }
             });
+          }
+
+          if (decodedContent.containsKey('market_analysis')) {
+             final List<dynamic> marketAnalysis = decodedContent['market_analysis'];
+             try {
+                categoriesMap['Market Analysis'] = CategoryData(
+                  sentimentScore: 0.8, // Example default
+                  summary: 'Deep dive analysis of key tickers at technical and fundamental inflection points.',
+                  items: marketAnalysis.map((i) => BriefingItem.fromJson(i as Map<String, dynamic>)).toList(),
+                );
+             } catch (e) {
+               debugPrint('BriefingRepository: Failed to parse market_analysis: $e');
+             }
+          }
+
+          if (decodedContent.containsKey('opportunities')) {
+             final List<dynamic> opportunities = decodedContent['opportunities'];
+             try {
+                categoriesMap['Opportunities'] = CategoryData(
+                  sentimentScore: 0.9,
+                  summary: 'High-signal tactical opportunities across diverse market sectors.',
+                  items: opportunities.map((i) => BriefingItem.fromJson(i as Map<String, dynamic>)).toList(),
+                );
+             } catch (e) {
+               debugPrint('BriefingRepository: Failed to parse opportunities: $e');
+             }
+          }
+
+          // Legacy support (if no news_categories, market_analysis, or opportunities found)
+          if (categoriesMap.isEmpty) {
+            // Pattern A: categories list
+            if (decodedContent.containsKey('categories') && decodedContent['categories'] is List) {
+              final List<dynamic> list = decodedContent['categories'];
+              for (final item in list) {
+                if (item is Map<String, dynamic>) {
+                  final String name = item['category'] ?? item['name'] ?? 'General';
+                  try {
+                    categoriesMap[name] = CategoryData.fromJson(item);
+                  } catch (e) {
+                    debugPrint('BriefingRepository: Failed to parse category $name: $e');
+                  }
+                }
+              }
+            } 
+            // Pattern B: direct map (keys are category names)
+            else {
+              decodedContent.forEach((key, value) {
+                if (value is Map<String, dynamic>) {
+                  if (value.containsKey('items') || value.containsKey('sentiment_score') || value.containsKey('summary')) {
+                    try {
+                      categoriesMap[key] = CategoryData.fromJson(value);
+                    } catch (e) {
+                      debugPrint('BriefingRepository: Failed to parse category $key: $e');
+                    }
+                  }
+                } else if (value is List) {
+                  try {
+                    categoriesMap[key] = CategoryData(
+                      sentimentScore: 0.0,
+                      summary: 'Direct item list',
+                      items: value.map((i) => BriefingItem.fromJson(i as Map<String, dynamic>)).toList(),
+                    );
+                  } catch (e) {
+                    debugPrint('BriefingRepository: Failed to parse list category $key: $e');
+                  }
+                }
+              });
+            }
           }
         }
 

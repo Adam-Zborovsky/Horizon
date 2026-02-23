@@ -30,20 +30,28 @@ class StockRepository extends _$StockRepository {
     final List<StockData> stocks = [];
     final random = Random();
     
-    // Check if it's the weekend (Saturday or Sunday)
-    final now = DateTime.now();
-    final isWeekend = now.weekday == DateTime.saturday || now.weekday == DateTime.sunday;
+    // Check if it's the weekend or Monday morning before market open (9:30 AM ET / 14:30 UTC)
+    final now = DateTime.now().toUtc();
+    bool isMarketClosed = now.weekday == DateTime.saturday || now.weekday == DateTime.sunday;
+    
+    // Monday pre-market check (before 14:30 UTC)
+    if (now.weekday == DateTime.monday && (now.hour < 14 || (now.hour == 14 && now.minute < 30))) {
+      isMarketClosed = true;
+    }
 
     for (final category in briefing.data.values) {
       for (final item in category.items) {
         if (item.ticker != null) {
           final double price = double.tryParse(item.price?.replaceAll(RegExp(r'[^\d.]'), '') ?? '0') ?? 0.0;
           final double change = double.tryParse(item.change?.replaceAll(RegExp(r'[^\d.+-]'), '') ?? '0') ?? 0.0;
-          final double sentiment = item.sentiment ?? 0.0;
+          
+          // Use sentiment score or fallback to sentiment string/double
+          final double sentiment = item.sentimentScore ?? 
+              (item.sentiment is double ? item.sentiment as double : 0.0);
           
           // Generate 15 points of realistic-looking history
-          // If it's the weekend, we simulate the "Friday Close" activity using the last known price and change
-          final List<double> history = _generateHistory(price, change, sentiment, random, isWeekend);
+          // If it's market closed, we simulate the "last session" activity
+          final List<double> history = _generateHistory(price, change, sentiment, random, isMarketClosed);
 
           stocks.add(StockData(
             ticker: item.ticker!,

@@ -30,7 +30,7 @@ abstract class BriefingItem with _$BriefingItem {
   const factory BriefingItem({
     String? title,
     String? l,
-    double? sentiment,
+    dynamic sentiment, // Changed to dynamic to handle both double and String
     String? img,
     String? takeaway,
     String? ticker,
@@ -40,6 +40,11 @@ abstract class BriefingItem with _$BriefingItem {
     String? analysis,
     String? explanation,
     String? horizon,
+    // New fields from market_analysis
+    List<String>? catalysts,
+    List<String>? risks,
+    @JsonKey(name: 'potential_price_action') String? potentialPriceAction,
+    @JsonKey(name: 'sentiment_score') double? sentimentScore,
   }) = _BriefingItem;
 
   factory BriefingItem.fromJson(Map<String, dynamic> json) => _$BriefingItemFromJson(json);

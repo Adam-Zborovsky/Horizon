@@ -56,9 +56,9 @@ class _IntelligenceVaultScreenState extends ConsumerState<IntelligenceVaultScree
             const _VaultHeader(),
             briefingAsync.when(
               data: (briefing) {
-                // Filter categories: only show those with >= 2 articles, plus 'All'
+                // Filter categories: only show those with >= 1 items (either title or ticker), plus 'All'
                 final validCategories = briefing.data.entries
-                    .where((e) => e.value.items.where((i) => i.title != null).length >= 2)
+                    .where((e) => e.value.items.where((i) => i.title != null || i.ticker != null).isNotEmpty)
                     .map((e) => e.key)
                     .toList();
                 
@@ -221,7 +221,7 @@ class _NewsList extends StatelessWidget {
     if (selectedCategory == 'All') {
       briefing.data.forEach((catName, catData) {
         for (var item in catData.items) {
-          if (item.title != null) {
+          if (item.title != null || item.ticker != null) {
             itemsWithCategories.add(MapEntry(catName, item));
           }
         }
@@ -230,7 +230,7 @@ class _NewsList extends StatelessWidget {
       final catData = briefing.data[selectedCategory];
       if (catData != null) {
         for (var item in catData.items) {
-          if (item.title != null) {
+          if (item.title != null || item.ticker != null) {
             itemsWithCategories.add(MapEntry(selectedCategory, item));
           }
         }
@@ -272,9 +272,28 @@ class _NewsCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final color = (item.sentiment ?? 0) > 0 ? AppTheme.goldAmber : AppTheme.softCrimson;
+    // Handle sentiment as dynamic (double score or String description)
+    double sentimentVal = 0.0;
+    String sentimentText = '0.0 SNT';
+    
+    if (item.sentimentScore != null) {
+       sentimentVal = item.sentimentScore!;
+       sentimentText = '${sentimentVal > 0 ? "+" : ""}${sentimentVal.toStringAsFixed(1)} SNT';
+    } else if (item.sentiment is double) {
+      sentimentVal = item.sentiment as double;
+      sentimentText = '${sentimentVal > 0 ? "+" : ""}${sentimentVal.toStringAsFixed(1)} SNT';
+    } else if (item.sentiment is String) {
+      sentimentText = item.sentiment as String;
+      // Heuristic for color if it's a string
+      final s = (item.sentiment as String).toLowerCase();
+      if (s.contains('bullish') || s.contains('high') || s.contains('positive')) sentimentVal = 1.0;
+      if (s.contains('bearish') || s.contains('low') || s.contains('negative')) sentimentVal = -1.0;
+    }
+
+    final color = sentimentVal >= 0 ? AppTheme.goldAmber : AppTheme.softCrimson;
     final savedArticles = ref.watch(savedArticlesProvider);
-    final isSaved = savedArticles.contains(item.title ?? '');
+    final title = item.title ?? item.name ?? item.ticker ?? "Untitled Intelligence";
+    final isSaved = savedArticles.contains(title);
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
@@ -296,7 +315,7 @@ class _NewsCard extends ConsumerWidget {
                         border: Border.all(color: color.withOpacity(0.2)),
                       ),
                       child: Text(
-                        '${(item.sentiment ?? 0).toStringAsFixed(1)} SNT',
+                        sentimentText,
                         style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 10),
                       ),
                     ),
@@ -309,9 +328,7 @@ class _NewsCard extends ConsumerWidget {
                 ),
                 GestureDetector(
                   onTap: () {
-                    if (item.title != null) {
-                      ref.read(savedArticlesProvider.notifier).toggle(item.title!);
-                    }
+                    ref.read(savedArticlesProvider.notifier).toggle(title);
                   },
                   child: Icon(
                     isSaved ? Icons.bookmark_rounded : Icons.bookmark_outline_rounded,
@@ -322,13 +339,18 @@ class _NewsCard extends ConsumerWidget {
               ],
             ),
             const SizedBox(height: 12),
+            if (item.ticker != null) 
+              Text(
+                item.ticker!,
+                style: TextStyle(color: AppTheme.goldAmber.withOpacity(0.7), fontWeight: FontWeight.bold, fontSize: 12, letterSpacing: 1),
+              ),
             Text(
-              item.title ?? "Untitled Intelligence",
+              title,
               style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white, height: 1.3),
               maxLines: 3,
               overflow: TextOverflow.ellipsis,
             ),
-            if (item.takeaway != null) ...[
+            if (item.takeaway != null || item.analysis != null || item.explanation != null) ...[
               const SizedBox(height: 20),
               Row(
                 children: [
@@ -338,9 +360,9 @@ class _NewsCard extends ConsumerWidget {
                     color: AppTheme.goldAmber,
                   ),
                   const SizedBox(width: 12),
-                  const Text(
-                    'TAKEAWAY',
-                    style: TextStyle(
+                  Text(
+                    item.analysis != null ? 'ANALYSIS' : item.explanation != null ? 'EXPLANATION' : 'TAKEAWAY',
+                    style: const TextStyle(
                       color: AppTheme.goldAmber,
                       fontWeight: FontWeight.bold,
                       fontSize: 10,
@@ -351,11 +373,26 @@ class _NewsCard extends ConsumerWidget {
               ),
               const SizedBox(height: 8),
               Text(
-                item.takeaway!,
+                item.analysis ?? item.explanation ?? item.takeaway ?? "",
                 style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 13, height: 1.4),
-                maxLines: 4,
+                maxLines: 6,
                 overflow: TextOverflow.ellipsis,
               ),
+            ],
+            if (item.catalysts != null && item.catalysts!.isNotEmpty) ...[
+              const SizedBox(height: 15),
+              const Text('CATALYSTS', style: TextStyle(color: Colors.white38, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1)),
+              const SizedBox(height: 5),
+              ...item.catalysts!.map((c) => Padding(
+                padding: const EdgeInsets.only(bottom: 4),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('• ', style: TextStyle(color: AppTheme.goldAmber)),
+                    Expanded(child: Text(c, style: const TextStyle(color: Colors.white70, fontSize: 12))),
+                  ],
+                ),
+              )),
             ],
           ],
         ),
