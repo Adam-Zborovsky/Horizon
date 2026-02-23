@@ -219,6 +219,19 @@ class _StrategicOpportunityCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Handle sentiment as dynamic (double score or String description)
+    String sentimentText = '0.0 SNT';
+    
+    if (item.sentimentScore != null) {
+       final val = item.sentimentScore!;
+       sentimentText = '${val > 0 ? "+" : ""}${val.toStringAsFixed(1)} SNT';
+    } else if (item.sentiment is num) {
+      final val = (item.sentiment as num).toDouble();
+      sentimentText = '${val > 0 ? "+" : ""}${val.toStringAsFixed(1)} SNT';
+    } else if (item.sentiment is String) {
+      sentimentText = item.sentiment as String;
+    }
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: GestureDetector(
@@ -261,7 +274,7 @@ class _StrategicOpportunityCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
                       Text(
-                        '${(item.sentiment ?? 0).toStringAsFixed(1)} SNT',
+                        sentimentText,
                         style: const TextStyle(
                           color: AppTheme.goldAmber,
                           fontWeight: FontWeight.bold,
