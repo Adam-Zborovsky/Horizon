@@ -16,6 +16,9 @@ abstract class StockData with _$StockData {
     required List<double> history, // Last 24 hours/points for sparkline
     required double sentiment,
     String? analysis,
+    List<String>? catalysts,
+    List<String>? risks,
+    String? potentialPriceAction,
   }) = _StockData;
 
   factory StockData.fromJson(Map<String, dynamic> json) => _$StockDataFromJson(json);
@@ -61,6 +64,9 @@ class StockRepository extends _$StockRepository {
             history: history,
             sentiment: sentiment,
             analysis: item.analysis,
+            catalysts: item.catalysts,
+            risks: item.risks,
+            potentialPriceAction: item.potentialPriceAction,
           ));
         }
       }

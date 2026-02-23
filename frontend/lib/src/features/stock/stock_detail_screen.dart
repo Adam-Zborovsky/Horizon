@@ -114,23 +114,49 @@ class _DetailContent extends ConsumerWidget {
                       const SizedBox(height: 16),
                       Text(
                         stock.analysis ?? "No AI analysis available for this ticker today.",
-                        style: Theme.of(context).textTheme.bodyLarge,
+                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(height: 1.5),
                       ),
+                      if (stock.potentialPriceAction != null) ...[
+                        const SizedBox(height: 20),
+                        const Text(
+                          'EXPECTED ACTION',
+                          style: TextStyle(color: AppTheme.goldAmber, fontWeight: FontWeight.bold, fontSize: 10, letterSpacing: 1),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          stock.potentialPriceAction!,
+                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500),
+                        ),
+                      ],
                     ],
                   ),
                 ),
-                const SizedBox(height: 30),
-                Text(
-                  'MACRO DRIVERS',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: AppTheme.goldAmber,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 1.5,
+                if (stock.catalysts != null && stock.catalysts!.isNotEmpty) ...[
+                  const SizedBox(height: 30),
+                  Text(
+                    'GROWTH CATALYSTS',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: AppTheme.goldAmber,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 1.5,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 12),
-                const _MacroItem(title: 'Memory Wall Bottleneck', description: 'Primary bottleneck for AI scaling.'),
-                const _MacroItem(title: 'Sovereign AI Pivot', description: 'Nations prioritizing hardware ownership.'),
+                  const SizedBox(height: 12),
+                  ...stock.catalysts!.map((c) => _MacroItem(title: 'Bullish Driver', description: c, icon: Icons.trending_up_rounded)),
+                ],
+                if (stock.risks != null && stock.risks!.isNotEmpty) ...[
+                  const SizedBox(height: 30),
+                  Text(
+                    'CRITICAL RISKS',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: AppTheme.softCrimson,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 1.5,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  ...stock.risks!.map((r) => _MacroItem(title: 'Risk Factor', description: r, icon: Icons.warning_amber_rounded, color: AppTheme.softCrimson)),
+                ],
                 const SizedBox(height: 100),
               ],
             ),
@@ -265,7 +291,15 @@ class _SentimentPill extends StatelessWidget {
 class _MacroItem extends StatelessWidget {
   final String title;
   final String description;
-  const _MacroItem({required this.title, required this.description});
+  final IconData icon;
+  final Color color;
+  
+  const _MacroItem({
+    required this.title, 
+    required this.description, 
+    this.icon = Icons.hub_outlined,
+    this.color = AppTheme.goldAmber,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -278,10 +312,10 @@ class _MacroItem extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: AppTheme.goldAmber.withOpacity(0.1),
+                color: color.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: const Icon(Icons.hub_outlined, color: AppTheme.goldAmber, size: 18),
+              child: Icon(icon, color: color, size: 18),
             ),
             const SizedBox(width: 16),
             Expanded(

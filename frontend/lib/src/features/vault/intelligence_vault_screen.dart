@@ -394,6 +394,37 @@ class _NewsCard extends ConsumerWidget {
                 ),
               )),
             ],
+            if (item.risks != null && item.risks!.isNotEmpty) ...[
+              const SizedBox(height: 15),
+              const Text('RISKS', style: TextStyle(color: AppTheme.softCrimson.withOpacity(0.5), fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1)),
+              const SizedBox(height: 5),
+              ...item.risks!.map((r) => Padding(
+                padding: const EdgeInsets.only(bottom: 4),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('• ', style: TextStyle(color: AppTheme.softCrimson)),
+                    Expanded(child: Text(r, style: const TextStyle(color: Colors.white70, fontSize: 12))),
+                  ],
+                ),
+              )),
+            ],
+            if (item.potentialPriceAction != null) ...[
+              const SizedBox(height: 15),
+              const Text('POTENTIAL PRICE ACTION', style: TextStyle(color: Colors.white38, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1)),
+              const SizedBox(height: 5),
+              Text(item.potentialPriceAction!, style: const TextStyle(color: AppTheme.goldAmber, fontSize: 13, fontWeight: FontWeight.w500)),
+            ],
+            if (item.horizon != null) ...[
+              const SizedBox(height: 15),
+              Row(
+                children: [
+                  const Icon(Icons.access_time_rounded, size: 12, color: Colors.white24),
+                  const SizedBox(width: 6),
+                  Text('HORIZON: ${item.horizon!.toUpperCase()}', style: const TextStyle(color: Colors.white24, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1)),
+                ],
+              ),
+            ],
           ],
         ),
       ),
