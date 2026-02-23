@@ -234,7 +234,6 @@ class BriefingService {
 
     try {
       const savedConfig = await config.save();
-      this.triggerWorkflow('config_updated');
       return savedConfig;
     } catch (saveErr) {
       console.error('⚠️ BriefingService: Save failed. Forcing reset and retry.');
@@ -244,7 +243,6 @@ class BriefingService {
         topics: (newTopics || []).map(t => ({ name: t.name, enabled: t.enabled }))
       });
       const savedConfig = await freshConfig.save();
-      this.triggerWorkflow('config_updated_after_reset');
       return savedConfig;
     }
   }
@@ -281,7 +279,6 @@ class BriefingService {
     
     try {
       const savedConfig = await config.save();
-      this.triggerWorkflow('topic_toggled');
       return savedConfig;
     } catch (saveErr) {
       console.error('⚠️ BriefingService: Toggle save failed. Resetting.');
@@ -289,7 +286,6 @@ class BriefingService {
       const fresh = new BriefingConfig();
       fresh.topics.push({ name: topicName, enabled: enabled });
       const savedConfig = await fresh.save();
-      this.triggerWorkflow('topic_toggled_after_reset');
       return savedConfig;
     }
   }

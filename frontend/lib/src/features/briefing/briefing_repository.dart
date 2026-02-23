@@ -11,6 +11,9 @@ part 'briefing_repository.g.dart';
 class BriefingRepository extends _$BriefingRepository {
   @override
   Future<BriefingData> build() async {
+    // Watch for config changes so that the dashboard updates its filtered state
+    ref.watch(briefingConfigRepositoryProvider);
+    
     try {
       final response = await http
           .get(Uri.parse(ApiConfig.briefingEndpoint))

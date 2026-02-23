@@ -25,7 +25,7 @@ class BriefingConfigRepository extends _$BriefingConfigRepository {
     }
   }
 
-  Future<BriefingConfig> updateConfig(BriefingConfig config) async {
+  Future<void> updateConfig(BriefingConfig config) async {
     final response = await http.put(
       Uri.parse(ApiConfig.briefingConfigEndpoint),
       headers: {'Content-Type': 'application/json'},
@@ -34,14 +34,15 @@ class BriefingConfigRepository extends _$BriefingConfigRepository {
     if (response.statusCode == 200) {
       final Map<String, dynamic> responseBody = json.decode(response.body);
       final data = responseBody['data'];
-      if (data == null) return const BriefingConfig();
-      return BriefingConfig.fromJson(data);
+      if (data != null) {
+        state = AsyncData(BriefingConfig.fromJson(data));
+      }
     } else {
       throw Exception('Failed to update briefing config: ${response.statusCode}');
     }
   }
 
-  Future<BriefingConfig> toggleTopic(String topicName, bool enabled) async {
+  Future<void> toggleTopic(String topicName, bool enabled) async {
     final response = await http.put(
       Uri.parse('${ApiConfig.briefingConfigEndpoint}/topic/${Uri.encodeComponent(topicName)}'),
       headers: {'Content-Type': 'application/json'},
@@ -50,8 +51,9 @@ class BriefingConfigRepository extends _$BriefingConfigRepository {
     if (response.statusCode == 200) {
       final Map<String, dynamic> responseBody = json.decode(response.body);
       final data = responseBody['data'];
-      if (data == null) return const BriefingConfig();
-      return BriefingConfig.fromJson(data);
+      if (data != null) {
+        state = AsyncData(BriefingConfig.fromJson(data));
+      }
     } else {
       throw Exception('Failed to toggle topic: ${response.statusCode}');
     }
