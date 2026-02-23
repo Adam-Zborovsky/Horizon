@@ -45,7 +45,7 @@ class StockRepository extends _$StockRepository {
     for (final category in briefing.data.values) {
       for (final item in category.items) {
         if (item.ticker != null) {
-          final double price = double.tryParse(item.price?.replaceAll(RegExp(r'[^\d.]'), '') ?? '0') ?? 0.0;
+          final double initialPrice = double.tryParse(item.price?.replaceAll(RegExp(r'[^\d.]'), '') ?? '0') ?? 0.0;
           final double change = double.tryParse(item.change?.replaceAll(RegExp(r'[^\d.+-]'), '') ?? '0') ?? 0.0;
           
           // Use sentiment score or fallback to sentiment string/double
@@ -53,7 +53,10 @@ class StockRepository extends _$StockRepository {
               (item.sentiment is double ? item.sentiment as double : 0.0);
           
           // Use history from backend if available, otherwise simulate
-          final List<double> history = item.history ?? _generateHistory(price, change, sentiment, random, isMarketClosed);
+          final List<double> history = item.history ?? _generateHistory(initialPrice, change, sentiment, random, isMarketClosed);
+
+          // If price is missing from direct field but present in history, use the latest point
+          final double price = initialPrice > 0 ? initialPrice : (history.isNotEmpty ? history.last : 100.0);
 
           stocks.add(StockData(
             ticker: item.ticker!,

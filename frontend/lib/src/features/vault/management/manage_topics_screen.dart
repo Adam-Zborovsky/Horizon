@@ -8,6 +8,17 @@ import 'package:horizon/src/features/briefing/briefing_config_repository.dart';
 class ManageTopicsScreen extends ConsumerStatefulWidget {
   const ManageTopicsScreen({super.key});
 
+  static String formatTopic(String key) {
+    if (key == 'news_intel') return 'Strategic News Intel';
+    if (key == 'market_analyst') return 'Market Analysis';
+    if (key == 'opportunity_scout') return 'Alpha Opportunities';
+    
+    return key.replaceAll('_', ' ').split(' ').map((word) {
+      if (word.isEmpty) return '';
+      return '${word[0].toUpperCase()}${word.substring(1).toLowerCase()}';
+    }).join(' ');
+  }
+
   @override
   ConsumerState<ManageTopicsScreen> createState() => _ManageTopicsScreenState();
 }
@@ -67,6 +78,7 @@ class _ManageTopicsScreenState extends ConsumerState<ManageTopicsScreen> {
                     return _RecommendedSection(
                       recommended: filtered,
                       onTap: (topic) async => await ref.read(briefingConfigRepositoryProvider.notifier).toggleTopic(topic, true),
+                      displayNames: filtered.map((e) => ManageTopicsScreen.formatTopic(e)).toList(),
                     );
                   },
                   loading: () => const SizedBox.shrink(),
@@ -107,7 +119,7 @@ class _ManageTopicsScreenState extends ConsumerState<ManageTopicsScreen> {
                   (context, index) {
                     final topic = config.topics[index];
                     return _TopicItem(
-                      title: topic.name,
+                      title: ManageTopicsScreen.formatTopic(topic.name),
                       isEnabled: topic.enabled,
                       onToggle: (bool newValue) async {
                         await ref.read(briefingConfigRepositoryProvider.notifier).toggleTopic(topic.name, newValue);
@@ -119,7 +131,7 @@ class _ManageTopicsScreenState extends ConsumerState<ManageTopicsScreen> {
                           builder: (context) => AlertDialog(
                             backgroundColor: AppTheme.obsidian,
                             title: const Text('REMOVE TOPIC', style: TextStyle(color: AppTheme.goldAmber, letterSpacing: 1)),
-                            content: Text('Completely remove "${topic.name}" from your intelligence stream?', style: const TextStyle(color: Colors.white70)),
+                            content: Text('Completely remove "${ManageTopicsScreen.formatTopic(topic.name)}" from your intelligence stream?', style: const TextStyle(color: Colors.white70)),
                             actions: [
                               TextButton(
                                 onPressed: () => Navigator.pop(context, false),
@@ -205,9 +217,14 @@ class _SliverSearchHeader extends StatelessWidget {
 
 class _RecommendedSection extends StatelessWidget {
   final List<String> recommended;
+  final List<String> displayNames;
   final Function(String) onTap;
 
-  const _RecommendedSection({required this.recommended, required this.onTap});
+  const _RecommendedSection({
+    required this.recommended, 
+    required this.onTap,
+    required this.displayNames,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -233,7 +250,7 @@ class _RecommendedSection extends StatelessWidget {
               return Padding(
                 padding: const EdgeInsets.only(right: 10),
                 child: ActionChip(
-                  label: Text(recommended[index]),
+                  label: Text(displayNames[index]),
                   onPressed: () => onTap(recommended[index]),
                   backgroundColor: AppTheme.glassWhite,
                   side: BorderSide(color: AppTheme.goldAmber.withOpacity(0.3)),

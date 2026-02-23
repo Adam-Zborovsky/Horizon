@@ -8,8 +8,17 @@ import 'briefing_model.dart';
 
 part 'briefing_repository.g.dart';
 
-@riverpod
-class BriefingRepository extends _$BriefingRepository {
+  String _formatCategory(String key) {
+    if (key == 'news_intel') return 'Strategic News Intel';
+    if (key == 'market_analyst') return 'Market Analysis';
+    if (key == 'opportunity_scout') return 'Alpha Opportunities';
+    
+    return key.replaceAll('_', ' ').split(' ').map((word) {
+      if (word.isEmpty) return '';
+      return '${word[0].toUpperCase()}${word.substring(1).toLowerCase()}';
+    }).join(' ');
+  }
+
   @override
   Future<BriefingData> build() async {
     // Watch for config changes so that the dashboard updates its filtered state
@@ -98,9 +107,10 @@ class BriefingRepository extends _$BriefingRepository {
                 container.forEach((key, value) {
                   if (value is List) {
                     try {
-                      categoriesMap[key] = CategoryData(
+                      final String categoryName = _formatCategory(key);
+                      categoriesMap[categoryName] = CategoryData(
                         sentimentScore: 0.0,
-                        summary: 'Strategic analysis for $key.',
+                        summary: 'Strategic analysis for $categoryName.',
                         items: value.map((i) => BriefingItem.fromJson(i as Map<String, dynamic>)).toList(),
                       );
                     } catch (e) {
@@ -146,7 +156,7 @@ class BriefingRepository extends _$BriefingRepository {
               final dynamic container = decodedContent[containerKey];
               if (container is List) {
                 try {
-                  categoriesMap['Opportunities'] = CategoryData(
+                  categoriesMap['Alpha Opportunities'] = CategoryData(
                     sentimentScore: 0.9,
                     summary: 'High-signal tactical opportunities across diverse market sectors.',
                     items: container.map((i) => BriefingItem.fromJson(i as Map<String, dynamic>)).toList(),
@@ -160,6 +170,47 @@ class BriefingRepository extends _$BriefingRepository {
 
           // Legacy support (if no categories found yet)
           if (categoriesMap.isEmpty) {
+            // Pattern A: categories list
+            if (decodedContent.containsKey('categories') && decodedContent['categories'] is List) {
+              final List<dynamic> list = decodedContent['categories'];
+              for (final item in list) {
+                if (item is Map<String, dynamic>) {
+                  final String name = _formatCategory(item['category'] ?? item['name'] ?? 'General');
+                  try {
+                    categoriesMap[name] = CategoryData.fromJson(item);
+                  } catch (e) {
+                    debugPrint('BriefingRepository: Failed to parse category $name: $e');
+                  }
+                }
+              }
+            } 
+            // Pattern B: direct map (keys are category names)
+            else {
+              decodedContent.forEach((key, value) {
+                final String categoryName = _formatCategory(key);
+                if (value is Map<String, dynamic>) {
+                  if (value.containsKey('items') || value.containsKey('sentiment_score') || value.containsKey('summary')) {
+                    try {
+                      categoriesMap[categoryName] = CategoryData.fromJson(value);
+                    } catch (e) {
+                      debugPrint('BriefingRepository: Failed to parse category $categoryName: $e');
+                    }
+                  }
+                } else if (value is List) {
+                  try {
+                    categoriesMap[categoryName] = CategoryData(
+                      sentimentScore: 0.0,
+                      summary: 'Direct item list',
+                      items: value.map((i) => BriefingItem.fromJson(i as Map<String, dynamic>)).toList(),
+                    );
+                  } catch (e) {
+                    debugPrint('BriefingRepository: Failed to parse list category $categoryName: $e');
+                  }
+                }
+              });
+            }
+          }
+        }
             // Pattern A: categories list
             if (decodedContent.containsKey('categories') && decodedContent['categories'] is List) {
               final List<dynamic> list = decodedContent['categories'];
