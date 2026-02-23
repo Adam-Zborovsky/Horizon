@@ -57,7 +57,7 @@ class _ManageTopicsScreenState extends ConsumerState<ManageTopicsScreen> {
                 return recommendedTopicsAsync.when(
                   data: (newsRecommended) {
                     // Combine default and news recommendations, prioritizing news
-                    final combinedRecommended = {...newsRecommended, ..._defaultRecommendedTopics}.toList();
+                    final combinedRecommended = <String>{...newsRecommended, ..._defaultRecommendedTopics}.toList();
                     
                     // Filter out topics already in the config to avoid duplicates
                     final filtered = combinedRecommended.where(
@@ -119,7 +119,7 @@ class _ManageTopicsScreenState extends ConsumerState<ManageTopicsScreen> {
                           builder: (context) => AlertDialog(
                             backgroundColor: AppTheme.obsidian,
                             title: const Text('REMOVE TOPIC', style: TextStyle(color: AppTheme.goldAmber, letterSpacing: 1)),
-                            content: Text('Completely remove "$topic.name" from your intelligence stream?', style: const TextStyle(color: Colors.white70)),
+                            content: Text('Completely remove "${topic.name}" from your intelligence stream?', style: const TextStyle(color: Colors.white70)),
                             actions: [
                               TextButton(
                                 onPressed: () => Navigator.pop(context, false),

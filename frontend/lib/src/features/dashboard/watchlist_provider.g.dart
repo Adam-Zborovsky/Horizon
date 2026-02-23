@@ -41,7 +41,7 @@ final class WatchlistProvider
   }
 }
 
-String _$watchlistHash() => r'37f1391b9e4a9ad10b85967ccf776fe38ff9a7b1';
+String _$watchlistHash() => r'4ea3fff04afb56ccb0082d33cac82ff9d4abb1d1';
 
 abstract class _$Watchlist extends $Notifier<Set<String>> {
   Set<String> build();

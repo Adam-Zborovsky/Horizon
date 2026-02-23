@@ -34,7 +34,7 @@ final class BriefingConfigRepositoryProvider
 }
 
 String _$briefingConfigRepositoryHash() =>
-    r'39dc07581b11b6000688fc3bf585497cdb12b3aa';
+    r'e1915fe1f36e9030f914a960fbe9359532da079c';
 
 abstract class _$BriefingConfigRepository
     extends $AsyncNotifier<BriefingConfig> {
@@ -54,3 +54,42 @@ abstract class _$BriefingConfigRepository
     element.handleCreate(ref, build);
   }
 }
+
+@ProviderFor(recommendedTopics)
+final recommendedTopicsProvider = RecommendedTopicsProvider._();
+
+final class RecommendedTopicsProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<String>>,
+          List<String>,
+          FutureOr<List<String>>
+        >
+    with $FutureModifier<List<String>>, $FutureProvider<List<String>> {
+  RecommendedTopicsProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'recommendedTopicsProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$recommendedTopicsHash();
+
+  @$internal
+  @override
+  $FutureProviderElement<List<String>> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<List<String>> create(Ref ref) {
+    return recommendedTopics(ref);
+  }
+}
+
+String _$recommendedTopicsHash() => r'8bf1e2f9594addfd547b6245216dcd032eb1b53c';
