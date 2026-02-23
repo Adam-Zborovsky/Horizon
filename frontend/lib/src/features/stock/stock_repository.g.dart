@@ -16,6 +16,11 @@ _StockData _$StockDataFromJson(Map<String, dynamic> json) => _StockData(
       .toList(),
   sentiment: (json['sentiment'] as num).toDouble(),
   analysis: json['analysis'] as String?,
+  catalysts: (json['catalysts'] as List<dynamic>?)
+      ?.map((e) => e as String)
+      .toList(),
+  risks: (json['risks'] as List<dynamic>?)?.map((e) => e as String).toList(),
+  potentialPriceAction: json['potentialPriceAction'] as String?,
 );
 
 Map<String, dynamic> _$StockDataToJson(_StockData instance) =>
@@ -27,6 +32,9 @@ Map<String, dynamic> _$StockDataToJson(_StockData instance) =>
       'history': instance.history,
       'sentiment': instance.sentiment,
       'analysis': instance.analysis,
+      'catalysts': instance.catalysts,
+      'risks': instance.risks,
+      'potentialPriceAction': instance.potentialPriceAction,
     };
 
 // **************************************************************************
@@ -60,7 +68,7 @@ final class StockRepositoryProvider
   StockRepository create() => StockRepository();
 }
 
-String _$stockRepositoryHash() => r'c811cd42ed627e5adb0cff9e7fe308675d2133a0';
+String _$stockRepositoryHash() => r'abe4cd8781ea6bbd35f2c07e9e502631f03f718d';
 
 abstract class _$StockRepository extends $AsyncNotifier<List<StockData>> {
   FutureOr<List<StockData>> build();
