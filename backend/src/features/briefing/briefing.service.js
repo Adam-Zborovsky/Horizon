@@ -46,14 +46,15 @@ class BriefingService {
             // If the key is a disabled topic, skip it
             if (disabledTopicNames.includes(key)) return;
 
-            // If the value is an object and not an array, recurse one level deep (for news/market containers)
+            // If the value is an object and not an array, recurse one level deep 
+            // This handles news, market, news_intel etc.
             if (typeof obj[key] === 'object' && obj[key] !== null && !Array.isArray(obj[key])) {
               const nestedResult = filterNested(obj[key]);
               if (Object.keys(nestedResult).length > 0) {
                 filtered[key] = nestedResult;
               }
             } else {
-              // It's a direct category or other data point, keep it if not disabled
+              // It's a direct category or other data point (like list in market_analyst), keep it if not disabled
               filtered[key] = obj[key];
             }
           });
@@ -349,7 +350,7 @@ class BriefingService {
         if (typeof briefingData === 'object' && !Array.isArray(briefingData)) {
           const extractTopics = (obj) => {
             Object.keys(obj).forEach(key => {
-              if (key === 'news' || key === 'market') {
+              if (['news', 'market', 'news_intel', 'market_analyst', 'opportunities', 'opportunity_scout'].includes(key)) {
                 if (typeof obj[key] === 'object' && obj[key] !== null && !Array.isArray(obj[key])) {
                   extractTopics(obj[key]);
                 }
