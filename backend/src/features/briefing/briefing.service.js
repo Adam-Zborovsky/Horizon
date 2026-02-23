@@ -40,15 +40,27 @@ class BriefingService {
           .filter(t => t.enabled === false)
           .map(t => t.name);
 
-        const allCategories = Object.keys(briefingData);
-        const filteredData = {};
-        
-        allCategories.forEach(categoryName => {
-          if (!disabledTopicNames.includes(categoryName)) {
-            filteredData[categoryName] = briefingData[categoryName];
-          }
-        });
-        briefingData = filteredData;
+        const filterNested = (obj) => {
+          const filtered = {};
+          Object.keys(obj).forEach(key => {
+            // If the key is a disabled topic, skip it
+            if (disabledTopicNames.includes(key)) return;
+
+            // If the value is an object and not an array, recurse one level deep (for news/market containers)
+            if (typeof obj[key] === 'object' && obj[key] !== null && !Array.isArray(obj[key])) {
+              const nestedResult = filterNested(obj[key]);
+              if (Object.keys(nestedResult).length > 0) {
+                filtered[key] = nestedResult;
+              }
+            } else {
+              // It's a direct category or other data point, keep it if not disabled
+              filtered[key] = obj[key];
+            }
+          });
+          return filtered;
+        };
+
+        briefingData = filterNested(briefingData);
       }
 
       return {
@@ -335,7 +347,18 @@ class BriefingService {
         }
 
         if (typeof briefingData === 'object' && !Array.isArray(briefingData)) {
-          Object.keys(briefingData).forEach(topic => recommendedSet.add(topic));
+          const extractTopics = (obj) => {
+            Object.keys(obj).forEach(key => {
+              if (key === 'news' || key === 'market') {
+                if (typeof obj[key] === 'object' && obj[key] !== null && !Array.isArray(obj[key])) {
+                  extractTopics(obj[key]);
+                }
+              } else {
+                recommendedSet.add(key);
+              }
+            });
+          };
+          extractTopics(briefingData);
         }
       }
 

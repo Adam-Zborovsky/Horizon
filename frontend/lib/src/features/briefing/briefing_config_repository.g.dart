@@ -92,4 +92,4 @@ final class RecommendedTopicsProvider
   }
 }
 
-String _$recommendedTopicsHash() => r'8bf1e2f9594addfd547b6245216dcd032eb1b53c';
+String _$recommendedTopicsHash() => r'f17f4f7a1bd5c5d55ad8d77798d034f11b08c0dc';

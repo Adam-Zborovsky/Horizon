@@ -77,7 +77,7 @@ class BriefingConfigRepository extends _$BriefingConfigRepository {
 }
 
 @riverpod
-Future<List<String>> recommendedTopics(RecommendedTopicsRef ref) async {
+Future<List<String>> recommendedTopics(Ref ref) async {
   final response = await http.get(Uri.parse('${ApiConfig.briefingConfigEndpoint}/recommended'));
   if (response.statusCode == 200) {
     final Map<String, dynamic> responseBody = json.decode(response.body);

@@ -89,22 +89,44 @@ class BriefingRepository extends _$BriefingRepository {
         final Map<String, CategoryData> categoriesMap = {};
 
         if (decodedContent is Map<String, dynamic>) {
-          // Handle the new structure: news_categories, market_analysis, opportunities
-          if (decodedContent.containsKey('news_categories')) {
-            final Map<String, dynamic> newsCats = decodedContent['news_categories'];
-            newsCats.forEach((key, value) {
-              if (value is List) {
-                try {
-                  categoriesMap[key] = CategoryData(
-                    sentimentScore: 0.0, // Default for now
-                    summary: 'Strategic news analysis for $key.',
-                    items: value.map((i) => BriefingItem.fromJson(i as Map<String, dynamic>)).toList(),
-                  );
-                } catch (e) {
-                  debugPrint('BriefingRepository: Failed to parse news category $key: $e');
-                }
+          // 1. Handle explicit 'news' and 'market' containers (Nested Pattern)
+          final containers = ['news', 'market', 'news_categories'];
+          for (final containerKey in containers) {
+            if (decodedContent.containsKey(containerKey)) {
+              final dynamic container = decodedContent[containerKey];
+              if (container is Map<String, dynamic>) {
+                container.forEach((key, value) {
+                  if (value is List) {
+                    try {
+                      categoriesMap[key] = CategoryData(
+                        sentimentScore: 0.0,
+                        summary: 'Strategic analysis for $key.',
+                        items: value.map((i) => BriefingItem.fromJson(i as Map<String, dynamic>)).toList(),
+                      );
+                    } catch (e) {
+                      debugPrint('BriefingRepository: Failed to parse nested category $key in $containerKey: $e');
+                    }
+                  } else if (value is Map<String, dynamic>) {
+                    try {
+                      categoriesMap[key] = CategoryData.fromJson(value);
+                    } catch (e) {
+                      debugPrint('BriefingRepository: Failed to parse nested map category $key in $containerKey: $e');
+                    }
+                  }
+                });
+              } else if (container is List && containerKey == 'market') {
+                 // Sometimes 'market' might be a direct list of items
+                 try {
+                    categoriesMap['Market Analysis'] = CategoryData(
+                      sentimentScore: 0.8,
+                      summary: 'Deep dive analysis of key tickers.',
+                      items: container.map((i) => BriefingItem.fromJson(i as Map<String, dynamic>)).toList(),
+                    );
+                 } catch (e) {
+                   debugPrint('BriefingRepository: Failed to parse market list: $e');
+                 }
               }
-            });
+            }
           }
 
           if (decodedContent.containsKey('market_analysis')) {
@@ -133,7 +155,7 @@ class BriefingRepository extends _$BriefingRepository {
              }
           }
 
-          // Legacy support (if no news_categories, market_analysis, or opportunities found)
+          // Legacy support (if no categories found yet)
           if (categoriesMap.isEmpty) {
             // Pattern A: categories list
             if (decodedContent.containsKey('categories') && decodedContent['categories'] is List) {
