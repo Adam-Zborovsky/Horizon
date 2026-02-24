@@ -15,8 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$StockData {
 
- String get ticker; String get name; double get currentPrice; double get changePercent; List<double> get history;// Last 24 hours/points for sparkline
- double get sentiment; String? get analysis; List<String>? get catalysts; List<String>? get risks; String? get potentialPriceAction;
+ String get ticker; String get name; double get currentPrice; double get changePercent; List<double> get history; double get sentiment; String? get analysis; List<String>? get catalysts; List<String>? get risks; String? get potentialPriceAction;
 /// Create a copy of StockData
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -233,7 +232,6 @@ class _StockData implements StockData {
   return EqualUnmodifiableListView(_history);
 }
 
-// Last 24 hours/points for sparkline
 @override final  double sentiment;
 @override final  String? analysis;
  final  List<String>? _catalysts;

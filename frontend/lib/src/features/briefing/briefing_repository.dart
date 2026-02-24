@@ -12,18 +12,62 @@ part 'briefing_repository.g.dart';
 class BriefingRepository extends _$BriefingRepository {
   String _formatCategory(String key) {
     if (key == 'news_intel') return 'Strategic News Intel';
-    if (key == 'market_analyst') return 'Market Analysis';
-    if (key == 'opportunity_scout') return 'Alpha Opportunities';
+    if (key == 'market_analyst' || key == 'market_analysis') return 'Market Analysis';
+    if (key == 'opportunity_scout' || key == 'opportunities') return 'Alpha Opportunities';
     
     return key.replaceAll('_', ' ').split(' ').map((word) {
       if (word.isEmpty) return '';
+      final upperWord = word.toUpperCase();
+      if (upperWord == 'AI') return 'AI';
+      if (upperWord == 'IPO') return 'IPO';
       return '${word[0].toUpperCase()}${word.substring(1).toLowerCase()}';
-    }).join(' ');
+    }).join(' ').trim();
+  }
+
+  Map<String, dynamic> _normalizeItem(Map<String, dynamic> map) {
+    final result = Map<String, dynamic>.from(map);
+    
+    // Normalize field variations from different agents
+    if (result['outlook_1_3_months'] != null && result['analysis'] == null) {
+      result['analysis'] = result['outlook_1_3_months'];
+    }
+    if (result['price_action_projection'] != null && result['potential_price_action'] == null) {
+      result['potential_price_action'] = result['price_action_projection'];
+    }
+    
+    // Flatten nested analysis if present
+    if (result['analysis'] is Map<String, dynamic>) {
+      final analysis = result['analysis'] as Map<String, dynamic>;
+      analysis.forEach((key, value) {
+        if (result[key] == null) {
+          result[key] = value;
+        }
+      });
+      // Ensure outlook or primary text is mapped to takeaway for display
+      final String? outlook = analysis['outlook']?.toString() ?? analysis['outlook_1_3_months']?.toString();
+      if (outlook != null) {
+        result['takeaway'] = outlook;
+      }
+    }
+    
+    // Safety: ensure fields expected by json_serializable as String? are actually strings
+    final stringFields = [
+      'title', 'takeaway', 'ticker', 'name', 'price', 'change', 
+      'explanation', 'horizon', 'potential_price_action'
+    ];
+    
+    for (final field in stringFields) {
+      if (result[field] != null && result[field] is! String) {
+        result[field] = result[field].toString();
+      }
+    }
+    
+    return result;
   }
 
   @override
   Future<BriefingData> build() async {
-    // Watch for config changes so that the dashboard updates its filtered state
+    // Watch for config changes
     ref.watch(briefingConfigRepositoryProvider);
     
     try {
@@ -40,12 +84,10 @@ class BriefingRepository extends _$BriefingRepository {
         try {
           decodedBody = jsonDecode(response.body);
         } catch (e) {
-          throw Exception('Failed to parse server response: $e\nBody: ${response.body.substring(0, response.body.length > 100 ? 100 : response.body.length)}...');
+          throw Exception('Failed to parse server response: $e');
         }
         
         Map<String, dynamic> firstBriefing;
-
-        // 1. Handle top-level list or map
         if (decodedBody is List) {
           if (decodedBody.isEmpty) {
             return const BriefingData(data: {}, success: true, message: 'No briefing data found.');
@@ -61,7 +103,6 @@ class BriefingRepository extends _$BriefingRepository {
           throw Exception('Unexpected response format');
         }
         
-        // 2. Extract and clean the nested 'data' content
         dynamic rawData = firstBriefing['data'];
         String rawContent = '';
 
@@ -75,16 +116,12 @@ class BriefingRepository extends _$BriefingRepository {
           rawContent = jsonEncode(firstBriefing);
         }
         
-        // Clean Markdown or unwanted wrapper if present
         if (rawContent.contains('```')) {
           final RegExp jsonBlockRegex = RegExp(r'```(?:json)?\s*(\{[\s\S]*\})\s*```');
           final match = jsonBlockRegex.firstMatch(rawContent);
-          if (match != null) {
-            rawContent = match.group(1)!;
-          }
+          if (match != null) rawContent = match.group(1)!;
         }
 
-        // 3. Decode content
         if (rawContent.trim().isEmpty) {
            return const BriefingData(data: {}, success: true, message: 'Empty briefing content.');
         }
@@ -93,13 +130,13 @@ class BriefingRepository extends _$BriefingRepository {
         try {
           decodedContent = jsonDecode(rawContent);
         } catch (e) {
-          throw Exception('Failed to parse briefing content: $e\nContent starts with: ${rawContent.substring(0, rawContent.length > 100 ? 100 : rawContent.length)}');
+          throw Exception('Failed to parse briefing content: $e');
         }
 
         final Map<String, CategoryData> categoriesMap = {};
 
         if (decodedContent is Map<String, dynamic>) {
-          // 1. Handle explicit news containers
+          // 1. Handle News Containers
           final newsContainers = ['news', 'news_intel', 'news_categories'];
           for (final containerKey in newsContainers) {
             if (decodedContent.containsKey(containerKey)) {
@@ -109,9 +146,8 @@ class BriefingRepository extends _$BriefingRepository {
                   if (value is List) {
                     try {
                       final String categoryName = _formatCategory(key);
-                      final List<BriefingItem> items = value.map((i) => BriefingItem.fromJson(i as Map<String, dynamic>)).toList();
+                      final List<BriefingItem> items = value.map((i) => BriefingItem.fromJson(_normalizeItem(i as Map<String, dynamic>))).toList();
                       
-                      // Calculate average sentiment for the category
                       double totalSentiment = 0;
                       int count = 0;
                       for (final item in items) {
@@ -126,7 +162,6 @@ class BriefingRepository extends _$BriefingRepository {
                             totalSentiment += parsed;
                             count++;
                           } else {
-                            // Map descriptive strings to values
                             if (lowerS.contains('very bullish') || lowerS.contains('strong buy')) {
                               totalSentiment += 0.9; count++;
                             } else if (lowerS.contains('bullish') || lowerS.contains('buy')) {
@@ -141,15 +176,13 @@ class BriefingRepository extends _$BriefingRepository {
                           }
                         }
                       }
-                      final double avgSentiment = count > 0 ? totalSentiment / count : 0.0;
-
                       categoriesMap[categoryName] = CategoryData(
-                        sentimentScore: avgSentiment,
+                        sentimentScore: count > 0 ? totalSentiment / count : 0.0,
                         summary: 'Strategic analysis for $categoryName.',
                         items: items,
                       );
                     } catch (e) {
-                      debugPrint('BriefingRepository: Failed to parse nested category $key in $containerKey: $e');
+                      debugPrint('BriefingRepository: Failed to parse news category $key: $e');
                     }
                   }
                 });
@@ -157,29 +190,21 @@ class BriefingRepository extends _$BriefingRepository {
             }
           }
 
-          // 2. Handle market analysis containers
+          // 2. Handle Market Analysis
           final marketContainers = ['market', 'market_analyst', 'market_analysis'];
           for (final containerKey in marketContainers) {
             if (decodedContent.containsKey(containerKey)) {
               final dynamic container = decodedContent[containerKey];
+              List<dynamic> itemsList = [];
               if (container is List) {
-                try {
-                  final List<BriefingItem> items = container.map((i) {
-                    final map = i as Map<String, dynamic>;
-                    // Flatten 'analysis' if it's nested (from market_analyst)
-                    if (map.containsKey('analysis') && map['analysis'] is Map<String, dynamic>) {
-                      final analysis = map['analysis'] as Map<String, dynamic>;
-                      final String? outlook = analysis['outlook']?.toString();
-                      return BriefingItem.fromJson({
-                        ...map, 
-                        ...analysis,
-                        if (outlook != null) 'takeaway': outlook,
-                      });
-                    }
-                    return BriefingItem.fromJson(map);
-                  }).toList();
+                itemsList = container;
+              } else if (container is Map<String, dynamic>) {
+                itemsList = container.values.toList();
+              }
 
-                  // Calculate average sentiment
+              if (itemsList.isNotEmpty) {
+                try {
+                  final List<BriefingItem> items = itemsList.map((i) => BriefingItem.fromJson(_normalizeItem(i as Map<String, dynamic>))).toList();
                   double totalSentiment = 0;
                   int count = 0;
                   for (final item in items) {
@@ -208,11 +233,9 @@ class BriefingRepository extends _$BriefingRepository {
                       }
                     }
                   }
-                  final double avgSentiment = count > 0 ? totalSentiment / count : 0.8;
-
                   categoriesMap['Market Analysis'] = CategoryData(
-                    sentimentScore: avgSentiment,
-                    summary: 'Deep dive analysis of key tickers at technical and fundamental inflection points.',
+                    sentimentScore: count > 0 ? totalSentiment / count : 0.8,
+                    summary: 'Technical and fundamental deep dive.',
                     items: items,
                   );
                 } catch (e) {
@@ -222,16 +245,21 @@ class BriefingRepository extends _$BriefingRepository {
             }
           }
 
-          // 3. Handle opportunities containers
+          // 3. Handle Alpha Opportunities
           final opportunityContainers = ['opportunities', 'opportunity_scout'];
           for (final containerKey in opportunityContainers) {
             if (decodedContent.containsKey(containerKey)) {
               final dynamic container = decodedContent[containerKey];
+              List<dynamic> itemsList = [];
               if (container is List) {
+                itemsList = container;
+              } else if (container is Map<String, dynamic>) {
+                itemsList = container.values.toList();
+              }
+
+              if (itemsList.isNotEmpty) {
                 try {
-                  final List<BriefingItem> items = container.map((i) => BriefingItem.fromJson(i as Map<String, dynamic>)).toList();
-                  
-                  // Calculate average sentiment
+                  final List<BriefingItem> items = itemsList.map((i) => BriefingItem.fromJson(_normalizeItem(i as Map<String, dynamic>))).toList();
                   double totalSentiment = 0;
                   int count = 0;
                   for (final item in items) {
@@ -260,11 +288,9 @@ class BriefingRepository extends _$BriefingRepository {
                       }
                     }
                   }
-                  final double avgSentiment = count > 0 ? totalSentiment / count : 0.9;
-
                   categoriesMap['Alpha Opportunities'] = CategoryData(
-                    sentimentScore: avgSentiment,
-                    summary: 'High-signal tactical opportunities across diverse market sectors.',
+                    sentimentScore: count > 0 ? totalSentiment / count : 0.9,
+                    summary: 'High-signal tactical opportunities.',
                     items: items,
                   );
                 } catch (e) {
@@ -274,49 +300,29 @@ class BriefingRepository extends _$BriefingRepository {
             }
           }
 
-          // Legacy support
+          // Legacy / Generic Support
           if (categoriesMap.isEmpty) {
-            if (decodedContent.containsKey('categories') && decodedContent['categories'] is List) {
-              final List<dynamic> list = decodedContent['categories'];
-              for (final item in list) {
-                if (item is Map<String, dynamic>) {
-                  final String name = _formatCategory(item['category'] ?? item['name'] ?? 'General');
-                  try {
-                    categoriesMap[name] = CategoryData.fromJson(item);
-                  } catch (e) {
-                    debugPrint('BriefingRepository: Failed to parse category $name: $e');
-                  }
+            decodedContent.forEach((key, value) {
+              final String categoryName = _formatCategory(key);
+              if (value is Map<String, dynamic>) {
+                try {
+                  categoriesMap[categoryName] = CategoryData.fromJson(value);
+                } catch (e) {
+                  debugPrint('BriefingRepository: Failed to parse generic category $categoryName: $e');
+                }
+              } else if (value is List) {
+                try {
+                  categoriesMap[categoryName] = CategoryData(
+                    sentimentScore: 0.0,
+                    summary: 'Direct list feed.',
+                    items: value.map((i) => BriefingItem.fromJson(_normalizeItem(i as Map<String, dynamic>))).toList(),
+                  );
+                } catch (e) {
+                  debugPrint('BriefingRepository: Failed to parse generic list $categoryName: $e');
                 }
               }
-            } else {
-              decodedContent.forEach((key, value) {
-                final String categoryName = _formatCategory(key);
-                if (value is Map<String, dynamic>) {
-                  if (value.containsKey('items') || value.containsKey('sentiment_score') || value.containsKey('summary')) {
-                    try {
-                      categoriesMap[categoryName] = CategoryData.fromJson(value);
-                    } catch (e) {
-                      debugPrint('BriefingRepository: Failed to parse category $categoryName: $e');
-                    }
-                  }
-                } else if (value is List) {
-                  try {
-                    categoriesMap[categoryName] = CategoryData(
-                      sentimentScore: 0.0,
-                      summary: 'Direct item list',
-                      items: value.map((i) => BriefingItem.fromJson(i as Map<String, dynamic>)).toList(),
-                    );
-                  } catch (e) {
-                    debugPrint('BriefingRepository: Failed to parse list category $categoryName: $e');
-                  }
-                }
-              });
-            }
+            });
           }
-        }
-
-        if (categoriesMap.isEmpty) {
-          debugPrint('BriefingRepository: No categories found in decoded content. Keys found: ${decodedContent.keys.join(', ')}');
         }
 
         return BriefingData(
