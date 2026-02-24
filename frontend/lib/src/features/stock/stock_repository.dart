@@ -29,14 +29,14 @@ abstract class StockData with _$StockData {
 class StockRepository extends _$StockRepository {
   double _extractPrice(String? text) {
     if (text == null || text.isEmpty) return 0.0;
-    // Prioritize patterns with $ sign
+    // Prioritize patterns with $ sign (handles $420.97 or ($420.97))
     final regexDollar = RegExp(r'\$\s*(\d+(?:\.\d+)?)');
     final matchDollar = regexDollar.firstMatch(text);
     if (matchDollar != null) {
       return double.tryParse(matchDollar.group(1) ?? '0') ?? 0.0;
     }
     // Then look for numbers that look like stock prices (XX.XX or XXX.XX)
-    final regexNum = RegExp(r'\b(\d{1,4}\.\d{2})\b');
+    final regexNum = RegExp(r'\b(\d{1,5}\.\d{2})\b');
     final matchNum = regexNum.firstMatch(text);
     if (matchNum != null) {
       return double.tryParse(matchNum.group(1) ?? '0') ?? 0.0;
@@ -46,6 +46,7 @@ class StockRepository extends _$StockRepository {
 
   double _extractChange(String? text) {
     if (text == null || text.isEmpty) return 0.0;
+    // Handle % sign with optional sign (e.g., +2.5% or -1.2% or 5%)
     final regexPercent = RegExp(r'([+-]?\d+(?:\.\d+)?)\s*%');
     final matchPercent = regexPercent.firstMatch(text);
     if (matchPercent != null) {
