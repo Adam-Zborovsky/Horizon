@@ -10,10 +10,33 @@ part 'briefing_repository.g.dart';
 
 @riverpod
 class BriefingRepository extends _$BriefingRepository {
+  double? _parseSentiment(dynamic s) {
+    if (s == null) return null;
+    if (s is num) return s.toDouble();
+    if (s is String) {
+      final lowerS = s.toLowerCase().trim();
+      final parsed = double.tryParse(lowerS);
+      if (parsed != null) return parsed;
+      
+      // Standard descriptive sentiments
+      if (lowerS.contains('very bullish') || lowerS.contains('strong buy')) return 0.95;
+      if (lowerS.contains('bullish') || lowerS.contains('buy') || lowerS.contains('positive')) return 0.75;
+      if (lowerS.contains('neutral') || lowerS.contains('hold') || lowerS.contains('mixed')) return 0.0;
+      if (lowerS.contains('bearish') || lowerS.contains('sell') || lowerS.contains('negative')) return -0.75;
+      if (lowerS.contains('very bearish') || lowerS.contains('strong sell')) return -0.95;
+      
+      // Additional keywords
+      if (lowerS.contains('volatile')) return 0.1;
+      if (lowerS.contains('conflict') || lowerS.contains('danger')) return -0.5;
+      if (lowerS.contains('growth') || lowerS.contains('expansion')) return 0.5;
+    }
+    return null;
+  }
+
   String _formatCategory(String key) {
     if (key == 'news_intel') return 'Strategic News Intel';
     if (key == 'market_analyst' || key == 'market_analysis') return 'Market Analysis';
-    if (key == 'opportunity_scout' || key == 'opportunities') return 'Alpha Opportunities';
+    if (key == 'opportunity_scout' || key == 'opportunities' || key == 'high_signal_divergent') return 'Alpha Opportunities';
     
     return key.replaceAll('_', ' ').split(' ').map((word) {
       if (word.isEmpty) return '';
@@ -38,16 +61,21 @@ class BriefingRepository extends _$BriefingRepository {
     // Flatten nested analysis if present
     if (result['analysis'] is Map<String, dynamic>) {
       final analysis = result['analysis'] as Map<String, dynamic>;
-      analysis.forEach((key, value) {
-        if (result[key] == null) {
-          result[key] = value;
-        }
-      });
-      // Ensure outlook or primary text is mapped to takeaway for display
-      final String? outlook = analysis['outlook']?.toString() ?? analysis['outlook_1_3_months']?.toString();
-      if (outlook != null) {
-        result['takeaway'] = outlook;
-      }
+      
+      // Extract specific fields if they exist in the analysis map
+      final outlook = analysis['outlook']?.toString() ?? analysis['outlook_1_3_months']?.toString();
+      final catalysts = analysis['catalysts'];
+      final risks = analysis['risks'];
+      final priceAction = analysis['potential_price_action']?.toString() ?? analysis['price_action_projection']?.toString();
+
+      if (result['takeaway'] == null && outlook != null) result['takeaway'] = outlook;
+      if (result['catalysts'] == null && catalysts != null) result['catalysts'] = catalysts;
+      if (result['risks'] == null && risks != null) result['risks'] = risks;
+      if (result['potential_price_action'] == null && priceAction != null) result['potential_price_action'] = priceAction;
+
+      // Convert the main analysis field to a readable string if it's still a Map
+      // Prefer outlook, or join all values
+      result['analysis'] = outlook ?? analysis.values.where((v) => v is String).join('\n');
     }
     
     // Safety: ensure fields expected by json_serializable as String? are actually strings
@@ -60,6 +88,11 @@ class BriefingRepository extends _$BriefingRepository {
       if (result[field] != null && result[field] is! String) {
         result[field] = result[field].toString();
       }
+    }
+
+    // Handle analysis if it's still not a string
+    if (result['analysis'] != null && result['analysis'] is! String) {
+      result['analysis'] = result['analysis'].toString();
     }
 
     // Ensure catalysts and risks are List<String>
@@ -184,29 +217,10 @@ class BriefingRepository extends _$BriefingRepository {
                       double totalSentiment = 0;
                       int count = 0;
                       for (final item in items) {
-                        final dynamic s = item.sentiment ?? item.sentimentScore;
-                        if (s is num) {
-                          totalSentiment += s.toDouble();
+                        final score = _parseSentiment(item.sentiment ?? item.sentimentScore);
+                        if (score != null) {
+                          totalSentiment += score;
                           count++;
-                        } else if (s is String) {
-                          final lowerS = s.toLowerCase();
-                          double? parsed = double.tryParse(s);
-                          if (parsed != null) {
-                            totalSentiment += parsed;
-                            count++;
-                          } else {
-                            if (lowerS.contains('very bullish') || lowerS.contains('strong buy')) {
-                              totalSentiment += 0.9; count++;
-                            } else if (lowerS.contains('bullish') || lowerS.contains('buy')) {
-                              totalSentiment += 0.7; count++;
-                            } else if (lowerS.contains('neutral') || lowerS.contains('hold')) {
-                              totalSentiment += 0.0; count++;
-                            } else if (lowerS.contains('bearish') || lowerS.contains('sell')) {
-                              totalSentiment += -0.7; count++;
-                            } else if (lowerS.contains('very bearish') || lowerS.contains('strong sell')) {
-                              totalSentiment += -0.9; count++;
-                            }
-                          }
                         }
                       }
                       categoriesMap[categoryName] = CategoryData(
@@ -241,29 +255,10 @@ class BriefingRepository extends _$BriefingRepository {
                   double totalSentiment = 0;
                   int count = 0;
                   for (final item in items) {
-                    final dynamic s = item.sentimentScore ?? item.sentiment;
-                    if (s is num) {
-                      totalSentiment += s.toDouble();
+                    final score = _parseSentiment(item.sentimentScore ?? item.sentiment);
+                    if (score != null) {
+                      totalSentiment += score;
                       count++;
-                    } else if (s is String) {
-                      final lowerS = s.toLowerCase();
-                      final parsed = double.tryParse(s);
-                      if (parsed != null) {
-                        totalSentiment += parsed;
-                        count++;
-                      } else {
-                        if (lowerS.contains('very bullish') || lowerS.contains('strong buy')) {
-                          totalSentiment += 0.9; count++;
-                        } else if (lowerS.contains('bullish') || lowerS.contains('buy')) {
-                          totalSentiment += 0.7; count++;
-                        } else if (lowerS.contains('neutral') || lowerS.contains('hold')) {
-                          totalSentiment += 0.0; count++;
-                        } else if (lowerS.contains('bearish') || lowerS.contains('sell')) {
-                          totalSentiment += -0.7; count++;
-                        } else if (lowerS.contains('very bearish') || lowerS.contains('strong sell')) {
-                          totalSentiment += -0.9; count++;
-                        }
-                      }
                     }
                   }
                   categoriesMap['Market Analysis'] = CategoryData(
@@ -296,29 +291,10 @@ class BriefingRepository extends _$BriefingRepository {
                   double totalSentiment = 0;
                   int count = 0;
                   for (final item in items) {
-                    final dynamic s = item.sentimentScore ?? item.sentiment;
-                    if (s is num) {
-                      totalSentiment += s.toDouble();
+                    final score = _parseSentiment(item.sentimentScore ?? item.sentiment);
+                    if (score != null) {
+                      totalSentiment += score;
                       count++;
-                    } else if (s is String) {
-                      final lowerS = s.toLowerCase();
-                      final parsed = double.tryParse(s);
-                      if (parsed != null) {
-                        totalSentiment += parsed;
-                        count++;
-                      } else {
-                        if (lowerS.contains('very bullish') || lowerS.contains('strong buy')) {
-                          totalSentiment += 0.9; count++;
-                        } else if (lowerS.contains('bullish') || lowerS.contains('buy')) {
-                          totalSentiment += 0.7; count++;
-                        } else if (lowerS.contains('neutral') || lowerS.contains('hold')) {
-                          totalSentiment += 0.0; count++;
-                        } else if (lowerS.contains('bearish') || lowerS.contains('sell')) {
-                          totalSentiment += -0.7; count++;
-                        } else if (lowerS.contains('very bearish') || lowerS.contains('strong sell')) {
-                          totalSentiment += -0.9; count++;
-                        }
-                      }
                     }
                   }
                   categoriesMap['Alpha Opportunities'] = CategoryData(
@@ -333,29 +309,44 @@ class BriefingRepository extends _$BriefingRepository {
             }
           }
 
-          // Legacy / Generic Support
-          if (categoriesMap.isEmpty) {
-            decodedContent.forEach((key, value) {
-              final String categoryName = _formatCategory(key);
-              if (value is Map<String, dynamic>) {
-                try {
-                  categoriesMap[categoryName] = CategoryData.fromJson(value);
-                } catch (e) {
-                  debugPrint('BriefingRepository: Failed to parse generic category $categoryName: $e');
-                }
-              } else if (value is List) {
-                try {
-                  categoriesMap[categoryName] = CategoryData(
-                    sentimentScore: 0.0,
-                    summary: 'Direct list feed.',
-                    items: value.map((i) => BriefingItem.fromJson(_normalizeItem(i as Map<String, dynamic>))).toList(),
-                  );
-                } catch (e) {
-                  debugPrint('BriefingRepository: Failed to parse generic list $categoryName: $e');
-                }
+          // 4. Handle any other top-level categories (Generic Support)
+          decodedContent.forEach((key, value) {
+            final String categoryName = _formatCategory(key);
+            // Skip already processed standard containers
+            if (newsContainers.contains(key) || 
+                marketContainers.contains(key) || 
+                opportunityContainers.contains(key)) return;
+
+            if (value is Map<String, dynamic>) {
+              try {
+                categoriesMap[categoryName] = CategoryData.fromJson(value);
+              } catch (e) {
+                debugPrint('BriefingRepository: Failed to parse generic category map $categoryName: $e');
               }
-            });
-          }
+            } else if (value is List) {
+              try {
+                final List<BriefingItem> items = value.map((i) => BriefingItem.fromJson(_normalizeItem(i as Map<String, dynamic>))).toList();
+                
+                double totalSentiment = 0;
+                int count = 0;
+                for (final item in items) {
+                  final score = _parseSentiment(item.sentiment ?? item.sentimentScore);
+                  if (score != null) {
+                    totalSentiment += score;
+                    count++;
+                  }
+                }
+
+                categoriesMap[categoryName] = CategoryData(
+                  sentimentScore: count > 0 ? totalSentiment / count : 0.0,
+                  summary: 'Direct item list feed.',
+                  items: items,
+                );
+              } catch (e) {
+                debugPrint('BriefingRepository: Failed to parse generic list $categoryName: $e');
+              }
+            }
+          });
         }
 
         return BriefingData(

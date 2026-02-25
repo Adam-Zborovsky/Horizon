@@ -46,8 +46,8 @@ Array of objects containing technical and fundamental analysis for specific tick
 
 ---
 
-## 4. Alpha Opportunities (`opportunity_scout`)
-Array of objects identifying high-conviction trade setups or macro shifts.
+## 4. Alpha Opportunities (`opportunity_scout` / `opportunities` / `high_signal_divergent`)
+Array of objects identifying high-conviction trade setups or macro shifts. These are your "High Signal Divergent" items.
 
 ### Opportunity Item Fields:
 - `ticker` (String, Optional): Associated asset ticker.

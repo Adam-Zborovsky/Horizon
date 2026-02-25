@@ -32,6 +32,13 @@ class _DetailContent extends ConsumerWidget {
   final StockData stock;
   const _DetailContent({required this.stock});
 
+  String? _getDisplayString(dynamic value) {
+    if (value == null) return null;
+    if (value is String) return value;
+    if (value is Map) return value.values.where((v) => v is String).join('\n');
+    return value.toString();
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final color = stock.changePercent > 0 ? AppTheme.goldAmber : AppTheme.softCrimson;
@@ -114,7 +121,7 @@ class _DetailContent extends ConsumerWidget {
                       ),
                       const SizedBox(height: 16),
                       Text(
-                        stock.analysis ?? "No AI analysis available for this ticker today.",
+                        _getDisplayString(stock.analysis) ?? "No AI analysis available for this ticker today.",
                         style: Theme.of(context).textTheme.bodyLarge?.copyWith(height: 1.5),
                       ),
                       const SizedBox(height: 20),
@@ -136,7 +143,7 @@ class _DetailContent extends ConsumerWidget {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          stock.potentialPriceAction!,
+                          _getDisplayString(stock.potentialPriceAction)!,
                           style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500),
                         ),
                       ],

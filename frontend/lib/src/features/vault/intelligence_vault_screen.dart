@@ -272,15 +272,15 @@ class _NewsCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Handle sentiment as dynamic (double score or String description)
+    // Handle sentiment as dynamic (score or description)
     double sentimentVal = 0.0;
     String sentimentText = '0.0 SNT';
     
     if (item.sentimentScore != null) {
        sentimentVal = item.sentimentScore!;
        sentimentText = '${sentimentVal > 0 ? "+" : ""}${sentimentVal.toStringAsFixed(1)} SNT';
-    } else if (item.sentiment is double) {
-      sentimentVal = item.sentiment as double;
+    } else if (item.sentiment is num) {
+      sentimentVal = (item.sentiment as num).toDouble();
       sentimentText = '${sentimentVal > 0 ? "+" : ""}${sentimentVal.toStringAsFixed(1)} SNT';
     } else if (item.sentiment is String) {
       sentimentText = item.sentiment as String;
@@ -294,6 +294,18 @@ class _NewsCard extends ConsumerWidget {
     final savedArticles = ref.watch(savedArticlesProvider);
     final title = item.title ?? item.name ?? item.ticker ?? "Untitled Intelligence";
     final isSaved = savedArticles.contains(title);
+    
+    // Safely convert dynamic fields to String for display
+    String? getDisplayString(dynamic value) {
+      if (value == null) return null;
+      if (value is String) return value;
+      if (value is Map) return value.values.where((v) => v is String).join('\n');
+      return value.toString();
+    }
+
+    final analysisStr = getDisplayString(item.analysis);
+    final explanationStr = getDisplayString(item.explanation);
+    final takeawayStr = getDisplayString(item.takeaway);
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
@@ -350,7 +362,7 @@ class _NewsCard extends ConsumerWidget {
               maxLines: 3,
               overflow: TextOverflow.ellipsis,
             ),
-            if (item.takeaway != null || item.analysis != null || item.explanation != null) ...[
+            if (takeawayStr != null || analysisStr != null || explanationStr != null) ...[
               const SizedBox(height: 20),
               Row(
                 children: [
@@ -361,7 +373,7 @@ class _NewsCard extends ConsumerWidget {
                   ),
                   const SizedBox(width: 12),
                   Text(
-                    item.analysis != null ? 'ANALYSIS' : item.explanation != null ? 'EXPLANATION' : 'TAKEAWAY',
+                    analysisStr != null ? 'ANALYSIS' : explanationStr != null ? 'EXPLANATION' : 'TAKEAWAY',
                     style: const TextStyle(
                       color: AppTheme.goldAmber,
                       fontWeight: FontWeight.bold,
@@ -373,7 +385,7 @@ class _NewsCard extends ConsumerWidget {
               ),
               const SizedBox(height: 8),
               Text(
-                item.analysis ?? item.explanation ?? item.takeaway ?? "",
+                analysisStr ?? explanationStr ?? takeawayStr ?? "",
                 style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 13, height: 1.4),
                 maxLines: 6,
                 overflow: TextOverflow.ellipsis,
