@@ -50,8 +50,13 @@ class AlphaScannerScreen extends ConsumerWidget {
                     const SizedBox(height: 15),
                     briefingAsync.when(
                       data: (briefing) {
-                        // Match the name used in BriefingRepository
-                        final opportunities = briefing.data['Alpha Opportunities']?.items ?? [];
+                        // Find opportunities category dynamically
+                        final oppEntry = briefing.data.entries.where(
+                          (e) => e.key.toLowerCase().contains('opportunit') ||
+                                 e.key.toLowerCase().contains('alpha') ||
+                                 e.key.toLowerCase().contains('divergent')
+                        );
+                        final opportunities = oppEntry.isNotEmpty ? oppEntry.first.value.items : <BriefingItem>[];
                         if (opportunities.isEmpty) {
                           return const _EmptyScannerState(message: 'No new opportunities scouted.');
                         }
@@ -97,7 +102,9 @@ class AlphaScannerScreen extends ConsumerWidget {
                       data: (briefing) {
                         final List<BriefingItem> catalysts = [];
                         briefing.data.forEach((key, cat) {
-                          if (key != 'Alpha Opportunities') {
+                          final lk = key.toLowerCase();
+                          // Skip opportunities-type categories, show only news/analysis catalysts
+                          if (!lk.contains('opportunit') && !lk.contains('divergent')) {
                             catalysts.addAll(cat.items.where((i) => i.takeaway != null || i.title != null));
                           }
                         });

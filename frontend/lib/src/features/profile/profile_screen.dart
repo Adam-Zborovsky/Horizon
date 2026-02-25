@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/glass_card.dart';
 import '../briefing/briefing_repository.dart';
+import '../briefing/briefing_config_repository.dart';
+import '../stock/stock_repository.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
@@ -56,28 +58,10 @@ class ProfileScreen extends ConsumerWidget {
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      'Adam Zborovsky',
+                      'Alpha Operator',
                       style: Theme.of(context).textTheme.displaySmall?.copyWith(
                         fontWeight: FontWeight.bold,
                         fontSize: 24,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: AppTheme.goldAmber.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: AppTheme.goldAmber.withOpacity(0.3)),
-                      ),
-                      child: const Text(
-                        'ALPHA TIER',
-                        style: TextStyle(
-                          color: AppTheme.goldAmber,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 10,
-                          letterSpacing: 1.5,
-                        ),
                       ),
                     ),
                   ],
@@ -187,18 +171,37 @@ class ProfileScreen extends ConsumerWidget {
   }
 }
 
-class _StatsRow extends StatelessWidget {
+class _StatsRow extends ConsumerWidget {
   const _StatsRow();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final configAsync = ref.watch(briefingConfigRepositoryProvider);
+    final briefingAsync = ref.watch(briefingRepositoryProvider);
+    final stocksAsync = ref.watch(stockRepositoryProvider);
+
+    final tickerCount = configAsync.maybeWhen(
+      data: (config) => config.tickers.length.toString(),
+      orElse: () => '-',
+    );
+
+    final categoryCount = briefingAsync.maybeWhen(
+      data: (briefing) => briefing.data.length.toString(),
+      orElse: () => '-',
+    );
+
+    final divergenceCount = stocksAsync.maybeWhen(
+      data: (stocks) => stocks.where((s) => s.sentiment > 0.5 && s.changePercent <= 0.5).length.toString(),
+      orElse: () => '-',
+    );
+
     return Row(
       children: [
-        Expanded(child: _StatCard(label: 'Stocks Watched', value: '12')),
+        Expanded(child: _StatCard(label: 'Stocks Watched', value: tickerCount)),
         const SizedBox(width: 12),
-        Expanded(child: _StatCard(label: 'Alpha Score', value: '94')),
+        Expanded(child: _StatCard(label: 'Intel Pillars', value: categoryCount)),
         const SizedBox(width: 12),
-        Expanded(child: _StatCard(label: 'Signals Caught', value: '8')),
+        Expanded(child: _StatCard(label: 'Divergences', value: divergenceCount)),
       ],
     );
   }

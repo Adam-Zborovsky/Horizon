@@ -334,6 +334,19 @@ class _IntelCard extends StatelessWidget {
   final double score;
   const _IntelCard({required this.name, required this.score});
 
+  static IconData _categoryIcon(String name) {
+    final n = name.toLowerCase();
+    if (n.contains('market') || n.contains('analysis')) return Icons.candlestick_chart_rounded;
+    if (n.contains('opportunit') || n.contains('alpha') || n.contains('divergent')) return Icons.bolt_rounded;
+    if (n.contains('defense') || n.contains('military')) return Icons.shield_outlined;
+    if (n.contains('ai') || n.contains('cyber') || n.contains('tech')) return Icons.memory;
+    if (n.contains('geo') || n.contains('diplom')) return Icons.public;
+    if (n.contains('econom') || n.contains('trade') || n.contains('infra')) return Icons.account_balance_outlined;
+    if (n.contains('energy') || n.contains('nuclear')) return Icons.flash_on_rounded;
+    if (n.contains('health') || n.contains('social') || n.contains('cultur')) return Icons.groups_outlined;
+    return Icons.hub_outlined;
+  }
+
   @override
   Widget build(BuildContext context) {
     final color = score > 0 ? AppTheme.goldAmber : AppTheme.softCrimson;
@@ -350,7 +363,7 @@ class _IntelCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(
-              name.toLowerCase().contains('semi') ? Icons.memory : name.toLowerCase().contains('geo') ? Icons.public : Icons.hub_outlined,
+              _categoryIcon(name),
               color: color,
               size: 18,
             ),

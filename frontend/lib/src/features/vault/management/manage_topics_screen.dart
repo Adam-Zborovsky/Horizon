@@ -26,16 +26,6 @@ class ManageTopicsScreen extends ConsumerStatefulWidget {
 class _ManageTopicsScreenState extends ConsumerState<ManageTopicsScreen> {
   final TextEditingController _searchController = TextEditingController();
   
-  // These should ideally come from backend config or initial setup
-  final List<String> _defaultRecommendedTopics = [
-    'Semiconductors', 
-    'Geopolitics', 
-    'Sovereign AI', 
-    'Energy', 
-    'Defense Tech', 
-    'Cybersecurity', 
-    'Macro Crypto'
-  ];
 
   @override
   void dispose() {
@@ -67,8 +57,7 @@ class _ManageTopicsScreenState extends ConsumerState<ManageTopicsScreen> {
               data: (config) {
                 return recommendedTopicsAsync.when(
                   data: (newsRecommended) {
-                    // Combine default and news recommendations, prioritizing news
-                    final combinedRecommended = <String>{...newsRecommended, ..._defaultRecommendedTopics}.toList();
+                    final combinedRecommended = newsRecommended.toList();
                     
                     // Filter out topics already in the config to avoid duplicates
                     final filtered = combinedRecommended.where(

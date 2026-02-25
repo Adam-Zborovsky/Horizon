@@ -13,28 +13,7 @@ class ManageWatchlistScreen extends ConsumerStatefulWidget {
 
 class _ManageWatchlistScreenState extends ConsumerState<ManageWatchlistScreen> {
   final TextEditingController _searchController = TextEditingController();
-  
-  final List<Map<String, String>> _allAvailableStocks = [
-    {'ticker': 'AAPL', 'name': 'Apple Inc.'},
-    {'ticker': 'MSFT', 'name': 'Microsoft Corporation'},
-    {'ticker': 'GOOGL', 'name': 'Alphabet Inc.'},
-    {'ticker': 'AMZN', 'name': 'Amazon.com, Inc.'},
-    {'ticker': 'TSLA', 'name': 'Tesla, Inc.'},
-    {'ticker': 'NVDA', 'name': 'NVIDIA Corporation'},
-    {'ticker': 'AMD', 'name': 'Advanced Micro Devices, Inc.'},
-    {'ticker': 'MU', 'name': 'Micron Technology, Inc.'},
-    {'ticker': 'INTC', 'name': 'Intel Corporation'},
-    {'ticker': 'TSM', 'name': 'Taiwan Semiconductor Manufacturing'},
-    {'ticker': 'META', 'name': 'Meta Platforms, Inc.'},
-    {'ticker': 'PLTR', 'name': 'Palantir Technologies Inc.'},
-    {'ticker': 'ARM', 'name': 'Arm Holdings plc'},
-    {'ticker': 'AVGO', 'name': 'Broadcom Inc.'},
-    {'ticker': 'SMCI', 'name': 'Super Micro Computer, Inc.'},
-    {'ticker': 'BTC-USD', 'name': 'Bitcoin USD'},
-    {'ticker': 'ETH-USD', 'name': 'Ethereum USD'},
-  ];
-
-  List<Map<String, String>> _searchResults = [];
+  String _searchQuery = '';
 
   @override
   void initState() {
@@ -50,17 +29,8 @@ class _ManageWatchlistScreenState extends ConsumerState<ManageWatchlistScreen> {
   }
 
   void _onSearchChanged() {
-    final query = _searchController.text.toUpperCase();
-    if (query.isEmpty) {
-      setState(() => _searchResults = []);
-      return;
-    }
-
     setState(() {
-      _searchResults = _allAvailableStocks.where((stock) {
-        return stock['ticker']!.contains(query) || 
-               stock['name']!.toUpperCase().contains(query);
-      }).toList();
+      _searchQuery = _searchController.text.trim().toUpperCase();
     });
   }
 
@@ -81,53 +51,36 @@ class _ManageWatchlistScreenState extends ConsumerState<ManageWatchlistScreen> {
               }
             },
           ),
-          if (_searchResults.isNotEmpty)
+          if (_searchQuery.isNotEmpty && !watchlist.contains(_searchQuery))
             SliverPadding(
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
-              sliver: SliverList(
-                delegate: SliverChildBuilderDelegate(
-                  (context, index) {
-                    final stock = _searchResults[index];
-                    final ticker = stock['ticker']!;
-                    final isAdded = watchlist.contains(ticker);
-                    
-                    return GestureDetector(
-                      onTap: () async {
-                        if (isAdded) {
-                          await ref.read(watchlistProvider.notifier).remove(ticker);
-                        } else {
-                          await ref.read(watchlistProvider.notifier).add(ticker);
-                        }
-                        setState(() {}); // Refresh local state for icons
-                      },
-                      child: Container(
-                        margin: const EdgeInsets.only(bottom: 8),
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: AppTheme.glassWhite,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: isAdded ? AppTheme.goldAmber.withOpacity(0.3) : Colors.white10),
-                        ),
-                        child: Row(
+              sliver: SliverToBoxAdapter(
+                child: GestureDetector(
+                  onTap: () async {
+                    await ref.read(watchlistProvider.notifier).add(_searchQuery);
+                    _searchController.clear();
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: AppTheme.glassWhite,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: AppTheme.goldAmber.withOpacity(0.3)),
+                    ),
+                    child: Row(
+                      children: [
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(ticker, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                                Text(stock['name']!, style: const TextStyle(color: Colors.white38, fontSize: 12)),
-                              ],
-                            ),
-                            const Spacer(),
-                            Icon(
-                              isAdded ? Icons.check_circle_rounded : Icons.add_circle_outline_rounded,
-                              color: isAdded ? AppTheme.goldAmber : Colors.white24,
-                            ),
+                            Text(_searchQuery, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                            const Text('Tap to add to watchlist', style: TextStyle(color: Colors.white38, fontSize: 12)),
                           ],
                         ),
-                      ),
-                    );
-                  },
-                  childCount: _searchResults.length,
+                        const Spacer(),
+                        const Icon(Icons.add_circle_outline_rounded, color: AppTheme.goldAmber),
+                      ],
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -157,14 +110,10 @@ class _ManageWatchlistScreenState extends ConsumerState<ManageWatchlistScreen> {
               delegate: SliverChildBuilderDelegate(
                 (context, index) {
                   final ticker = watchlist.toList()[index];
-                  final stockInfo = _allAvailableStocks.firstWhere(
-                    (s) => s['ticker'] == ticker,
-                    orElse: () => {'ticker': ticker, 'name': 'Market Asset'},
-                  );
-                  
+
                   return _WatchlistItem(
                     ticker: ticker,
-                    name: stockInfo['name']!,
+                    name: ticker,
                     onRemove: () async => await ref.read(watchlistProvider.notifier).remove(ticker),
                   );
                 },

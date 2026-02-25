@@ -223,9 +223,11 @@ class BriefingRepository extends _$BriefingRepository {
                           count++;
                         }
                       }
+                      // Build summary from first item's takeaway if available
+                      final firstTakeaway = items.where((i) => i.takeaway != null && i.takeaway!.isNotEmpty).firstOrNull?.takeaway;
                       categoriesMap[categoryName] = CategoryData(
                         sentimentScore: count > 0 ? totalSentiment / count : 0.0,
-                        summary: 'Strategic analysis for $categoryName.',
+                        summary: firstTakeaway ?? '${items.length} items in $categoryName.',
                         items: items,
                       );
                     } catch (e) {
@@ -261,9 +263,10 @@ class BriefingRepository extends _$BriefingRepository {
                       count++;
                     }
                   }
+                  final firstAnalysis = items.where((i) => i.analysis != null && i.analysis!.isNotEmpty).firstOrNull?.analysis;
                   categoriesMap['Market Analysis'] = CategoryData(
-                    sentimentScore: count > 0 ? totalSentiment / count : 0.8,
-                    summary: 'Technical and fundamental deep dive.',
+                    sentimentScore: count > 0 ? totalSentiment / count : 0.0,
+                    summary: firstAnalysis ?? '${items.length} tickers analyzed.',
                     items: items,
                   );
                 } catch (e) {
@@ -297,9 +300,10 @@ class BriefingRepository extends _$BriefingRepository {
                       count++;
                     }
                   }
+                  final firstExplanation = items.where((i) => i.explanation != null && i.explanation!.isNotEmpty).firstOrNull?.explanation;
                   categoriesMap['Alpha Opportunities'] = CategoryData(
-                    sentimentScore: count > 0 ? totalSentiment / count : 0.9,
-                    summary: 'High-signal tactical opportunities.',
+                    sentimentScore: count > 0 ? totalSentiment / count : 0.0,
+                    summary: firstExplanation ?? '${items.length} opportunities identified.',
                     items: items,
                   );
                 } catch (e) {
@@ -337,9 +341,10 @@ class BriefingRepository extends _$BriefingRepository {
                   }
                 }
 
+                final firstItemText = items.where((i) => i.takeaway != null && i.takeaway!.isNotEmpty).firstOrNull?.takeaway;
                 categoriesMap[categoryName] = CategoryData(
                   sentimentScore: count > 0 ? totalSentiment / count : 0.0,
-                  summary: 'Direct item list feed.',
+                  summary: firstItemText ?? '${items.length} items in $categoryName.',
                   items: items,
                 );
               } catch (e) {
