@@ -9,6 +9,8 @@ const envSchema = zod.object({
   MONGODB_URI: zod.string().url(),
   API_PREFIX: zod.string().default('/api/v1'),
   N8N_WEBHOOK_URL: zod.string().url().optional(),
+  JWT_SECRET: zod.string().default('horizon-secret-123!@#'),
+  JWT_EXPIRES_IN: zod.string().default('30d'),
 });
 
 const parsed = envSchema.safeParse(process.env);

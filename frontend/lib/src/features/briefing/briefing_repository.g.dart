@@ -34,7 +34,7 @@ final class BriefingRepositoryProvider
 }
 
 String _$briefingRepositoryHash() =>
-    r'537c157929a5d304ab656d1a6c3ca5f9967a9387';
+    r'6afb5342be36e761f38b9c382b7890cf4d952a28';
 
 abstract class _$BriefingRepository extends $AsyncNotifier<BriefingData> {
   FutureOr<BriefingData> build();

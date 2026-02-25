@@ -2,190 +2,124 @@ const briefingService = require('./briefing.service');
 
 class BriefingController {
   /**
-   * GET /api/v1/briefing
-   * Returns the latest available briefing for the app
+   * Get the most recent briefing for current user
    */
   async getLatest(req, res, next) {
     try {
-      const briefing = await briefingService.getLatest();
-      
+      const briefing = await briefingService.getLatest(req.user._id);
       if (!briefing) {
-        return res.status(200).json({
-          success: true,
-          data: {},
-          message: 'No briefing available yet.',
-        });
+        return res.status(200).json({ status: 'pending', message: 'No briefing found for this user.' });
       }
-
-      res.status(200).json({
-        success: true,
-        data: briefing.data,
-        metadata: {
-          id: briefing._id,
-          createdAt: briefing.createdAt,
-        },
-      });
+      res.status(200).json(briefing);
     } catch (err) {
       next(err);
     }
   }
 
   /**
-   * POST /api/v1/briefing
-   * Receives new data from n8n and updates the latest state
+   * Save a new briefing (from agents/n8n)
+   * Note: This needs to know which user this briefing belongs to.
+   * If n8n sends it, it should probably include the userId in the body.
    */
   async save(req, res, next) {
     try {
-      const briefing = await briefingService.save(req.body);
+      const { userId, ...data } = req.body;
       
-      res.status(201).json({
-        success: true,
-        data: briefing.data,
-        message: 'Briefing saved successfully.',
-      });
-    } catch (err) {
-      next(err);
-    }
-  }
-
-  /**
-   * PUT /api/v1/briefing/config/topic/:topicName
-   * Toggles the enabled status of a specific topic
-   */
-  async toggleTopic(req, res, next) {
-    try {
-      const { topicName } = req.params;
-      const { enabled } = req.body;
-
-      if (typeof enabled === 'undefined') {
-        return res.status(400).json({
-          success: false,
-          message: 'The "enabled" status is required in the request body.',
-        });
+      if (!userId) {
+        return res.status(400).json({ message: 'userId is required for saving briefings' });
       }
 
-      const config = await briefingService.toggleTopic(topicName, enabled);
-      
-      res.status(200).json({
-        success: true,
-        data: config,
-        message: `Topic "${topicName}" enabled status updated to ${enabled}.`,
-      });
+      const saved = await briefingService.save(userId, data);
+      res.status(201).json(saved);
     } catch (err) {
       next(err);
     }
   }
 
   /**
-   * DELETE /api/v1/briefing/config/topic/:topicName
-   * Completely removes a topic from the user's list.
-   */
-  async removeTopic(req, res, next) {
-    try {
-      const { topicName } = req.params;
-      const config = await briefingService.removeTopic(topicName);
-      
-      res.status(200).json({
-        success: true,
-        data: config,
-        message: `Topic "${topicName}" removed from list.`,
-      });
-    } catch (err) {
-      next(err);
-    }
-  }
-
-  /**
-   * GET /api/v1/briefing/config/recommended
-   * Suggests new topics based on the latest news.
-   */
-  async getRecommendedTopics(req, res, next) {
-    try {
-      const topics = await briefingService.getRecommendedTopics();
-      
-      res.status(200).json({
-        success: true,
-        data: topics,
-      });
-    } catch (err) {
-      next(err);
-    }
-  }
-
-  /**
-   * POST /webhook/update-briefing-config
-   * Receives updated topics/tickers from the frontend
-   */
-  async updateConfig(req, res, next) {
-
-    try {
-      const config = await briefingService.updateConfig(req.body);
-      
-      res.status(200).json({
-        success: true,
-        data: config,
-        message: 'Briefing configuration updated successfully.',
-      });
-    } catch (err) {
-      next(err);
-    }
-  }
-
-  /**
-   * POST /api/v1/briefing/trigger
-   * Manually triggers the briefing generation workflow
+   * Manually trigger the briefing generation workflow
    */
   async triggerManual(req, res, next) {
     try {
-      await briefingService.triggerWorkflow('manual_trigger');
-      
-      res.status(200).json({
-        success: true,
-        message: 'Briefing generation triggered successfully.',
-      });
+      await briefingService.triggerWorkflow(req.user._id, 'manual_trigger');
+      res.status(202).json({ message: 'Briefing generation triggered.' });
     } catch (err) {
       next(err);
     }
   }
 
   /**
-   * GET /api/v1/briefing/config
-   * Returns the current topics and tickers configuration
+   * Get the current configuration for user
    */
   async getConfig(req, res, next) {
     try {
-      const config = await briefingService.getConfig();
-      
-      res.status(200).json({
-        success: true,
-        data: config || { topics: [], tickers: [] },
-      });
+      const config = await briefingService.getConfig(req.user._id);
+      res.status(200).json(config);
     } catch (err) {
       next(err);
     }
   }
 
   /**
-   * GET /api/v1/briefing/history
-   * List historical briefings with pagination
+   * List historical briefings for user
    */
   async getHistory(req, res, next) {
     try {
       const page = parseInt(req.query.page) || 1;
       const limit = parseInt(req.query.limit) || 20;
-      
-      const { briefings, total } = await briefingService.getHistory(page, limit);
-      
-      res.status(200).json({
-        success: true,
-        data: briefings,
-        pagination: {
-          page,
-          limit,
-          total,
-          totalPages: Math.ceil(total / limit),
-        },
-      });
+      const history = await briefingService.getHistory(req.user._id, page, limit);
+      res.status(200).json(history);
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  /**
+   * Toggle topic enabled status
+   */
+  async toggleTopic(req, res, next) {
+    try {
+      const { topicName } = req.params;
+      const { enabled } = req.body;
+      const updated = await briefingService.toggleTopic(req.user._id, topicName, enabled);
+      res.status(200).json(updated);
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  /**
+   * Remove a topic
+   */
+  async removeTopic(req, res, next) {
+    try {
+      const { topicName } = req.params;
+      const updated = await briefingService.removeTopic(req.user._id, topicName);
+      res.status(200).json(updated);
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  /**
+   * Get recommended topics
+   */
+  async getRecommendedTopics(req, res, next) {
+    try {
+      const recommendations = await briefingService.getRecommendedTopics(req.user._id);
+      res.status(200).json(recommendations);
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  /**
+   * Update full configuration
+   */
+  async updateConfig(req, res, next) {
+    try {
+      const updated = await briefingService.updateConfig(req.user._id, req.body);
+      res.status(200).json(updated);
     } catch (err) {
       next(err);
     }

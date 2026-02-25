@@ -137,10 +137,18 @@ class BriefingRepository extends _$BriefingRepository {
   Future<BriefingData> build() async {
     // Watch for config changes
     ref.watch(briefingConfigRepositoryProvider);
+    final authRepo = ref.watch(authRepositoryProvider);
+    final token = await authRepo.getToken();
     
     try {
       final response = await http
-          .get(Uri.parse(ApiConfig.briefingEndpoint))
+          .get(
+            Uri.parse(ApiConfig.briefingEndpoint),
+            headers: {
+              'Content-Type': 'application/json',
+              if (token != null) 'Authorization': 'Bearer $token',
+            },
+          )
           .timeout(const Duration(seconds: 15));
       
       if (response.statusCode == 200) {
@@ -370,8 +378,17 @@ class BriefingRepository extends _$BriefingRepository {
   }
 
   Future<void> triggerBriefing() async {
-    final response = await http.post(Uri.parse(ApiConfig.briefingTriggerEndpoint));
-    if (response.statusCode != 200) {
+    final authRepo = ref.read(authRepositoryProvider);
+    final token = await authRepo.getToken();
+    
+    final response = await http.post(
+      Uri.parse(ApiConfig.briefingTriggerEndpoint),
+      headers: {
+        'Content-Type': 'application/json',
+        if (token != null) 'Authorization': 'Bearer $token',
+      },
+    );
+    if (response.statusCode != 200 && response.statusCode != 202) {
       throw Exception('Failed to trigger briefing: ${response.statusCode}');
     }
   }

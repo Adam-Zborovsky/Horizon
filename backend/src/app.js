@@ -5,6 +5,7 @@ const morgan = require('morgan');
 const env = require('./config/env');
 const briefingRoutes = require('./features/briefing/briefing.routes');
 const webhookRoutes = require('./features/briefing/webhook.routes');
+const authRoutes = require('./features/auth/auth.routes');
 const errorHandler = require('./middleware/error.middleware');
 
 const app = express();
@@ -22,6 +23,7 @@ app.get('/health', (req, res) => {
 });
 
 // API Routes
+app.use(`${env.API_PREFIX}/auth`, authRoutes);
 app.use(`${env.API_PREFIX}/briefing`, briefingRoutes);
 
 // Webhook Routes (unversioned as they match specific external endpoint requirements)

@@ -34,7 +34,7 @@ final class BriefingConfigRepositoryProvider
 }
 
 String _$briefingConfigRepositoryHash() =>
-    r'e1915fe1f36e9030f914a960fbe9359532da079c';
+    r'af27bb562738d879fb205ae6490643ab9873fef7';
 
 abstract class _$BriefingConfigRepository
     extends $AsyncNotifier<BriefingConfig> {
@@ -92,4 +92,4 @@ final class RecommendedTopicsProvider
   }
 }
 
-String _$recommendedTopicsHash() => r'f17f4f7a1bd5c5d55ad8d77798d034f11b08c0dc';
+String _$recommendedTopicsHash() => r'394ee2a1109dc219dd20a7cbd1d690371c5c8566';

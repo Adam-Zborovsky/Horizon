@@ -1,19 +1,25 @@
 const express = require('express');
 const briefingController = require('./briefing.controller');
+const authMiddleware = require('../../middleware/auth.middleware');
 
 const router = express.Router();
+
+/**
+ * @route POST /api/v1/briefing
+ * Updates the briefing state from agents/n8n
+ * Note: Not protected by authMiddleware because it's called by external services.
+ * In a production app, this would use an API key or webhook secret.
+ */
+router.post('/', briefingController.save);
+
+// All other briefing routes are protected
+router.use(authMiddleware);
 
 /**
  * @route GET /api/v1/briefing
  * Returns the most current briefing
  */
 router.get('/', briefingController.getLatest);
-
-/**
- * @route POST /api/v1/briefing
- * Updates the briefing state from agents
- */
-router.post('/', briefingController.save);
 
 /**
  * @route POST /api/v1/briefing/trigger
@@ -44,4 +50,3 @@ router.get('/config/recommended', briefingController.getRecommendedTopics);
 router.put('/config', briefingController.updateConfig);
 
 module.exports = router;
-

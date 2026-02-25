@@ -6,6 +6,12 @@ const topicSchema = new mongoose.Schema({
 }, { _id: false }); // _id: false if you don't need an ID for subdocuments
 
 const briefingConfigSchema = new mongoose.Schema({
+  user: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true,
+    unique: true,
+  },
   topics: {
     type: [topicSchema],
     default: [

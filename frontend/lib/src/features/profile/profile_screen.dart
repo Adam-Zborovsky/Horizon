@@ -6,12 +6,16 @@ import '../../core/widgets/glass_card.dart';
 import '../briefing/briefing_repository.dart';
 import '../briefing/briefing_config_repository.dart';
 import '../stock/stock_repository.dart';
+import '../auth/auth_provider.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final authState = ref.watch(authProvider);
+    final username = authState.valueOrNull?.username ?? 'Alpha Operator';
+
     return Scaffold(
       backgroundColor: AppTheme.obsidian,
       body: CustomScrollView(
@@ -58,10 +62,20 @@ class ProfileScreen extends ConsumerWidget {
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      'Alpha Operator',
+                      username.toUpperCase(),
                       style: Theme.of(context).textTheme.displaySmall?.copyWith(
                         fontWeight: FontWeight.bold,
                         fontSize: 24,
+                        letterSpacing: 2,
+                      ),
+                    ),
+                    Text(
+                      'ACTIVE SESSION',
+                      style: TextStyle(
+                        color: AppTheme.goldAmber.withOpacity(0.7),
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 4,
                       ),
                     ),
                   ],
@@ -144,7 +158,9 @@ class ProfileScreen extends ConsumerWidget {
                   ),
                   const SizedBox(height: 40),
                   OutlinedButton(
-                    onPressed: () {},
+                    onPressed: () {
+                      ref.read(authProvider.notifier).logout();
+                    },
                     style: OutlinedButton.styleFrom(
                       side: const BorderSide(color: AppTheme.softCrimson),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),

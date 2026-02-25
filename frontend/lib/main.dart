@@ -11,6 +11,8 @@ import 'src/features/nexus/management/manage_watchlist_screen.dart';
 import 'src/features/vault/management/manage_topics_screen.dart';
 import 'src/features/profile/profile_screen.dart';
 import 'src/features/notifications/notifications_screen.dart';
+import 'src/features/auth/login_screen.dart';
+import 'src/features/auth/auth_provider.dart';
 import 'src/core/widgets/glass_card.dart';
 
 void main() {
@@ -24,78 +26,106 @@ void main() {
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 final _shellNavigatorKey = GlobalKey<NavigatorState>();
 
-final _router = GoRouter(
-  initialLocation: '/',
-  navigatorKey: _rootNavigatorKey,
-  routes: [
-    ShellRoute(
-      navigatorKey: _shellNavigatorKey,
-      builder: (context, state, child) {
-        return ScaffoldWithNavBar(child: child);
-      },
-      routes: [
-        GoRoute(
-          path: '/',
-          builder: (context, state) => const DashboardScreen(),
-        ),
-        GoRoute(
-          path: '/nexus',
-          builder: (context, state) => const MarketNexusScreen(),
-        ),
-        GoRoute(
-          path: '/vault',
-          builder: (context, state) {
-            final category = state.uri.queryParameters['category'];
-            return IntelligenceVaultScreen(initialCategory: category);
-          },
-        ),
-        GoRoute(
-          path: '/scanner',
-          builder: (context, state) => AlphaScannerScreen(),
-        ),
-      ],
-    ),
-    GoRoute(
-      path: '/manage-watchlist',
-      parentNavigatorKey: _rootNavigatorKey,
-      builder: (context, state) => const ManageWatchlistScreen(),
-    ),
-    GoRoute(
-      path: '/manage-topics',
-      parentNavigatorKey: _rootNavigatorKey,
-      builder: (context, state) => const ManageTopicsScreen(),
-    ),
-    GoRoute(
-      path: '/profile',
-      parentNavigatorKey: _rootNavigatorKey,
-      builder: (context, state) => const ProfileScreen(),
-    ),
-    GoRoute(
-      path: '/notifications',
-      parentNavigatorKey: _rootNavigatorKey,
-      builder: (context, state) => const NotificationsScreen(),
-    ),
-    GoRoute(
-      path: '/stock/:ticker',
-      parentNavigatorKey: _rootNavigatorKey,
-      builder: (context, state) {
-        final ticker = state.pathParameters['ticker']!;
-        return StockDetailScreen(ticker: ticker);
-      },
-    ),
-  ],
-);
+final _routerProvider = Provider<GoRouter>((ref) {
+  final authState = ref.watch(authProvider);
 
-class AlphaHorizonApp extends StatelessWidget {
+  return GoRouter(
+    initialLocation: '/',
+    navigatorKey: _rootNavigatorKey,
+    redirect: (context, state) {
+      final isLoading = authState.isLoading;
+      if (isLoading) return null;
+
+      final isLoggedIn = authState.valueOrNull != null;
+      final isLoggingIn = state.matchedLocation == '/login';
+
+      if (!isLoggedIn) {
+        return isLoggingIn ? null : '/login';
+      }
+
+      if (isLoggingIn) {
+        return '/';
+      }
+
+      return null;
+    },
+    routes: [
+      GoRoute(
+        path: '/login',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const LoginScreen(),
+      ),
+      ShellRoute(
+        navigatorKey: _shellNavigatorKey,
+        builder: (context, state, child) {
+          return ScaffoldWithNavBar(child: child);
+        },
+        routes: [
+          GoRoute(
+            path: '/',
+            builder: (context, state) => const DashboardScreen(),
+          ),
+          GoRoute(
+            path: '/nexus',
+            builder: (context, state) => const MarketNexusScreen(),
+          ),
+          GoRoute(
+            path: '/vault',
+            builder: (context, state) {
+              final category = state.uri.queryParameters['category'];
+              return IntelligenceVaultScreen(initialCategory: category);
+            },
+          ),
+          GoRoute(
+            path: '/scanner',
+            builder: (context, state) => AlphaScannerScreen(),
+          ),
+        ],
+      ),
+      GoRoute(
+        path: '/manage-watchlist',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const ManageWatchlistScreen(),
+      ),
+      GoRoute(
+        path: '/manage-topics',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const ManageTopicsScreen(),
+      ),
+      GoRoute(
+        path: '/profile',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const ProfileScreen(),
+      ),
+      GoRoute(
+        path: '/notifications',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const NotificationsScreen(),
+      ),
+      GoRoute(
+        path: '/stock/:ticker',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) {
+          final ticker = state.pathParameters['ticker']!;
+          return StockDetailScreen(ticker: ticker);
+        },
+      ),
+    ],
+  );
+});
+
+class AlphaHorizonApp extends ConsumerWidget {
   const AlphaHorizonApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final router = ref.watch(_routerProvider);
+    
     return MaterialApp.router(
       title: 'Alpha Horizon',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.darkTheme,
-      routerConfig: _router,
+      routerConfig: router,
     );
   }
 }

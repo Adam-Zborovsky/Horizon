@@ -1,5 +1,10 @@
 class ApiConfig {
   static const String baseUrl = 'https://alpha-horizon-backend.adamzborovsky.com/api/v1';
+  static const String authEndpoint = '$baseUrl/auth';
+  static const String loginEndpoint = '$authEndpoint/login';
+  static const String registerEndpoint = '$authEndpoint/register';
+  static const String meEndpoint = '$authEndpoint/me';
+  
   static const String briefingEndpoint = '$baseUrl/briefing';
   static const String briefingTriggerEndpoint = '$baseUrl/briefing/trigger';
   static const String briefingConfigEndpoint = '$baseUrl/briefing/config';
