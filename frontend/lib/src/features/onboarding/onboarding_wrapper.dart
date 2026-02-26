@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
 import 'onboarding_provider.dart';
 import 'tutorial_service.dart';
+import 'tutorial_keys.dart';
 
 enum OnboardingStep {
   dashboard(0),
@@ -26,45 +26,52 @@ class OnboardingWrapper extends ConsumerStatefulWidget {
 
 class _OnboardingWrapperState extends ConsumerState<OnboardingWrapper> {
   TutorialCoachMark? _tutorial;
+  bool _tutorialScheduled = false;
 
   @override
   void initState() {
     super.initState();
-    _checkOnboarding();
+    // Wait until the first frame so all widget keys are laid out.
+    WidgetsBinding.instance.addPostFrameCallback((_) => _checkCurrentStep());
   }
 
-  void _checkOnboarding() async {
+  void _checkCurrentStep() async {
+    if (!mounted) return;
     final currentStep = await ref.read(onboardingProvider.future);
-    if (currentStep == widget.step.value) {
-      Future.delayed(const Duration(milliseconds: 800), () {
-        if (mounted) {
-          _showTutorial();
-        }
-      });
+    if (mounted && currentStep == widget.step.value) {
+      _scheduleTutorial();
     }
   }
 
-  void _showTutorial() {
-    List<TargetFocus> targets = [];
+  void _scheduleTutorial() {
+    if (_tutorialScheduled) return;
+    _tutorialScheduled = true;
+    Future.delayed(const Duration(milliseconds: 1500), () {
+      if (mounted) _showTutorial();
+    });
+  }
 
-    switch (widget.step) {
-      case OnboardingStep.dashboard:
-        targets = [
-          ...TutorialService.getNavigationTargets(),
-          ...TutorialService.getDashboardTargets(),
-        ];
-        break;
-      case OnboardingStep.vault:
-        targets = TutorialService.getVaultTargets();
-        break;
-      case OnboardingStep.nexus:
-        targets = TutorialService.getNexusTargets();
-        break;
-      case OnboardingStep.profile:
-        targets = TutorialService.getProfileTargets();
-        break;
+  Future<void> _showTutorial() async {
+    if (!mounted) return;
+
+    // For the profile screen, the highlighted items (Refresh, Logout) are
+    // near the bottom. Scroll them into view before the tutorial starts.
+    if (widget.step == OnboardingStep.profile) {
+      final ctx = TutorialKeys.profileRefresh.currentContext;
+      if (ctx != null) {
+        await Scrollable.ensureVisible(
+          ctx,
+          duration: const Duration(milliseconds: 500),
+          curve: Curves.easeInOut,
+          alignment: 0.4,
+        );
+        await Future.delayed(const Duration(milliseconds: 400));
+      }
     }
 
+    if (!mounted) return;
+
+    final targets = _buildTargets();
     if (targets.isEmpty) return;
 
     _tutorial = TutorialService.createTutorial(
@@ -72,8 +79,13 @@ class _OnboardingWrapperState extends ConsumerState<OnboardingWrapper> {
       targets: targets,
       onFinish: () {
         if (!mounted) return;
-        ref.read(onboardingProvider.notifier).completeStep(widget.step.value);
-        _navigateToNextStep();
+        // Advance the step counter. The next screen's tutorial fires
+        // automatically when the user navigates there for the first time.
+        if (widget.step == OnboardingStep.profile) {
+          ref.read(onboardingProvider.notifier).completeAll();
+        } else {
+          ref.read(onboardingProvider.notifier).completeStep(widget.step.value);
+        }
       },
       onSkip: () {
         if (!mounted) return true;
@@ -85,30 +97,16 @@ class _OnboardingWrapperState extends ConsumerState<OnboardingWrapper> {
     _tutorial?.show(context: context);
   }
 
-  void _navigateToNextStep() {
-    if (!mounted) return;
+  List<TargetFocus> _buildTargets() {
     switch (widget.step) {
       case OnboardingStep.dashboard:
-        Future.delayed(const Duration(milliseconds: 300), () {
-          if (mounted) context.go('/vault');
-        });
-        break;
+        return TutorialService.getDashboardTargets();
       case OnboardingStep.vault:
-        Future.delayed(const Duration(milliseconds: 300), () {
-          if (mounted) context.go('/nexus');
-        });
-        break;
+        return TutorialService.getVaultTargets();
       case OnboardingStep.nexus:
-        Future.delayed(const Duration(milliseconds: 300), () {
-          if (mounted) context.push('/profile');
-        });
-        break;
+        return TutorialService.getNexusTargets();
       case OnboardingStep.profile:
-        ref.read(onboardingProvider.notifier).completeAll();
-        Future.delayed(const Duration(milliseconds: 300), () {
-          if (mounted) context.go('/');
-        });
-        break;
+        return TutorialService.getProfileTargets();
     }
   }
 
@@ -120,6 +118,19 @@ class _OnboardingWrapperState extends ConsumerState<OnboardingWrapper> {
 
   @override
   Widget build(BuildContext context) {
+    // React to onboarding step changes on already-mounted screens.
+    // This handles "Restart Tutorial" from the profile screen — the
+    // DashboardScreen stays mounted in the ShellRoute and its initState
+    // won't re-fire, so we catch the reset (e.g. 100 → 0) here instead.
+    ref.listen<AsyncValue<int>>(onboardingProvider, (previous, next) {
+      final prev = previous?.value;
+      final curr = next.value;
+      if (curr == widget.step.value && prev != widget.step.value) {
+        _tutorialScheduled = false;
+        _scheduleTutorial();
+      }
+    });
+
     return widget.child;
   }
 }
