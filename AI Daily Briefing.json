@@ -11,26 +11,26 @@
           ]
         }
       },
-      "id": "e3366023-c8f8-4e2b-81ae-fa858fadbe11",
+      "id": "51d9002e-55d1-46ae-a8e1-d6b2251a730d",
       "name": "Schedule Trigger",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.1,
       "position": [
-        90112,
-        1664
+        94800,
+        2928
       ]
     },
     {
       "parameters": {
         "jsCode": "\n// Handle both API response format (with .data) and direct file format\nconst inputData = $('Fetch Web Config').first().json.data;\n\nlet rawTopics = inputData.topics || [];\nconst tickers = inputData.tickers || [];\n\n// Extract names from objects if necessary and filter for enabled topics\nconst topics = rawTopics.map(t => {\n  if (typeof t === 'string') return t;\n  return t.enabled !== false ? t.name : null;\n}).filter(t => t !== null);\n\nreturn {\n  topics,\n  tickers,\n  rssQuery: topics.length > 0 ? topics.join(' OR ') : \"market news\"\n};"
       },
-      "id": "1e6a45e9-9999-4c8a-88a1-7ed1728bdace",
+      "id": "082826ba-d66a-4e73-ab17-f08561e88ec5",
       "name": "Config",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        90640,
-        1744
+        95200,
+        3008
       ]
     },
     {
@@ -38,13 +38,13 @@
         "fieldToSplitOut": "tickers",
         "options": {}
       },
-      "id": "82a0a8e6-4860-4f49-971f-bae55652d03d",
+      "id": "c88eddec-bf23-4ddf-927f-ff2b689bdb26",
       "name": "Split Tickers",
       "type": "n8n-nodes-base.itemLists",
       "typeVersion": 3,
       "position": [
-        90800,
-        1600
+        95360,
+        2864
       ]
     },
     {
@@ -61,13 +61,13 @@
         },
         "options": {}
       },
-      "id": "9905a9ef-72f4-46fc-9f49-027381487b44",
+      "id": "28b12ee2-d5f5-45b6-bb2b-213b4673953e",
       "name": "Fetch Stocks",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.1,
       "position": [
-        90976,
-        1600
+        95536,
+        2864
       ]
     },
     {
@@ -75,26 +75,26 @@
         "url": "=https://news.google.com/rss/search?q={{ $node[\"Config\"].json[\"rssQuery\"] }}&hl=en-US&gl=US&ceid=US:en",
         "options": {}
       },
-      "id": "1ce2df4c-cd27-4177-b550-d19dc823e535",
+      "id": "c9f982f7-fdac-4ed1-bb7d-347375c33217",
       "name": "Fetch News RSS",
       "type": "n8n-nodes-base.rssFeedRead",
       "typeVersion": 1,
       "position": [
-        90800,
-        1872
+        95360,
+        3136
       ]
     },
     {
       "parameters": {
         "jsCode": "return {\n  chart: $input.all().map(item => item.json.chart)\n}"
       },
-      "id": "0ef2d607-1624-46e6-83f9-bc81a1e483b9",
+      "id": "80c08098-b122-48e0-9ab7-8ad3a30bf758",
       "name": "Aggregate Stocks",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        91136,
-        1600
+        95696,
+        2864
       ],
       "executeOnce": false
     },
@@ -102,13 +102,13 @@
       "parameters": {
         "jsCode": "const items = $input.all();\nreturn {\n  title: items.map(i => i.json.title),\n  link: items.map(i => i.json.link),\n  content: items.map(i => i.json.content),\n  media: items.map(i => i.json.thumbnail || i.json.enclosure?.url || \"\")\n};"
       },
-      "id": "b44dfb5f-879d-4f04-8a26-b82efed11e82",
+      "id": "4be2b67e-9fd3-44ae-b453-68d84cc818a1",
       "name": "Aggregate News",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        91088,
-        1872
+        95648,
+        3136
       ],
       "executeOnce": false
     },
@@ -118,26 +118,26 @@
         "combinationMode": "mergeByPosition",
         "options": {}
       },
-      "id": "f10cd8a2-9015-41dd-8452-bde25d362e27",
+      "id": "9675e448-24cc-4107-9919-e324b63ba381",
       "name": "Merge Data",
       "type": "n8n-nodes-base.merge",
       "typeVersion": 2.1,
       "position": [
-        91328,
-        1776
+        95888,
+        3040
       ]
     },
     {
       "parameters": {
         "jsCode": "// DATA PRE-PROCESSOR\nconst config = $(\"Config\").first().json;\n\n// Safely get Stocks data\nlet stocks = [];\ntry {\n  const stocksData = $(\"Aggregate Stocks\").first().json;\n  const rawCharts = Array.isArray(stocksData.chart) ? stocksData.chart : [];\n  for (let i = 0; i < rawCharts.length; i++) {\n    const chart = rawCharts[i];\n    if (!chart) continue;\n    const res = chart.result && chart.result[0];\n    if (!res) continue;\n    const meta = res.meta || {};\n    const indicators = res.indicators || {};\n    const quote = (indicators.quote && indicators.quote[0]) || {};\n    const close = (quote.close && quote.close[0]) || meta.regularMarketPrice;\n    const prevClose = meta.chartPreviousClose;\n    stocks.push({\n      ticker: meta.symbol,\n      name: meta.longName || meta.symbol,\n      price: close,\n      change: prevClose ? parseFloat(((close - prevClose) / prevClose * 100).toFixed(2)) : 0,\n      volume: (quote.volume && quote.volume[0]) || meta.regularMarketVolume,\n      ma50: (indicators.quote && indicators.quote[0] && indicators.quote[0].close) ? \n            indicators.quote[0].close.slice(-50).reduce((a,b) => a+b, 0) / Math.min(50, indicators.quote[0].close.length) : close\n    });\n  }\n} catch (e) { console.log('Stocks data processing error', e); }\n\n// Safely get News data\nlet news = [];\ntry {\n  const titles = $(\"Aggregate News\").first().json.title || [];\n  const links = $(\"Aggregate News\").first().json.link || [];\n  const contents = $(\"Aggregate News\").first().json.content || [];\n  const media = $(\"Aggregate News\").first().json.media || [];\n\n  news = titles.map((title, i) => {\n       return {\n        title: Array.isArray(title) ? title[0] : title,\n        l: Array.isArray(links[i]) ? links[i][0] : (links[i] || \"\"),\n        takeaway: (Array.isArray(contents[i]) ? contents[i][0] : (contents[i] || \"\"))\n                   .replace(/<[^>]*>?/gm, '')\n                   .slice(0, 500),\n        img: Array.isArray(media[i]) ? media[i][0] : (media[i] || \"\")\n      };\n    }).filter(item => item.title && item.title.trim().length > 0);\n} catch (e) {\n  console.log(\"News data not available\", e);\n}\n\nif (stocks.length === 0 && news.length === 0) {\n  throw new Error(\"No data available from either Stocks or News. Check your configuration.\");\n}\n\nconst stockContext = JSON.stringify(stocks);\nconst newsContext = JSON.stringify(news.slice(0, 25));\nconst agentDir = \"AI_Briefing/agents\";\n\nconst getCommand = (agentFile, dataStr) => {\n  return `cd /home/adam/n8n && { cat ${agentDir}/${agentFile}; cat <<'EOF'\\n\\nInput: ${dataStr}\\nEOF\\n} | gemini -p \"\" --yolo`;\n};\n\nreturn {\n  stocks,\n  news: news.slice(0, 50),\n  cmd_news: getCommand(\"news_intel.md\", newsContext),\n  cmd_market: getCommand(\"market_analyst.md\", stockContext),\n  cmd_macro: getCommand(\"opportunity_scout.md\", newsContext)\n};"
       },
-      "id": "cf152f6f-d6f4-40f2-b0fc-d2a254e52561",
+      "id": "e843cdcb-d734-4730-8ba9-38433341ed95",
       "name": "Data Pre-processor",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        91536,
-        1776
+        96096,
+        3040
       ],
       "executeOnce": false
     },
@@ -145,13 +145,13 @@
       "parameters": {
         "command": "={{ $('Data Pre-processor').first().json.cmd_news }}"
       },
-      "id": "961884c8-57dc-4fd4-9525-7f5164a0852c",
+      "id": "9eb8ee87-2d49-4fa8-ba8c-c495d862ff95",
       "name": "Agent: News Intel",
       "type": "n8n-nodes-base.ssh",
       "typeVersion": 1,
       "position": [
-        91888,
-        1536
+        96448,
+        2800
       ],
       "credentials": {
         "sshPassword": {
@@ -164,13 +164,13 @@
       "parameters": {
         "command": "={{ $('Data Pre-processor').first().json.cmd_market }}"
       },
-      "id": "7313e217-8225-406b-a8f6-e04aa00683a5",
+      "id": "9800451f-b6fe-443a-9254-238fe54ef94a",
       "name": "Agent: Market Analyst",
       "type": "n8n-nodes-base.ssh",
       "typeVersion": 1,
       "position": [
-        91888,
-        1776
+        96448,
+        3040
       ],
       "credentials": {
         "sshPassword": {
@@ -183,13 +183,13 @@
       "parameters": {
         "command": "={{$('Data Pre-processor').first().json.cmd_macro}}\n"
       },
-      "id": "abccdeea-2b5d-4ebb-81d1-345c4fd2eb41",
+      "id": "c0ddffcd-8d6e-421d-8c01-0621b3a480ee",
       "name": "Agent: Opportunity Scout",
       "type": "n8n-nodes-base.ssh",
       "typeVersion": 1,
       "position": [
-        91888,
-        2016
+        96448,
+        3280
       ],
       "credentials": {
         "sshPassword": {
@@ -204,13 +204,13 @@
         "combinationMode": "mergeByPosition",
         "options": {}
       },
-      "id": "b33127cf-0f53-413f-b759-fbdc7426ddce",
+      "id": "2632fa56-7105-4a98-a873-706e16c4ed84",
       "name": "Merge Agents 1",
       "type": "n8n-nodes-base.merge",
       "typeVersion": 2.1,
       "position": [
-        92352,
-        1632
+        96912,
+        2896
       ]
     },
     {
@@ -219,26 +219,26 @@
         "combinationMode": "mergeByPosition",
         "options": {}
       },
-      "id": "07b37c27-be14-451b-94c2-5b17636c6e48",
+      "id": "e7a384bc-287c-4d1b-be80-25ae9b16030f",
       "name": "Merge Agents 2",
       "type": "n8n-nodes-base.merge",
       "typeVersion": 2.1,
       "position": [
-        92544,
-        1776
+        97104,
+        3040
       ]
     },
     {
       "parameters": {
         "jsCode": "const results = {\n  agent_results: {\n    news_intel: $(\"Agent: News Intel\").first().json,\n    market_analyst: $(\"Agent: Market Analyst\").first().json,\n    opportunity_scout: $(\"Agent: Opportunity Scout\").first().json\n  },\n  market_data: $(\"Data Pre-processor\").first().json.stocks || []\n};\n\nconst agentDir = \"AI_Briefing/agents\";\nconst dataStr = JSON.stringify(results);\n\nconst command = `cd /home/adam/n8n && { cat ${agentDir}/lead_architect.md; cat <<'EOF'\\n\\nInput: ${dataStr}\\nEOF\\n} | gemini -p \"\" --yolo`;\n\nreturn {\n  ...results,\n  cmd_architect: command\n};"
       },
-      "id": "fd3471ba-fc9c-45eb-ba1b-80f230aefa77",
+      "id": "3df9f5ca-ce28-43ad-938a-b4de8dd3d3ec",
       "name": "Aggregate Agent Results",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        92736,
-        1776
+        97296,
+        3040
       ],
       "executeOnce": false
     },
@@ -246,13 +246,13 @@
       "parameters": {
         "command": "={{ $('Aggregate Agent Results').item.json.cmd_architect }}"
       },
-      "id": "6de5c251-4fdb-44c9-ae57-7299c10597b0",
+      "id": "6cdc4fb3-28a5-4762-b851-e96cf51ffe4d",
       "name": "Agent: Lead Architect",
       "type": "n8n-nodes-base.ssh",
       "typeVersion": 1,
       "position": [
-        92928,
-        1776
+        97488,
+        3040
       ],
       "credentials": {
         "sshPassword": {
@@ -297,13 +297,13 @@
         },
         "options": {}
       },
-      "id": "27b665eb-f96e-46e5-b9ae-39f789884d3b",
+      "id": "4dc432d1-d9a0-4950-8189-8a64a64f5c6f",
       "name": "POST Briefing to Web",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.1,
       "position": [
-        93264,
-        1760
+        97824,
+        3024
       ]
     },
     {
@@ -312,13 +312,13 @@
         "path": "trigger-briefing",
         "options": {}
       },
-      "id": "f86192a8-222d-4775-a7ff-6d6223b34924",
+      "id": "bce594d6-3d22-4f64-a285-03634610bdc1",
       "name": "Webhook Trigger",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 1,
       "position": [
-        90112,
-        1856
+        94800,
+        3120
       ],
       "webhookId": "89d64947-6f55-4f49-949d-3b44ed7058d2"
     },
@@ -327,33 +327,14 @@
         "url": "https://alpha-horizon-backend.adamzborovsky.com/api/v1/briefing/config",
         "options": {}
       },
-      "id": "61424ea0-6e1a-4d9d-948f-178498647c68",
+      "id": "935084b9-73d5-4b0e-83c9-546bb1f49af7",
       "name": "Fetch Web Config",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.1,
       "position": [
-        90320,
-        1744
+        95008,
+        3008
       ]
-    },
-    {
-      "parameters": {
-        "command": "=cat <<'EOF' > /home/adam/n8n/AI_Briefing/briefing_config.json\n{{ JSON.stringify($json.data, null, 2) }}\nEOF"
-      },
-      "id": "693df343-c941-49fd-a311-54c2be8b3676",
-      "name": "Save Config to File",
-      "type": "n8n-nodes-base.ssh",
-      "typeVersion": 1,
-      "position": [
-        90496,
-        1744
-      ],
-      "credentials": {
-        "sshPassword": {
-          "id": "0EnwcxrRu8Fo75Hq",
-          "name": "SSH Password account"
-        }
-      }
     },
     {
       "parameters": {
@@ -384,10 +365,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        92048,
-        2016
+        96608,
+        3280
       ],
-      "id": "b67b801b-f872-48dd-9eca-6f50b67d79e5",
+      "id": "55f70a51-0f72-4111-960a-e17941a4cb3e",
       "name": "If2"
     },
     {
@@ -419,10 +400,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        93088,
-        1776
+        97648,
+        3040
       ],
-      "id": "74313609-28a4-4137-a6f9-05595b6f5a33",
+      "id": "7c16cab6-63ee-4b32-bb00-ea87486e4bd6",
       "name": "If3"
     },
     {
@@ -454,10 +435,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        92048,
-        1776
+        96608,
+        3040
       ],
-      "id": "0c5b9dc0-fc81-4848-b798-9ccdeeb66b22",
+      "id": "e28a2cc3-6c9e-4457-befc-b95e43b63de1",
       "name": "If"
     },
     {
@@ -489,35 +470,14 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        92048,
-        1536
+        96608,
+        2800
       ],
-      "id": "39a4aaa2-eb6f-4e10-a3f5-666e72f46632",
+      "id": "275b832b-e981-4059-a5ae-b04334ba3966",
       "name": "If4"
     }
   ],
-  "pinData": {
-    "Schedule Trigger": [
-      {
-        "json": {
-          "timestamp": "2026-02-23T21:08:11.602+00:00",
-          "Readable date": "February 23rd 2026, 9:08:11 pm",
-          "Readable time": "9:08:11 pm",
-          "Day of week": "Monday",
-          "Year": "2026",
-          "Month": "February",
-          "Day of month": "23",
-          "Hour": "21",
-          "Minute": "08",
-          "Second": "11",
-          "Timezone": "UTC (UTC+00:00)"
-        },
-        "pairedItem": {
-          "item": 0
-        }
-      }
-    ]
-  },
+  "pinData": {},
   "connections": {
     "Webhook Trigger": {
       "main": [
@@ -542,17 +502,6 @@
       ]
     },
     "Fetch Web Config": {
-      "main": [
-        [
-          {
-            "node": "Save Config to File",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Save Config to File": {
       "main": [
         [
           {
@@ -825,7 +774,7 @@
     "callerPolicy": "workflowsFromSameOwner",
     "timeSavedPerExecution": 25
   },
-  "versionId": "d60c077f-be3d-4d79-8dab-a0a11e086567",
+  "versionId": "fb186d8f-0506-48c4-af07-e8dd91a5548b",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "462f72c1cb99079f620d4944d8321993a68403a9c985b9412cdd835b5280d81a"

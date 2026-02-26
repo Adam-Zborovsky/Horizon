@@ -1,5 +1,3 @@
-const fs = require('fs');
-const path = require('path');
 const Briefing = require('./briefing.model');
 const BriefingConfig = require('./briefing_config.model');
 const marketUtil = require('../../utils/market');
@@ -232,7 +230,12 @@ class BriefingService {
       config.tickers = tickers;
     }
 
-    return await config.save();
+    const saved = await config.save();
+    
+    // Trigger workflow because config changed
+    this.triggerWorkflow(userId, 'config_update');
+    
+    return saved;
   }
 
   /**
@@ -253,7 +256,9 @@ class BriefingService {
       }
     }
     
-    return await config.save();
+    const saved = await config.save();
+    this.triggerWorkflow(userId, 'topic_toggle');
+    return saved;
   }
 
   /**
@@ -264,7 +269,9 @@ class BriefingService {
     if (!config || !config.topics) return null;
     
     config.topics = config.topics.filter(t => t.name !== topicName);
-    return await config.save();
+    const saved = await config.save();
+    this.triggerWorkflow(userId, 'topic_remove');
+    return saved;
   }
 
   /**
@@ -325,6 +332,9 @@ class BriefingService {
       const user = await User.findById(userId);
       if (!user) return;
 
+      // Get user's configuration
+      const config = await this.getConfig(userId);
+
       console.log(`BriefingService: Triggering n8n workflow for user ${user.username} (Reason: ${reason})...`);
       
       const response = await fetch(env.N8N_WEBHOOK_URL, {
@@ -335,6 +345,10 @@ class BriefingService {
           reason: reason,
           userId: userId,
           username: user.username,
+          config: {
+            topics: config.topics,
+            tickers: config.tickers
+          },
           timestamp: new Date().toISOString()
         })
       });
