@@ -8,6 +8,7 @@ import '../briefing/briefing_config_repository.dart';
 import '../stock/stock_repository.dart';
 import '../auth/auth_provider.dart';
 import '../onboarding/onboarding_wrapper.dart';
+import '../onboarding/onboarding_provider.dart';
 import '../onboarding/tutorial_keys.dart';
 
 class ProfileScreen extends ConsumerWidget {
@@ -155,9 +156,25 @@ class ProfileScreen extends ConsumerWidget {
                           onTap: () => context.push('/manage-topics'),
                         ),
                         _SettingsItem(
-                          icon: Icons.list_alt_rounded, 
+                          icon: Icons.list_alt_rounded,
                           title: 'Manage Global Watchlist',
                           onTap: () => context.push('/manage-watchlist'),
+                        ),
+                        _SettingsItem(
+                          icon: Icons.school_outlined,
+                          title: 'Restart Tutorial',
+                          onTap: () async {
+                            // Reset state immediately (synchronous in-memory update),
+                            // then navigate to dashboard so the tutorial fires fresh.
+                            // Using go('/') replaces the entire navigation stack back
+                            // to the shell root, ensuring DashboardScreen remounts.
+                            await ref.read(onboardingProvider.notifier).resetOnboarding();
+                            if (context.mounted) {
+                              // Pop profile off the root navigator first, then go to
+                              // dashboard so the shell route child is fully replaced.
+                              context.go('/');
+                            }
+                          },
                         ),
                       ],
                     ),

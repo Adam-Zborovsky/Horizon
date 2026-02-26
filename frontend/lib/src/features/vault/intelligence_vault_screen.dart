@@ -67,13 +67,13 @@ class _IntelligenceVaultScreenState extends ConsumerState<IntelligenceVaultScree
                       .toList();
                   
                   final categories = ['All', ...validCategories];
-                  
+
                   if (_selectedCategory != 'All' && !validCategories.contains(_selectedCategory) && briefing.data.containsKey(_selectedCategory)) {
                     categories.add(_selectedCategory);
                   }
 
-                  if (categories.length <= 1) return const SliverToBoxAdapter(child: SizedBox.shrink());
-
+                  // Always render the pills widget so the tutorial key is attached
+                  // even on a fresh account with no categories yet.
                   return SliverToBoxAdapter(
                     child: _CategoryPills(
                       key: TutorialKeys.vaultFilter,

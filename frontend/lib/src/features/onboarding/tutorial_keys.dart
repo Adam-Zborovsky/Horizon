@@ -19,6 +19,12 @@ class TutorialKeys {
   // Nexus
   static final nexusManage = GlobalKey();
 
+  // Scanner
+  static final scannerPulse = GlobalKey();
+  static final scannerOpportunities = GlobalKey();
+  static final scannerDivergences = GlobalKey();
+  static final scannerCatalysts = GlobalKey();
+
   // Profile
   static final profileRefresh = GlobalKey();
   static final profileLogout = GlobalKey();

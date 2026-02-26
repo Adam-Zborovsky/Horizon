@@ -7,6 +7,8 @@ import 'package:horizon/src/core/widgets/section_header.dart';
 import 'package:horizon/src/features/stock/stock_repository.dart';
 import 'package:horizon/src/features/briefing/briefing_repository.dart';
 import 'package:horizon/src/features/briefing/briefing_model.dart';
+import 'package:horizon/src/features/onboarding/onboarding_wrapper.dart';
+import 'package:horizon/src/features/onboarding/tutorial_keys.dart';
 
 class AlphaScannerScreen extends ConsumerWidget {
   const AlphaScannerScreen({super.key});
@@ -16,117 +18,148 @@ class AlphaScannerScreen extends ConsumerWidget {
     final briefingAsync = ref.watch(briefingRepositoryProvider);
     final stocksAsync = ref.watch(stockRepositoryProvider);
 
-    return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: RadialGradient(
-            center: Alignment.center,
-            radius: 1.5,
-            colors: [
-              Color(0x22FFB800),
-              AppTheme.obsidian,
-            ],
+    return OnboardingWrapper(
+      step: OnboardingStep.scanner,
+      child: Scaffold(
+        body: Container(
+          decoration: const BoxDecoration(
+            gradient: RadialGradient(
+              center: Alignment.center,
+              radius: 1.5,
+              colors: [
+                Color(0x22FFB800),
+                AppTheme.obsidian,
+              ],
+            ),
           ),
-        ),
-        child: CustomScrollView(
-          physics: const BouncingScrollPhysics(),
-          slivers: [
-            const _ScannerHeader(),
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const _ScannerPulse(),
-                    const SizedBox(height: 30),
-                    
-                    const SectionHeader(title: 'Strategic Opportunities'),
-                    const SizedBox(height: 8),
-                    const Text(
-                      'High-conviction ideas scouted from across the market.',
-                      style: TextStyle(color: Colors.white24, fontSize: 11),
-                    ),
-                    const SizedBox(height: 15),
-                    briefingAsync.when(
-                      data: (briefing) {
-                        // Find opportunities category dynamically
-                        final oppEntry = briefing.data.entries.where(
-                          (e) => e.key.toLowerCase().contains('opportunit') ||
-                                 e.key.toLowerCase().contains('alpha') ||
-                                 e.key.toLowerCase().contains('divergent')
-                        );
-                        final opportunities = oppEntry.isNotEmpty ? oppEntry.first.value.items : <BriefingItem>[];
-                        if (opportunities.isEmpty) {
-                          return const _EmptyScannerState(message: 'No new opportunities scouted.');
-                        }
-                        return Column(
-                          children: opportunities.map((item) => _StrategicOpportunityCard(item: item)).toList(),
-                        );
-                      },
-                      loading: () => const LinearProgressIndicator(color: AppTheme.goldAmber),
-                      error: (e, s) => const _EmptyScannerState(message: 'Opportunity feed offline.'),
-                    ),
+          child: CustomScrollView(
+            physics: const BouncingScrollPhysics(),
+            slivers: [
+              const _ScannerHeader(),
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _ScannerPulse(key: TutorialKeys.scannerPulse),
+                      const SizedBox(height: 30),
 
-                    const SizedBox(height: 30),
-                    const SectionHeader(title: 'High-Signal Divergences'),
-                    const SizedBox(height: 8),
-                    const Text(
-                      'AI Sentiment is high, but price action remains flat/down.',
-                      style: TextStyle(color: Colors.white24, fontSize: 11),
-                    ),
-                    const SizedBox(height: 15),
-                    stocksAsync.when(
-                      data: (stocks) {
-                        final divergences = stocks.where((s) => s.sentiment > 0.5 && s.changePercent <= 0.5).toList();
-                        if (divergences.isEmpty) {
-                          return const _EmptyScannerState(message: 'No active divergences detected.');
-                        }
-                        return Column(
-                          children: divergences.map((s) => _DivergenceCard(stock: s)).toList(),
-                        );
-                      },
-                      loading: () => const LinearProgressIndicator(color: AppTheme.goldAmber),
-                      error: (e, s) => const SizedBox.shrink(),
-                    ),
-                    
-                    const SizedBox(height: 30),
-                    const SectionHeader(title: 'Strategic Catalysts'),
-                    const SizedBox(height: 8),
-                    const Text(
-                      'Deep-intelligence anchors extracted from daily briefing.',
-                      style: TextStyle(color: Colors.white24, fontSize: 11),
-                    ),
-                    const SizedBox(height: 15),
-                    briefingAsync.when(
-                      data: (briefing) {
-                        final List<BriefingItem> catalysts = [];
-                        briefing.data.forEach((key, cat) {
-                          final lk = key.toLowerCase();
-                          // Skip opportunities-type categories, show only news/analysis catalysts
-                          if (!lk.contains('opportunit') && !lk.contains('divergent')) {
-                            catalysts.addAll(cat.items.where((i) => i.takeaway != null || i.title != null));
+                      SectionHeader(
+                        key: TutorialKeys.scannerOpportunities,
+                        title: 'Strategic Opportunities',
+                      ),
+                      const SizedBox(height: 8),
+                      const Text(
+                        'High-conviction ideas scouted from across the market.',
+                        style: TextStyle(color: Colors.white24, fontSize: 11),
+                      ),
+                      const SizedBox(height: 15),
+                      briefingAsync.when(
+                        data: (briefing) {
+                          final oppEntry = briefing.data.entries.where(
+                            (e) =>
+                                e.key.toLowerCase().contains('opportunit') ||
+                                e.key.toLowerCase().contains('alpha') ||
+                                e.key.toLowerCase().contains('divergent'),
+                          );
+                          final opportunities = oppEntry.isNotEmpty
+                              ? oppEntry.first.value.items
+                              : <BriefingItem>[];
+                          if (opportunities.isEmpty) {
+                            return const _EmptyScannerState(
+                              message:
+                                  'No opportunities scouted yet. Trigger a briefing from your profile to populate this section.',
+                            );
                           }
-                        });
-                        
-                        if (catalysts.isEmpty) {
-                          return const _EmptyScannerState(message: 'No catalysts identified.');
-                        }
-                            
-                        return Column(
-                          children: catalysts.take(5).map((i) => _CatalystCard(item: i)).toList(),
-                        );
-                      },
-                      loading: () => const SizedBox.shrink(),
-                      error: (e, s) => const SizedBox.shrink(),
-                    ),
-                    
-                    const SizedBox(height: 120),
-                  ],
+                          return Column(
+                            children: opportunities
+                                .map((item) => _StrategicOpportunityCard(item: item))
+                                .toList(),
+                          );
+                        },
+                        loading: () => const LinearProgressIndicator(color: AppTheme.goldAmber),
+                        error: (e, s) =>
+                            const _EmptyScannerState(message: 'Opportunity feed offline.'),
+                      ),
+
+                      const SizedBox(height: 30),
+                      SectionHeader(
+                        key: TutorialKeys.scannerDivergences,
+                        title: 'High-Signal Divergences',
+                      ),
+                      const SizedBox(height: 8),
+                      const Text(
+                        'AI Sentiment is high, but price action remains flat/down.',
+                        style: TextStyle(color: Colors.white24, fontSize: 11),
+                      ),
+                      const SizedBox(height: 15),
+                      stocksAsync.when(
+                        data: (stocks) {
+                          final divergences = stocks
+                              .where((s) => s.sentiment > 0.5 && s.changePercent <= 0.5)
+                              .toList();
+                          if (divergences.isEmpty) {
+                            return const _EmptyScannerState(
+                              message:
+                                  'No divergences detected. Add stocks to your watchlist to enable this feed.',
+                            );
+                          }
+                          return Column(
+                            children:
+                                divergences.map((s) => _DivergenceCard(stock: s)).toList(),
+                          );
+                        },
+                        loading: () => const LinearProgressIndicator(color: AppTheme.goldAmber),
+                        error: (e, s) => const SizedBox.shrink(),
+                      ),
+
+                      const SizedBox(height: 30),
+                      SectionHeader(
+                        key: TutorialKeys.scannerCatalysts,
+                        title: 'Strategic Catalysts',
+                      ),
+                      const SizedBox(height: 8),
+                      const Text(
+                        'Deep-intelligence anchors extracted from daily briefing.',
+                        style: TextStyle(color: Colors.white24, fontSize: 11),
+                      ),
+                      const SizedBox(height: 15),
+                      briefingAsync.when(
+                        data: (briefing) {
+                          final List<BriefingItem> catalysts = [];
+                          briefing.data.forEach((key, cat) {
+                            final lk = key.toLowerCase();
+                            if (!lk.contains('opportunit') && !lk.contains('divergent')) {
+                              catalysts.addAll(
+                                cat.items.where((i) => i.takeaway != null || i.title != null),
+                              );
+                            }
+                          });
+                          if (catalysts.isEmpty) {
+                            return const _EmptyScannerState(
+                              message:
+                                  'No catalysts identified yet. Run a briefing cycle to populate this section.',
+                            );
+                          }
+                          return Column(
+                            children: catalysts
+                                .take(5)
+                                .map((i) => _CatalystCard(item: i))
+                                .toList(),
+                          );
+                        },
+                        loading: () => const SizedBox.shrink(),
+                        error: (e, s) => const SizedBox.shrink(),
+                      ),
+
+                      const SizedBox(height: 120),
+                    ],
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -135,6 +168,7 @@ class AlphaScannerScreen extends ConsumerWidget {
 
 class _ScannerHeader extends StatelessWidget {
   const _ScannerHeader({super.key});
+
   @override
   Widget build(BuildContext context) {
     return SliverAppBar(
@@ -147,9 +181,9 @@ class _ScannerHeader extends StatelessWidget {
       title: Text(
         'Alpha Scanner',
         style: Theme.of(context).textTheme.titleLarge?.copyWith(
-          fontWeight: FontWeight.bold,
-          letterSpacing: -0.5,
-        ),
+              fontWeight: FontWeight.bold,
+              letterSpacing: -0.5,
+            ),
       ),
     );
   }
@@ -157,6 +191,7 @@ class _ScannerHeader extends StatelessWidget {
 
 class _ScannerPulse extends StatefulWidget {
   const _ScannerPulse({super.key});
+
   @override
   State<_ScannerPulse> createState() => _ScannerPulseState();
 }
@@ -168,8 +203,12 @@ class _ScannerPulseState extends State<_ScannerPulse> with SingleTickerProviderS
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(vsync: this, duration: const Duration(seconds: 3))..repeat(reverse: true);
-    _animation = Tween<double>(begin: 0.1, end: 0.4).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
+    _controller =
+        AnimationController(vsync: this, duration: const Duration(seconds: 3))
+          ..repeat(reverse: true);
+    _animation = Tween<double>(begin: 0.1, end: 0.4).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
   }
 
   @override
@@ -188,7 +227,9 @@ class _ScannerPulseState extends State<_ScannerPulse> with SingleTickerProviderS
           height: 60,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: AppTheme.goldAmber.withAlpha((255 * _animation.value).toInt())),
+            border: Border.all(
+              color: AppTheme.goldAmber.withAlpha((255 * _animation.value).toInt()),
+            ),
             gradient: LinearGradient(
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
@@ -201,7 +242,12 @@ class _ScannerPulseState extends State<_ScannerPulse> with SingleTickerProviderS
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.radar_rounded, color: AppTheme.goldAmber.withAlpha((255 * (_animation.value + 0.4)).toInt()), size: 20),
+              Icon(
+                Icons.radar_rounded,
+                color: AppTheme.goldAmber
+                    .withAlpha((255 * (_animation.value + 0.4)).toInt()),
+                size: 20,
+              ),
               const SizedBox(width: 12),
               Text(
                 'SYSTEM SCANNING LIVE',
@@ -222,17 +268,14 @@ class _ScannerPulseState extends State<_ScannerPulse> with SingleTickerProviderS
 
 class _StrategicOpportunityCard extends StatelessWidget {
   final BriefingItem item;
-
   const _StrategicOpportunityCard({super.key, required this.item});
 
   @override
   Widget build(BuildContext context) {
-    // Handle sentiment as dynamic (double score or String description)
     String sentimentText = '0.0 SNT';
-    
     if (item.sentimentScore != null) {
-       final val = item.sentimentScore!;
-       sentimentText = '${val > 0 ? "+" : ""}${val.toStringAsFixed(1)} SNT';
+      final val = item.sentimentScore!;
+      sentimentText = '${val > 0 ? "+" : ""}${val.toStringAsFixed(1)} SNT';
     } else if (item.sentiment is num) {
       final val = (item.sentiment as num).toDouble();
       sentimentText = '${val > 0 ? "+" : ""}${val.toStringAsFixed(1)} SNT';
@@ -272,7 +315,7 @@ class _StrategicOpportunityCard extends StatelessWidget {
                             fontSize: 10,
                             letterSpacing: 1,
                           ),
-                           overflow: TextOverflow.ellipsis,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ],
                     ),
@@ -328,7 +371,6 @@ class _StrategicOpportunityCard extends StatelessWidget {
 
 class _DivergenceCard extends StatelessWidget {
   final StockData stock;
-
   const _DivergenceCard({super.key, required this.stock});
 
   @override
@@ -344,10 +386,23 @@ class _DivergenceCard extends StatelessWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(stock.ticker, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white, fontFamily: 'Montserrat')),
+                  Text(
+                    stock.ticker,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                      fontFamily: 'Montserrat',
+                    ),
+                  ),
                   Text(
                     'DIVERGENCE DETECTED',
-                    style: TextStyle(color: AppTheme.goldAmber.withAlpha(204), fontSize: 8, fontWeight: FontWeight.bold, letterSpacing: 1),
+                    style: TextStyle(
+                      color: AppTheme.goldAmber.withAlpha(204),
+                      fontSize: 8,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 1,
+                    ),
                   ),
                 ],
               ),
@@ -355,8 +410,18 @@ class _DivergenceCard extends StatelessWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  Text('+${stock.sentiment.toStringAsFixed(1)} SNT', style: const TextStyle(color: AppTheme.goldAmber, fontWeight: FontWeight.bold, fontSize: 14)),
-                  Text('${stock.changePercent.toStringAsFixed(2)}% Action', style: const TextStyle(color: Colors.white38, fontSize: 10)),
+                  Text(
+                    '+${stock.sentiment.toStringAsFixed(1)} SNT',
+                    style: const TextStyle(
+                      color: AppTheme.goldAmber,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ),
+                  ),
+                  Text(
+                    '${stock.changePercent.toStringAsFixed(2)}% Action',
+                    style: const TextStyle(color: Colors.white38, fontSize: 10),
+                  ),
                 ],
               ),
               const SizedBox(width: 16),
@@ -371,7 +436,6 @@ class _DivergenceCard extends StatelessWidget {
 
 class _CatalystCard extends StatelessWidget {
   final BriefingItem item;
-
   const _CatalystCard({super.key, required this.item});
 
   @override
@@ -397,16 +461,26 @@ class _CatalystCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(item.title ?? 'Market Event', 
-                      maxLines: 1, 
+                    Text(
+                      item.title ?? 'Market Event',
+                      maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.white)
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                        color: Colors.white,
+                      ),
                     ),
                     const SizedBox(height: 2),
-                    Text(item.takeaway?.toUpperCase() ?? 'CATALYST', 
-                      maxLines: 1, 
+                    Text(
+                      item.takeaway?.toUpperCase() ?? 'CATALYST',
+                      maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: TextStyle(color: AppTheme.goldAmber.withAlpha(102), fontSize: 9, letterSpacing: 1)
+                      style: TextStyle(
+                        color: AppTheme.goldAmber.withAlpha(102),
+                        fontSize: 9,
+                        letterSpacing: 1,
+                      ),
                     ),
                   ],
                 ),
@@ -434,7 +508,11 @@ class _EmptyScannerState extends StatelessWidget {
         border: Border.all(color: Colors.white.withAlpha(12)),
       ),
       child: Center(
-        child: Text(message, style: const TextStyle(color: Colors.white24, fontSize: 12)),
+        child: Text(
+          message,
+          textAlign: TextAlign.center,
+          style: const TextStyle(color: Colors.white24, fontSize: 12),
+        ),
       ),
     );
   }
