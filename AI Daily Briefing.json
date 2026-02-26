@@ -3,25 +3,6 @@
   "nodes": [
     {
       "parameters": {
-        "rule": {
-          "interval": [
-            {
-              "triggerAtHour": 6
-            }
-          ]
-        }
-      },
-      "id": "51d9002e-55d1-46ae-a8e1-d6b2251a730d",
-      "name": "Schedule Trigger",
-      "type": "n8n-nodes-base.scheduleTrigger",
-      "typeVersion": 1.1,
-      "position": [
-        94800,
-        2928
-      ]
-    },
-    {
-      "parameters": {
         "jsCode": "\n// Handle both API response format (with .data) and direct file format\nconst inputJson = $input.first().json;\nconst inputData = inputJson.data || (inputJson.body && inputJson.body.config);\nlet rawTopics = inputData.topics || [];\nconst tickers = inputData.tickers || [];\nconst userId = inputData.userId || (inputJson.body && inputJson.body.userId) || null;\n\n// Extract names from objects if necessary and filter for enabled topics\nconst topics = rawTopics.map(t => {\n  if (typeof t === 'string') return t;\n  return t.enabled !== false ? t.name : null;\n}).filter(t => t !== null);\n\nreturn {\n  topics,\n  tickers,\n  userId,\n  rssQuery: topics.length > 0 ? topics.join(' OR ') : \"market news\"\n};"
       },
       "id": "082826ba-d66a-4e73-ab17-f08561e88ec5",
@@ -328,20 +309,6 @@
     },
     {
       "parameters": {
-        "url": "https://alpha-horizon-backend.adamzborovsky.com/api/v1/briefing/config/system?userId={{ $vars.BRIEFING_USER_ID }}",
-        "options": {}
-      },
-      "id": "935084b9-73d5-4b0e-83c9-546bb1f49af7",
-      "name": "Fetch Web Config",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.1,
-      "position": [
-        95008,
-        2928
-      ]
-    },
-    {
-      "parameters": {
         "conditions": {
           "options": {
             "caseSensitive": true,
@@ -484,28 +451,6 @@
   "pinData": {},
   "connections": {
     "Webhook Trigger": {
-      "main": [
-        [
-          {
-            "node": "Config",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Schedule Trigger": {
-      "main": [
-        [
-          {
-            "node": "Fetch Web Config",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Fetch Web Config": {
       "main": [
         [
           {

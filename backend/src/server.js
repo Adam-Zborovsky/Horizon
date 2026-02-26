@@ -1,10 +1,14 @@
 const app = require('./app');
 const env = require('./config/env');
 const connectDB = require('./config/db');
+const { startScheduler } = require('./utils/scheduler');
 
 const startServer = async () => {
   // Connect to the database
   await connectDB();
+
+  // Start the daily briefing scheduler
+  startScheduler();
 
   // Listen for requests
   app.listen(env.PORT, () => {
