@@ -27,29 +27,41 @@ void main() {
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 final _shellNavigatorKey = GlobalKey<NavigatorState>();
 
+// Notifier that triggers router refresh when auth state changes,
+// without recreating the GoRouter instance itself.
+class _RouterNotifier extends ChangeNotifier {
+  _RouterNotifier(this._ref) {
+    _ref.listen<AsyncValue<dynamic>>(authProvider, (_, __) => notifyListeners());
+  }
+  final Ref _ref;
+
+  String? redirect(BuildContext context, GoRouterState state) {
+    final authState = _ref.read(authProvider);
+    if (authState.isLoading) return null;
+
+    final isLoggedIn = authState.value != null;
+    final isLoggingIn = state.matchedLocation == '/login';
+
+    if (!isLoggedIn) return isLoggingIn ? null : '/login';
+    if (isLoggingIn) return '/';
+    return null;
+  }
+}
+
+final _routerNotifierProvider = Provider<_RouterNotifier>((ref) {
+  final notifier = _RouterNotifier(ref);
+  ref.onDispose(notifier.dispose);
+  return notifier;
+});
+
 final _routerProvider = Provider<GoRouter>((ref) {
-  final authState = ref.watch(authProvider);
+  final notifier = ref.watch(_routerNotifierProvider);
 
   return GoRouter(
     initialLocation: '/',
     navigatorKey: _rootNavigatorKey,
-    redirect: (context, state) {
-      final isLoading = authState.isLoading;
-      if (isLoading) return null;
-
-      final isLoggedIn = authState.value != null;
-      final isLoggingIn = state.matchedLocation == '/login';
-
-      if (!isLoggedIn) {
-        return isLoggingIn ? null : '/login';
-      }
-
-      if (isLoggingIn) {
-        return '/';
-      }
-
-      return null;
-    },
+    refreshListenable: notifier,
+    redirect: notifier.redirect,
     routes: [
       GoRoute(
         path: '/login',
@@ -120,8 +132,27 @@ class AlphaHorizonApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final authState = ref.watch(authProvider);
+
+    // Show a splash screen while auth resolves to prevent blank first frame.
+    if (authState.isLoading) {
+      return MaterialApp(
+        debugShowCheckedModeBanner: false,
+        theme: AppTheme.darkTheme,
+        home: const Scaffold(
+          backgroundColor: Color(0xFF0A0A0F),
+          body: Center(
+            child: CircularProgressIndicator(
+              color: Color(0xFFFFB800),
+              strokeWidth: 2,
+            ),
+          ),
+        ),
+      );
+    }
+
     final router = ref.watch(_routerProvider);
-    
+
     return MaterialApp.router(
       title: 'Alpha Horizon',
       debugShowCheckedModeBanner: false,

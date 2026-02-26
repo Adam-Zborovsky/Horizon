@@ -13,9 +13,9 @@ class TutorialService {
     return TutorialCoachMark(
       targets: targets,
       colorShadow: AppTheme.obsidian,
-      textSkip: "SKIP PROTOCOL",
+      textSkip: "SKIP TUTORIAL",
       paddingFocus: 10,
-      opacityShadow: 0.8,
+      opacityShadow: 0.6,
       onFinish: onFinish,
       onSkip: onSkip,
       onClickTarget: (target) {},
@@ -31,24 +31,28 @@ class TutorialService {
         key: TutorialKeys.navDash,
         title: "Intelligence Hub",
         content: "Access your primary War Room dashboard for real-time strategic overviews.",
+        align: ContentAlign.top,
       ),
       _buildTarget(
         identify: "nav_vault",
         key: TutorialKeys.navVault,
         title: "Intelligence Vault",
         content: "Deep-dive into categorical reports and historical intelligence data.",
+        align: ContentAlign.top,
       ),
       _buildTarget(
         identify: "nav_nexus",
         key: TutorialKeys.navNexus,
         title: "Market Nexus",
         content: "Monitor live asset performance and identify strategic divergences.",
+        align: ContentAlign.top,
       ),
       _buildTarget(
         identify: "nav_scan",
         key: TutorialKeys.navScan,
         title: "Alpha Scanner",
         content: "Utilize advanced scanning protocols to identify emerging market patterns.",
+        align: ContentAlign.top,
       ),
     ];
   }
@@ -72,6 +76,7 @@ class TutorialService {
         key: TutorialKeys.navProfile,
         title: "Operator Profile",
         content: "Access secure configurations and manual protocol refreshes.",
+        align: ContentAlign.bottom,
       ),
     ];
   }
