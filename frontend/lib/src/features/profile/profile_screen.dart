@@ -166,12 +166,7 @@ class ProfileScreen extends ConsumerWidget {
                           onTap: () async {
                             await ref.read(onboardingProvider.notifier).resetOnboarding();
                             if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('Tutorial reset. Navigate to the dashboard to begin.'),
-                                  backgroundColor: AppTheme.obsidian,
-                                ),
-                              );
+                              context.go('/');
                             }
                           },
                         ),

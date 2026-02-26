@@ -38,8 +38,10 @@ class Onboarding extends _$Onboarding {
 
   Future<void> resetOnboarding() async {
     final prefs = await SharedPreferences.getInstance();
+    if (!ref.mounted) return;
     await prefs.remove(_keyCompleted);
     await prefs.remove(_keyStep);
+    if (!ref.mounted) return;
     state = const AsyncValue.data(0);
   }
 }
