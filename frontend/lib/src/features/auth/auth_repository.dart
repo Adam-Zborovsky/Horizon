@@ -73,7 +73,11 @@ class AuthRepository {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        return User.fromJson(data['user']);
+        final userJson = data['user'] as Map<String, dynamic>;
+        return User(
+          id: userJson['id']?.toString() ?? '',
+          username: userJson['username']?.toString() ?? '',
+        );
       } else {
         await logout();
         return null;
