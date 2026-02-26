@@ -19,7 +19,7 @@ class Onboarding extends _$Onboarding {
 
   Future<void> completeStep(int step) async {
     final prefs = await SharedPreferences.getInstance();
-    final currentStep = state.valueOrNull ?? 0;
+    final currentStep = state.value ?? 0;
     if (step >= currentStep) {
       await prefs.setInt(_keyStep, step + 1);
       state = AsyncValue.data(step + 1);

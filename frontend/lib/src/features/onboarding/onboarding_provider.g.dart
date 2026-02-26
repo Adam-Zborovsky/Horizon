@@ -32,7 +32,7 @@ final class OnboardingProvider extends $AsyncNotifierProvider<Onboarding, int> {
   Onboarding create() => Onboarding();
 }
 
-String _$onboardingHash() => r'33ceb6e9f6939f6aeb04623b2b77ff8c6a6a53eb';
+String _$onboardingHash() => r'8e6c366ec682d9ef219cb78d21d587adb7bda891';
 
 abstract class _$Onboarding extends $AsyncNotifier<int> {
   FutureOr<int> build();

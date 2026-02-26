@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../core/api/api_config.dart';
 import 'package:horizon/src/features/briefing/briefing_config_repository.dart';
+import '../auth/auth_repository.dart';
 import 'briefing_model.dart';
 
 part 'briefing_repository.g.dart';

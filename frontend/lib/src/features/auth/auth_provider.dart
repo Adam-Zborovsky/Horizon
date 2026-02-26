@@ -21,6 +21,16 @@ class Auth extends _$Auth {
     }
   }
 
+  Future<void> register(String username, String password) async {
+    state = const AsyncValue.loading();
+    final result = await ref.read(authRepositoryProvider).register(username, password);
+    if (result != null) {
+      state = AsyncValue.data(result.user);
+    } else {
+      state = AsyncValue.error('Registration failed', StackTrace.current);
+    }
+  }
+
   Future<void> logout() async {
     await ref.read(authRepositoryProvider).logout();
     state = const AsyncValue.data(null);

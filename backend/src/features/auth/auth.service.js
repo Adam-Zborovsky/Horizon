@@ -29,6 +29,7 @@ class AuthService {
    */
   async login(username, password) {
     const user = await User.findOne({ username: username.toLowerCase() });
+    
     if (!user) {
       const error = new Error('Invalid credentials');
       error.status = 401;

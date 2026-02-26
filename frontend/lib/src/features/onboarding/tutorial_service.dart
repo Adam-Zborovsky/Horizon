@@ -8,7 +8,7 @@ class TutorialService {
     required BuildContext context,
     required List<TargetFocus> targets,
     Function()? onFinish,
-    Function()? onSkip,
+    bool Function()? onSkip,
   }) {
     return TutorialCoachMark(
       targets: targets,

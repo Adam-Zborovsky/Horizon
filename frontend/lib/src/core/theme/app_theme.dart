@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 class AppTheme {
   // Primary Obsidian & Gold Palette
   static const Color obsidian = Color(0xFF0C0C0C);
+  static const Color charcoalBlack = Color(0xFF161618);
   static const Color goldAmber = Color(0xFFFFB800);
   static const Color softCrimson = Color(0xFFFF4B5C); // For negative price movements
   static const Color glassWhite = Color(0x14FFFFFF);

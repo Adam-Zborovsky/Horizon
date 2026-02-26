@@ -26,10 +26,6 @@ class AuthRepository {
         final authResponse = AuthResponse.fromJson(data);
         await saveToken(authResponse.token);
         return authResponse;
-      } else if (response.statusCode == 401) {
-        // Simple auto-register if login fails (as implied by user's "simple login" request)
-        // Or we can just throw error. Let's try to register if login fails with 401/404.
-        return await register(username, password);
       }
       return null;
     } catch (e) {
@@ -105,6 +101,6 @@ class AuthRepository {
 }
 
 @riverpod
-AuthRepository authRepository(AuthRepositoryRef ref) {
+AuthRepository authRepository(Ref ref) {
   return AuthRepository();
 }

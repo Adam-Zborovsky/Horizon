@@ -16,6 +16,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isLoading = false;
+  bool _isLogin = true;
   String? _error;
 
   @override
@@ -25,7 +26,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     super.dispose();
   }
 
-  Future<void> _handleLogin() async {
+  Future<void> _handleAuth() async {
     final username = _usernameController.text.trim();
     final password = _passwordController.text.trim();
 
@@ -40,10 +41,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     });
 
     try {
-      await ref.read(authProvider.notifier).login(username, password);
-      // Success will be handled by the router state change
+      if (_isLogin) {
+        await ref.read(authProvider.notifier).login(username, password);
+      } else {
+        await ref.read(authProvider.notifier).register(username, password);
+      }
     } catch (e) {
-      setState(() => _error = 'Authentication failed. Please try again.');
+      setState(() => _error = _isLogin 
+        ? 'Authentication failed. Please check your credentials.' 
+        : 'Registration failed. Username may already be taken.');
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
@@ -127,7 +133,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         Text(
-                          'AUTHENTICATION',
+                          _isLogin ? 'AUTHENTICATION' : 'REGISTRATION',
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             fontSize: 16,
@@ -168,9 +174,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         
                         const SizedBox(height: 32),
                         
-                        // Login Button
+                        // Login/Register Button
                         ElevatedButton(
-                          onPressed: _isLoading ? null : _handleLogin,
+                          onPressed: _isLoading ? null : _handleAuth,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppTheme.goldAmber,
                             foregroundColor: Colors.black,
@@ -190,9 +196,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                     color: Colors.black,
                                   ),
                                 )
-                              : const Text(
-                                  'INITIATE SESSION',
-                                  style: TextStyle(
+                              : Text(
+                                  _isLogin ? 'INITIATE SESSION' : 'ESTABLISH IDENTITY',
+                                  style: const TextStyle(
                                     fontWeight: FontWeight.bold,
                                     letterSpacing: 1.5,
                                   ),
@@ -200,12 +206,24 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         ),
                         
                         const SizedBox(height: 16),
-                        Text(
-                          'New accounts will be registered automatically.',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 10,
-                            color: Colors.white.withOpacity(0.3),
+                        TextButton(
+                          onPressed: _isLoading ? null : () {
+                            setState(() {
+                              _isLogin = !_isLogin;
+                              _error = null;
+                            });
+                          },
+                          child: Text(
+                            _isLogin 
+                              ? 'NEW OPERATOR? REGISTER HERE' 
+                              : 'EXISTING OPERATOR? LOGIN HERE',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              color: AppTheme.goldAmber.withOpacity(0.6),
+                              letterSpacing: 1,
+                            ),
                           ),
                         ),
                       ],
