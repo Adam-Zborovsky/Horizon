@@ -76,18 +76,16 @@ class _OnboardingWrapperState extends ConsumerState<OnboardingWrapper> {
       context: context,
       targets: targets,
       onFinish: () {
-        if (mounted) {
-          setState(() => _isTutorialShowing = false);
-        }
+        if (!mounted) return;
+        setState(() => _isTutorialShowing = false);
         ref.read(onboardingProvider.notifier).completeStep(widget.step.value);
         if (widget.step == OnboardingStep.profile) {
           ref.read(onboardingProvider.notifier).completeAll();
         }
       },
       onSkip: () {
-        if (mounted) {
-          setState(() => _isTutorialShowing = false);
-        }
+        if (!mounted) return true;
+        setState(() => _isTutorialShowing = false);
         ref.read(onboardingProvider.notifier).completeAll();
         return true;
       },
@@ -98,7 +96,7 @@ class _OnboardingWrapperState extends ConsumerState<OnboardingWrapper> {
 
   @override
   void dispose() {
-    _tutorial?.finish();
+    _tutorial = null;
     super.dispose();
   }
 
