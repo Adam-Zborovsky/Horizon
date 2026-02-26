@@ -127,6 +127,20 @@ class BriefingController {
   }
 
   /**
+   * Get Opportunity Scout appearance stats for a ticker
+   */
+  async getOpportunityStats(req, res, next) {
+    try {
+      const { ticker } = req.params;
+      if (!ticker) return res.status(400).json({ message: 'ticker is required' });
+      const stats = await briefingService.getOpportunityStats(req.user._id, ticker);
+      res.status(200).json(stats);
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  /**
    * Update full configuration
    */
   async updateConfig(req, res, next) {

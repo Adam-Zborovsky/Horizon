@@ -5,6 +5,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/widgets/glass_card.dart';
 import '../briefing/briefing_repository.dart';
 import '../briefing/briefing_model.dart';
+import '../stock/opportunity_stats_provider.dart';
 import 'saved_articles_provider.dart';
 import '../onboarding/onboarding_wrapper.dart';
 import '../onboarding/tutorial_keys.dart';
@@ -355,10 +356,18 @@ class _NewsCard extends ConsumerWidget {
               ],
             ),
             const SizedBox(height: 12),
-            if (item.ticker != null) 
-              Text(
-                item.ticker!,
-                style: TextStyle(color: AppTheme.goldAmber.withOpacity(0.7), fontWeight: FontWeight.bold, fontSize: 12, letterSpacing: 1),
+            if (item.ticker != null)
+              Row(
+                children: [
+                  Text(
+                    item.ticker!,
+                    style: TextStyle(color: AppTheme.goldAmber.withOpacity(0.7), fontWeight: FontWeight.bold, fontSize: 12, letterSpacing: 1),
+                  ),
+                  if (categoryName == 'Alpha Opportunities') ...[
+                    const SizedBox(width: 8),
+                    _StreakBadge(ticker: item.ticker!),
+                  ],
+                ],
               ),
             Text(
               title,
@@ -444,6 +453,42 @@ class _NewsCard extends ConsumerWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _StreakBadge extends ConsumerWidget {
+  final String ticker;
+  const _StreakBadge({required this.ticker});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final statsAsync = ref.watch(opportunityStatsProvider(ticker));
+    return statsAsync.when(
+      data: (stats) {
+        if (stats.consecutiveTradingDays < 2) return const SizedBox.shrink();
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+          decoration: BoxDecoration(
+            color: AppTheme.goldAmber.withOpacity(0.12),
+            borderRadius: BorderRadius.circular(6),
+            border: Border.all(color: AppTheme.goldAmber.withOpacity(0.3)),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.local_fire_department_rounded, size: 11, color: AppTheme.goldAmber),
+              const SizedBox(width: 3),
+              Text(
+                '${stats.consecutiveTradingDays}d',
+                style: const TextStyle(color: AppTheme.goldAmber, fontWeight: FontWeight.bold, fontSize: 10),
+              ),
+            ],
+          ),
+        );
+      },
+      loading: () => const SizedBox.shrink(),
+      error: (_, __) => const SizedBox.shrink(),
     );
   }
 }

@@ -405,6 +405,96 @@ class BriefingService {
   }
 
   /**
+   * Get Opportunity Scout appearance stats for a specific ticker
+   * Returns how many times the ticker appeared in the last 30 days
+   * and the current consecutive trading-day streak.
+   */
+  async getOpportunityStats(userId, ticker) {
+    const upperTicker = ticker.toUpperCase();
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+    const briefings = await Briefing.find({
+      user: userId,
+      createdAt: { $gte: thirtyDaysAgo },
+    }).sort({ createdAt: -1 });
+
+    // Helper: check if a briefing's data contains ticker in opportunities
+    const tickerInOpportunities = (data) => {
+      if (!data || typeof data !== 'object') return false;
+      const opportunityKeys = ['opportunities', 'opportunity_scout'];
+      for (const key of opportunityKeys) {
+        const section = data[key];
+        if (Array.isArray(section)) {
+          if (section.some(item => item && typeof item.ticker === 'string' && item.ticker.toUpperCase() === upperTicker)) {
+            return true;
+          }
+        }
+      }
+      return false;
+    };
+
+    // Trading days: Mon–Fri (simple check, no holiday calendar)
+    const isTradingDay = (date) => {
+      const day = date.getDay();
+      return day !== 0 && day !== 6;
+    };
+
+    let totalLast30Days = 0;
+    let consecutiveTradingDays = 0;
+    let lastSeen = null;
+
+    // Collect all dates where ticker appeared (most recent first)
+    const appearanceDates = [];
+    for (const briefing of briefings) {
+      let data = briefing.data;
+      if (typeof data === 'string') {
+        try { data = JSON.parse(data); } catch (e) { continue; }
+      }
+      if (tickerInOpportunities(data)) {
+        totalLast30Days++;
+        appearanceDates.push(new Date(briefing.createdAt));
+      }
+    }
+
+    if (appearanceDates.length > 0) {
+      lastSeen = appearanceDates[0];
+
+      // Calculate consecutive trading-day streak from today backwards
+      // Walk backward through trading days and check if ticker appeared on each
+      const appearanceDateStrings = new Set(
+        appearanceDates.map(d => d.toISOString().split('T')[0])
+      );
+
+      let cursor = new Date();
+      cursor.setHours(0, 0, 0, 0);
+
+      // If today is not a trading day, start from last trading day
+      while (!isTradingDay(cursor)) {
+        cursor.setDate(cursor.getDate() - 1);
+      }
+
+      // Walk back counting consecutive trading days with appearances
+      let checking = new Date(cursor);
+      while (true) {
+        if (!isTradingDay(checking)) {
+          checking.setDate(checking.getDate() - 1);
+          continue;
+        }
+        const dateStr = checking.toISOString().split('T')[0];
+        if (appearanceDateStrings.has(dateStr)) {
+          consecutiveTradingDays++;
+          checking.setDate(checking.getDate() - 1);
+        } else {
+          break;
+        }
+      }
+    }
+
+    return { totalLast30Days, consecutiveTradingDays, lastSeen };
+  }
+
+  /**
    * Get historical briefings for a user
    */
   async getHistory(userId, page = 1, limit = 20) {

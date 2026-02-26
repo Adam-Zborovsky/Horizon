@@ -9,6 +9,7 @@ class ApiConfig {
   static const String briefingTriggerEndpoint = '$baseUrl/briefing/trigger';
   static const String briefingConfigEndpoint = '$baseUrl/briefing/config';
   static const String briefingSearchEndpoint = '$baseUrl/briefing/search';
+  static String opportunityStatsEndpoint(String ticker) => '$baseUrl/briefing/opportunity-stats/$ticker';
   
   // N8N Webhook for configuration updates
   // Adjusting to common N8N webhook pattern based on backend domain

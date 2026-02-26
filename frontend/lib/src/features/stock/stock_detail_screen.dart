@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/glass_card.dart';
 import '../stock/stock_repository.dart';
+import '../stock/opportunity_stats_provider.dart';
 import '../dashboard/watchlist_provider.dart';
 
 class StockDetailScreen extends ConsumerWidget {
@@ -176,6 +177,8 @@ class _DetailContent extends ConsumerWidget {
                   const SizedBox(height: 12),
                   ...stock.risks!.map((r) => _MacroItem(title: 'Risk Factor', description: r, icon: Icons.warning_amber_rounded, color: AppTheme.softCrimson)),
                 ],
+                const SizedBox(height: 30),
+                _OpportunityScoutStats(ticker: stock.ticker),
                 const SizedBox(height: 100),
               ],
             ),
@@ -307,15 +310,109 @@ class _SentimentPill extends StatelessWidget {
   }
 }
 
+class _OpportunityScoutStats extends ConsumerWidget {
+  final String ticker;
+  const _OpportunityScoutStats({required this.ticker});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final statsAsync = ref.watch(opportunityStatsProvider(ticker));
+
+    return statsAsync.when(
+      data: (stats) {
+        if (stats.totalLast30Days == 0) return const SizedBox.shrink();
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'OPPORTUNITY SCOUT',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: AppTheme.goldAmber,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 1.5,
+              ),
+            ),
+            const SizedBox(height: 12),
+            GlassCard(
+              padding: const EdgeInsets.all(20),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: _ScoutStatTile(
+                      icon: Icons.local_fire_department_rounded,
+                      value: '${stats.consecutiveTradingDays}',
+                      label: stats.consecutiveTradingDays == 1 ? 'day streak' : 'days in a row',
+                      color: stats.consecutiveTradingDays >= 3 ? AppTheme.goldAmber : Colors.white70,
+                    ),
+                  ),
+                  Container(width: 1, height: 50, color: Colors.white10),
+                  Expanded(
+                    child: _ScoutStatTile(
+                      icon: Icons.calendar_month_rounded,
+                      value: '${stats.totalLast30Days}',
+                      label: 'times / 30 days',
+                      color: Colors.white70,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        );
+      },
+      loading: () => const SizedBox.shrink(),
+      error: (_, __) => const SizedBox.shrink(),
+    );
+  }
+}
+
+class _ScoutStatTile extends StatelessWidget {
+  final IconData icon;
+  final String value;
+  final String label;
+  final Color color;
+
+  const _ScoutStatTile({
+    required this.icon,
+    required this.value,
+    required this.label,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Icon(icon, color: color, size: 22),
+        const SizedBox(height: 8),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 28,
+            fontWeight: FontWeight.bold,
+            color: color,
+            fontFamily: 'Montserrat',
+          ),
+        ),
+        Text(
+          label,
+          style: const TextStyle(fontSize: 11, color: Colors.white38),
+        ),
+      ],
+    );
+  }
+}
+
 class _MacroItem extends StatelessWidget {
   final String title;
   final String description;
   final IconData icon;
   final Color color;
-  
+
   const _MacroItem({
-    required this.title, 
-    required this.description, 
+    required this.title,
+    required this.description,
     this.icon = Icons.hub_outlined,
     this.color = AppTheme.goldAmber,
   });

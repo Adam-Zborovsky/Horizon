@@ -45,6 +45,7 @@ router.get('/config', briefingController.getConfig);
  */
 router.get('/history', briefingController.getHistory);
 
+router.get('/opportunity-stats/:ticker', briefingController.getOpportunityStats);
 router.put('/config/topic/:topicName', briefingController.toggleTopic);
 router.delete('/config/topic/:topicName', briefingController.removeTopic);
 router.get('/config/recommended', briefingController.getRecommendedTopics);
