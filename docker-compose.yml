@@ -3,16 +3,8 @@ services:
     build: ./backend
     container_name: alpha-horizon-backend
     restart: unless-stopped
-    ports:
-      - "8181:8181"
-    environment:
-      - PORT=${PORT}
-      - NODE_ENV=${NODE_ENV}
-      - MONGODB_URI=${MONGODB_URI}
-      - API_PREFIX=${API_PREFIX}
-      - N8N_WEBHOOK_URL=${N8N_WEBHOOK_URL}
-      - JWT_SECRET=${JWT_SECRET}
-      - JWT_EXPIRES_IN=${JWT_EXPIRES_IN}
+    env_file:
+      - .env
     depends_on:
       - mongodb
     networks:
@@ -30,7 +22,6 @@ services:
 
 networks:
   alpha-horizon-network:
-    name: alpha-horizon-network
     driver: bridge
   adam:
     external: true
