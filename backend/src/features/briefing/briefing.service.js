@@ -157,6 +157,10 @@ class BriefingService {
               obj.price = factual.price;
               obj.change = factual.change;
               if (!obj.name) obj.name = factual.name;
+              obj.is_invalid = false;
+            } else {
+              // Mark as invalid if not found in real market data
+              obj.is_invalid = true;
             }
           }
           Object.values(obj).forEach(val => {

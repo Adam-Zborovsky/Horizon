@@ -474,34 +474,41 @@ class _MarketNexusList extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 child: Row(
                   children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          stock.ticker,
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                            letterSpacing: 0.5,
+                    Expanded(
+                      flex: 3,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            stock.ticker,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                              letterSpacing: 0.5,
+                            ),
                           ),
-                        ),
-                        Text(
-                          stock.name,
-                          style: TextStyle(fontSize: 11, color: Colors.white.withOpacity(0.3)),
-                        ),
-                      ],
-                    ),
-                    const Spacer(),
-                    SizedBox(
-                      height: 30,
-                      width: 70,
-                      child: _MiniSparkline(
-                        data: stock.history, 
-                        color: stock.changePercent >= 0 ? AppTheme.goldAmber : AppTheme.softCrimson
+                          Text(
+                            stock.name,
+                            style: TextStyle(fontSize: 11, color: Colors.white.withOpacity(0.3)),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
                       ),
                     ),
-                    const SizedBox(width: 20),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      flex: 2,
+                      child: SizedBox(
+                        height: 30,
+                        child: _MiniSparkline(
+                          data: stock.history, 
+                          color: stock.changePercent >= 0 ? AppTheme.goldAmber : AppTheme.softCrimson
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 15),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
