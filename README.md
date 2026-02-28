@@ -1,12 +1,12 @@
-# AlphaHorizon: Strategic Intelligence Platform
+# Horizon: Strategic Intelligence Platform
 
-AlphaHorizon is a high-performance, AI-driven market intelligence application designed for tactical traders and strategic investors. It synthesizes global news, geopolitical data, and market metrics into actionable intelligence.
+Horizon is a high-performance, AI-driven market intelligence application designed for tactical traders and strategic investors. It synthesizes global news, geopolitical data, and market metrics into actionable intelligence.
 
-![AlphaHorizon Icon](frontend/assets/branding/app_icon.png)
+![Horizon Icon](frontend/assets/branding/app_icon.png)
 
 ## Core Value Proposition
 
-AlphaHorizon transforms noise into signal. By leveraging specialized AI agents, the platform provides:
+Horizon transforms noise into signal. By leveraging specialized AI agents, the platform provides:
 
 - **Strategic Sentiment Analysis (SNT)**: Moving beyond simple price action to understand the "why" behind market shifts.
 - **Geopolitical Nexus**: Connecting global events directly to asset performance.
