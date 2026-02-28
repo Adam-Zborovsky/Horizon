@@ -2,6 +2,8 @@
 
 Horizon is a high-performance, AI-driven market intelligence application designed for tactical traders and strategic investors. It synthesizes global news, geopolitical data, and market metrics into actionable intelligence.
 
+## Live On: https://horizon.adamzborovsky.com
+
 ![Horizon Icon](frontend/assets/branding/app_icon.png)
 
 ## Core Value Proposition
