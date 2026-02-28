@@ -239,8 +239,7 @@ class BriefingService {
 
     const saved = await config.save();
     
-    // Trigger workflow because config changed
-    this.triggerWorkflow(userId, 'config_update');
+    // Workflow trigger removed from here to follow daily schedule only.
     
     return saved;
   }
@@ -264,7 +263,7 @@ class BriefingService {
     }
     
     const saved = await config.save();
-    this.triggerWorkflow(userId, 'topic_toggle');
+    // Workflow trigger removed from here to follow daily schedule only.
     return saved;
   }
 
@@ -277,7 +276,7 @@ class BriefingService {
     
     config.topics = config.topics.filter(t => t.name !== topicName);
     const saved = await config.save();
-    this.triggerWorkflow(userId, 'topic_remove');
+    // Workflow trigger removed from here to follow daily schedule only.
     return saved;
   }
 
