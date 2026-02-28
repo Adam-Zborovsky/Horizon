@@ -14,6 +14,7 @@ services:
     build: ./frontend
     container_name: horizon-frontend
     restart: unless-stopped
+    # Note: Run 'flutter build web' in the frontend directory before building this container
     depends_on:
       - horizon-backend
     networks:
