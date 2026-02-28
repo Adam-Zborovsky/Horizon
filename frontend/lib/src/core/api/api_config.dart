@@ -1,5 +1,5 @@
 class ApiConfig {
-  static const String baseUrl = 'https://alpha-horizon-backend.adamzborovsky.com/api/v1';
+  static const String baseUrl = '/api/v1';
   static const String authEndpoint = '$baseUrl/auth';
   static const String loginEndpoint = '$authEndpoint/login';
   static const String registerEndpoint = '$authEndpoint/register';
