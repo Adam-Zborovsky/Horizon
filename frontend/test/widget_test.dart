@@ -6,7 +6,7 @@ import 'package:horizon/main.dart';
 void main() {
   testWidgets('App smoke test', (WidgetTester tester) async {
     // Build our app and trigger a frame.
-    await tester.pumpWidget(const ProviderScope(child: AlphaHorizonApp()));
+    await tester.pumpWidget(const ProviderScope(child: HorizonApp()));
 
     // Verify that the title is present.
     expect(find.text('HORIZON'), findsOneWidget);
