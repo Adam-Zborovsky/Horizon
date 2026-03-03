@@ -15,7 +15,9 @@ _StockData _$StockDataFromJson(Map<String, dynamic> json) => _StockData(
       .map((e) => (e as num).toDouble())
       .toList(),
   sentiment: (json['sentiment'] as num).toDouble(),
+  source: $enumDecode(_$StockSourceEnumMap, json['source']),
   analysis: json['analysis'] as String?,
+  horizon: json['horizon'] as String?,
   catalysts: (json['catalysts'] as List<dynamic>?)
       ?.map((e) => e as String)
       .toList(),
@@ -31,11 +33,18 @@ Map<String, dynamic> _$StockDataToJson(_StockData instance) =>
       'changePercent': instance.changePercent,
       'history': instance.history,
       'sentiment': instance.sentiment,
+      'source': _$StockSourceEnumMap[instance.source]!,
       'analysis': instance.analysis,
+      'horizon': instance.horizon,
       'catalysts': instance.catalysts,
       'risks': instance.risks,
       'potentialPriceAction': instance.potentialPriceAction,
     };
+
+const _$StockSourceEnumMap = {
+  StockSource.watchlist: 'watchlist',
+  StockSource.opportunity: 'opportunity',
+};
 
 // **************************************************************************
 // RiverpodGenerator
@@ -68,7 +77,7 @@ final class StockRepositoryProvider
   StockRepository create() => StockRepository();
 }
 
-String _$stockRepositoryHash() => r'3072c715095ba6435a48ae223404138798950a02';
+String _$stockRepositoryHash() => r'0ee4775b6f0d24c16ab2821bf1a9797cf95447c3';
 
 abstract class _$StockRepository extends $AsyncNotifier<List<StockData>> {
   FutureOr<List<StockData>> build();

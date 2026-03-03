@@ -53,12 +53,18 @@ class _DetailContent extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  stock.name,
-                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: Colors.white38,
-                    fontWeight: FontWeight.w500,
-                  ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      stock.name,
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                        color: Colors.white38,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    _SourceBadge(source: stock.source),
+                  ],
                 ),
                 const SizedBox(height: 8),
                 Row(
@@ -96,8 +102,34 @@ class _DetailContent extends ConsumerWidget {
                   child: _MainChart(data: stock.history, color: color),
                 ),
                 const SizedBox(height: 40),
+                if (stock.horizon != null) ...[
+                  Text(
+                    'STRATEGIC HORIZON',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: AppTheme.goldAmber,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 1.5,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      const Icon(Icons.timer_outlined, color: AppTheme.goldAmber, size: 16),
+                      const SizedBox(width: 8),
+                      Text(
+                        stock.horizon!.toUpperCase(),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 30),
+                ],
                 Text(
-                  'AI STRATEGIC SIGNAL',
+                  stock.source == StockSource.opportunity ? 'TACTICAL SETUP' : 'AI STRATEGIC SIGNAL',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: AppTheme.goldAmber,
                     fontWeight: FontWeight.bold,
@@ -113,28 +145,33 @@ class _DetailContent extends ConsumerWidget {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Text(
-                            'Strategic Position',
-                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+                          Text(
+                            stock.source == StockSource.opportunity ? 'Opportunity Thesis' : 'Strategic Position',
+                            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
                           ),
                           _SentimentPill(score: stock.sentiment),
                         ],
                       ),
                       const SizedBox(height: 16),
                       Text(
-                        _getDisplayString(stock.analysis) ?? "No AI analysis available for this ticker today.",
+                        _getDisplayString(stock.analysis) ?? (stock.source == StockSource.opportunity 
+                            ? "AI discovery algorithm identified this as a high-potential target, but detailed reasoning is still being synthesized."
+                            : "No AI analysis available for this ticker today. Ticker is being tracked in your strategic watchlist."),
                         style: Theme.of(context).textTheme.bodyLarge?.copyWith(height: 1.5),
                       ),
                       const SizedBox(height: 20),
                       OutlinedButton.icon(
-                        onPressed: () => context.go('/vault?category=${Uri.encodeComponent('Market Analysis')}'),
+                        onPressed: () => context.go('/vault?category=${Uri.encodeComponent(stock.source == StockSource.opportunity ? 'Opportunities' : 'Market Analysis')}'),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: AppTheme.goldAmber,
                           side: BorderSide(color: AppTheme.goldAmber.withOpacity(0.3)),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                         ),
                         icon: const Icon(Icons.analytics_outlined, size: 18),
-                        label: const Text('VIEW MARKET ANALYSIS', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1)),
+                        label: Text(
+                          stock.source == StockSource.opportunity ? 'VIEW ALL OPPORTUNITIES' : 'VIEW MARKET ANALYSIS', 
+                          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1)
+                        ),
                       ),
                       if (stock.potentialPriceAction != null) ...[
                         const SizedBox(height: 20),
@@ -444,6 +481,35 @@ class _MacroItem extends StatelessWidget {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SourceBadge extends StatelessWidget {
+  final StockSource source;
+  const _SourceBadge({required this.source});
+
+  @override
+  Widget build(BuildContext context) {
+    final isOpp = source == StockSource.opportunity;
+    final color = isOpp ? AppTheme.goldAmber : Colors.white38;
+    
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: color.withOpacity(0.2)),
+      ),
+      child: Text(
+        isOpp ? 'ALPHA' : 'WATCHLIST',
+        style: TextStyle(
+          color: color,
+          fontSize: 10,
+          fontWeight: FontWeight.bold,
+          letterSpacing: 0.5,
         ),
       ),
     );

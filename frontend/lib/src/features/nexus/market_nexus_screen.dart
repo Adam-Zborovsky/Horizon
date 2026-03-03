@@ -35,7 +35,56 @@ class MarketNexusScreen extends ConsumerWidget {
               const _NexusHeader(),
               const _NexusToolbar(),
               stocksAsync.when(
-                data: (stocks) => _NexusList(stocks: stocks),
+                data: (stocks) {
+                  final watchlist = stocks.where((s) => s.source == StockSource.watchlist).toList();
+                  final opportunities = stocks.where((s) => s.source == StockSource.opportunity).toList();
+                  
+                  return SliverMainAxisGroup(
+                    slivers: [
+                      if (watchlist.isNotEmpty) ...[
+                        const SliverToBoxAdapter(
+                          child: Padding(
+                            padding: EdgeInsets.fromLTRB(24, 20, 24, 10),
+                            child: Text(
+                              'STRATEGIC WATCHLIST',
+                              style: TextStyle(
+                                color: Colors.white38,
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 1.5,
+                              ),
+                            ),
+                          ),
+                        ),
+                        _NexusList(stocks: watchlist),
+                      ],
+                      if (opportunities.isNotEmpty) ...[
+                        const SliverToBoxAdapter(
+                          child: Padding(
+                            padding: EdgeInsets.fromLTRB(24, 40, 24, 10),
+                            child: Text(
+                              'OPPORTUNITY SCOUT',
+                              style: TextStyle(
+                                color: AppTheme.goldAmber,
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 1.5,
+                              ),
+                            ),
+                          ),
+                        ),
+                        _NexusList(stocks: opportunities, isOpportunity: true),
+                      ],
+                      if (watchlist.isEmpty && opportunities.isEmpty)
+                        const SliverFillRemaining(
+                          hasScrollBody: false,
+                          child: Center(
+                            child: Text('Add stocks to start tracking prices.', style: TextStyle(color: Colors.white24)),
+                          ),
+                        ),
+                    ],
+                  );
+                },
                 loading: () => const SliverFillRemaining(child: Center(child: CircularProgressIndicator())),
                 error: (err, stack) => SliverToBoxAdapter(child: Center(child: Text('Error: $err'))),
               ),
@@ -121,24 +170,16 @@ class _NexusToolbar extends StatelessWidget {
 
 class _NexusList extends StatelessWidget {
   final List<StockData> stocks;
-  const _NexusList({required this.stocks});
+  final bool isOpportunity;
+  const _NexusList({required this.stocks, this.isOpportunity = false});
 
   @override
   Widget build(BuildContext context) {
-    if (stocks.isEmpty) {
-      return const SliverFillRemaining(
-        hasScrollBody: false,
-        child: Center(
-          child: Text('Add stocks to start tracking prices.', style: TextStyle(color: Colors.white24)),
-        ),
-      );
-    }
-
     return SliverList(
       delegate: SliverChildBuilderDelegate(
         (context, index) {
           final stock = stocks[index];
-          return _NexusCard(stock: stock);
+          return _NexusCard(stock: stock, isOpportunity: isOpportunity);
         },
         childCount: stocks.length,
       ),
@@ -148,7 +189,8 @@ class _NexusList extends StatelessWidget {
 
 class _NexusCard extends StatelessWidget {
   final StockData stock;
-  const _NexusCard({required this.stock});
+  final bool isOpportunity;
+  const _NexusCard({required this.stock, this.isOpportunity = false});
 
   @override
   Widget build(BuildContext context) {
@@ -167,15 +209,38 @@ class _NexusCard extends StatelessWidget {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        stock.ticker,
-                        style: const TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                          fontFamily: 'Montserrat',
-                          letterSpacing: 1,
-                        ),
+                      Row(
+                        children: [
+                          Text(
+                            stock.ticker,
+                            style: const TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                              fontFamily: 'Montserrat',
+                              letterSpacing: 1,
+                            ),
+                          ),
+                          if (isOpportunity) ...[
+                            const SizedBox(width: 10),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: AppTheme.goldAmber.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(4),
+                                border: Border.all(color: AppTheme.goldAmber.withOpacity(0.2)),
+                              ),
+                              child: const Text(
+                                'ALPHA',
+                                style: TextStyle(
+                                  color: AppTheme.goldAmber,
+                                  fontSize: 8,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
                       ),
                       Text(
                         stock.name,

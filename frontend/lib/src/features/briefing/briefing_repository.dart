@@ -59,7 +59,7 @@ class BriefingRepository extends _$BriefingRepository {
       result['potential_price_action'] = result['price_action_projection'];
     }
     
-    // Flatten nested analysis if present
+    // Flatten nested analysis if present but keep structure for StockRepository
     if (result['analysis'] is Map<String, dynamic>) {
       final analysis = result['analysis'] as Map<String, dynamic>;
       
@@ -76,9 +76,8 @@ class BriefingRepository extends _$BriefingRepository {
       if (result['risks'] == null && risks != null) result['risks'] = risks;
       if (result['potential_price_action'] == null && priceAction != null) result['potential_price_action'] = priceAction;
 
-      // Convert the main analysis field to a readable string if it's still a Map
-      // Prefer outlook, or join all values
-      result['analysis'] = outlook ?? analysis.values.where((v) => v is String).join('\n');
+      // DO NOT flatten here anymore, let StockRepository handle the Map structure
+      // result['analysis'] = outlook ?? analysis.values.where((v) => v is String).join('\n');
     }
     
     // Safety: ensure fields expected by json_serializable as String? are actually strings

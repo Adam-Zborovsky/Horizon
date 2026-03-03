@@ -7,6 +7,8 @@ import '../briefing/briefing_config_repository.dart';
 part 'stock_repository.freezed.dart';
 part 'stock_repository.g.dart';
 
+enum StockSource { watchlist, opportunity }
+
 @freezed
 abstract class StockData with _$StockData {
   const factory StockData({
@@ -16,7 +18,9 @@ abstract class StockData with _$StockData {
     required double changePercent,
     required List<double> history, 
     required double sentiment,
+    required StockSource source,
     String? analysis,
+    String? horizon,
     List<String>? catalysts,
     List<String>? risks,
     String? potentialPriceAction,
@@ -71,10 +75,18 @@ class StockRepository extends _$StockRepository {
     }
 
     // 1. Process items from briefing
-    for (final category in briefing.data.values) {
+    for (final entry in briefing.data.entries) {
+      final categoryName = entry.key.toLowerCase();
+      final category = entry.value;
+      
+      final isOpportunityCategory = categoryName.contains('opportunit') || categoryName.contains('scout');
+
       for (final item in category.items) {
         if (item.ticker != null) {
           final ticker = item.ticker!.toUpperCase();
+          
+          // If already seen, we might want to update it if the new one is an "opportunity"
+          // but for now let's just keep the first one found (usually market_analysis is first)
           if (seen.contains(ticker)) continue;
 
           // Price extraction
@@ -114,6 +126,18 @@ class StockRepository extends _$StockRepository {
           final List<double> history = item.history ?? _generateHistory(price > 0 ? price : 100.0, change, sentiment, random, isMarketClosed);
           final finalPrice = price > 0 ? price : (history.isNotEmpty ? history.last : 100.0);
 
+          // Analysis mapping logic
+          String? analysisText;
+          if (item.analysis is String) {
+            analysisText = item.analysis;
+          } else if (item.analysis is Map) {
+            // Check for market_outlook or similar nested fields
+            final map = item.analysis as Map<String, dynamic>;
+            analysisText = map['market_outlook'] ?? map['summary'] ?? item.takeaway;
+          } else {
+            analysisText = item.explanation ?? item.takeaway;
+          }
+
           stocks.add(StockData(
             ticker: ticker,
             name: item.name ?? ticker,
@@ -121,7 +145,9 @@ class StockRepository extends _$StockRepository {
             changePercent: change,
             history: history,
             sentiment: sentiment,
-            analysis: item.analysis is String ? item.analysis : (item.analysis is Map ? item.takeaway : null),
+            source: isOpportunityCategory ? StockSource.opportunity : StockSource.watchlist,
+            analysis: analysisText,
+            horizon: item.horizon,
             catalysts: item.catalysts,
             risks: item.risks,
             potentialPriceAction: item.potentialPriceAction,
@@ -145,6 +171,7 @@ class StockRepository extends _$StockRepository {
           changePercent: 0.0,
           history: history,
           sentiment: 0.0,
+          source: StockSource.watchlist,
         ));
         seen.add(upperTicker);
       }

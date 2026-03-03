@@ -74,14 +74,41 @@ class DashboardScreen extends ConsumerWidget {
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20),
                   child: SectionHeader(
-                    title: 'Market Nexus',
+                    title: 'Strategic Watchlist',
+                    onTap: () => context.push('/manage-watchlist'),
+                  ),
+                ),
+              ),
+              const SliverToBoxAdapter(child: SizedBox(height: 15)),
+              stocksAsync.when(
+                data: (stocks) => _MarketNexusList(
+                  stocks: stocks.where((s) => s.source == StockSource.watchlist).toList(),
+                  emptyLabel: 'No stocks in watchlist',
+                  emptyAction: 'Add Stocks',
+                  onEmptyTap: () => context.push('/manage-watchlist'),
+                ),
+                loading: () => const SliverToBoxAdapter(child: Center(child: CircularProgressIndicator())),
+                error: (err, stack) => SliverToBoxAdapter(child: Center(child: Text('Stock error: $err', style: const TextStyle(color: Colors.white24)))),
+              ),
+              const SliverToBoxAdapter(child: SizedBox(height: 30)),
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: SectionHeader(
+                    title: 'Opportunity Scout',
                     onTap: () => context.go('/nexus'),
                   ),
                 ),
               ),
               const SliverToBoxAdapter(child: SizedBox(height: 15)),
               stocksAsync.when(
-                data: (stocks) => _MarketNexusList(stocks: stocks),
+                data: (stocks) => _MarketNexusList(
+                  stocks: stocks.where((s) => s.source == StockSource.opportunity).toList(),
+                  isOpportunity: true,
+                  emptyLabel: 'Searching for market anomalies...',
+                  emptyAction: 'View Nexus',
+                  onEmptyTap: () => context.go('/nexus'),
+                ),
                 loading: () => const SliverToBoxAdapter(child: Center(child: CircularProgressIndicator())),
                 error: (err, stack) => SliverToBoxAdapter(child: Center(child: Text('Stock error: $err', style: const TextStyle(color: Colors.white24)))),
               ),
@@ -435,7 +462,18 @@ class _IntelCard extends StatelessWidget {
 
 class _MarketNexusList extends StatelessWidget {
   final List<StockData> stocks;
-  const _MarketNexusList({required this.stocks});
+  final bool isOpportunity;
+  final String emptyLabel;
+  final String emptyAction;
+  final VoidCallback? onEmptyTap;
+
+  const _MarketNexusList({
+    required this.stocks,
+    this.isOpportunity = false,
+    this.emptyLabel = 'No stocks added',
+    this.emptyAction = 'Tap to add stocks',
+    this.onEmptyTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -444,16 +482,27 @@ class _MarketNexusList extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20),
           child: GestureDetector(
-            onTap: () => context.push('/manage-watchlist'),
+            onTap: onEmptyTap,
             child: GlassCard(
               padding: const EdgeInsets.all(30),
               child: Column(
                 children: [
-                  const Icon(Icons.add_chart_rounded, color: Colors.white10, size: 32),
+                  Icon(
+                    isOpportunity ? Icons.radar_rounded : Icons.add_chart_rounded, 
+                    color: Colors.white10, 
+                    size: 32
+                  ),
                   const SizedBox(height: 12),
-                  const Text('No stocks added', style: TextStyle(color: Colors.white24)),
+                  Text(emptyLabel, style: const TextStyle(color: Colors.white24)),
                   const SizedBox(height: 8),
-                  Text('Tap to add stocks', style: TextStyle(color: AppTheme.goldAmber.withOpacity(0.5), fontSize: 11, fontWeight: FontWeight.bold)),
+                  Text(
+                    emptyAction, 
+                    style: TextStyle(
+                      color: AppTheme.goldAmber.withOpacity(0.5), 
+                      fontSize: 11, 
+                      fontWeight: FontWeight.bold
+                    )
+                  ),
                 ],
               ),
             ),
@@ -466,6 +515,8 @@ class _MarketNexusList extends StatelessWidget {
       delegate: SliverChildBuilderDelegate(
         (context, index) {
           final stock = stocks[index];
+          final color = stock.changePercent >= 0 ? AppTheme.goldAmber : AppTheme.softCrimson;
+          
           return Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
             child: GestureDetector(
@@ -479,14 +530,38 @@ class _MarketNexusList extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            stock.ticker,
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                              letterSpacing: 0.5,
-                            ),
+                          Row(
+                            children: [
+                              Text(
+                                stock.ticker,
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
+                              if (isOpportunity) ...[
+                                const SizedBox(width: 8),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                                  decoration: BoxDecoration(
+                                    color: AppTheme.goldAmber.withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(4),
+                                    border: Border.all(color: AppTheme.goldAmber.withOpacity(0.2)),
+                                  ),
+                                  child: const Text(
+                                    'ALPHA',
+                                    style: TextStyle(
+                                      color: AppTheme.goldAmber,
+                                      fontSize: 8,
+                                      fontWeight: FontWeight.bold,
+                                      letterSpacing: 0.5,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ],
                           ),
                           Text(
                             stock.name,
@@ -504,7 +579,7 @@ class _MarketNexusList extends StatelessWidget {
                         height: 30,
                         child: _MiniSparkline(
                           data: stock.history, 
-                          color: stock.changePercent >= 0 ? AppTheme.goldAmber : AppTheme.softCrimson
+                          color: color,
                         ),
                       ),
                     ),
@@ -525,7 +600,7 @@ class _MarketNexusList extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
-                            color: stock.changePercent >= 0 ? AppTheme.goldAmber : AppTheme.softCrimson,
+                            color: color,
                           ),
                         ),
                       ],
