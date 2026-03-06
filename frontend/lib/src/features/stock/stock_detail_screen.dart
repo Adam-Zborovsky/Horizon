@@ -19,7 +19,12 @@ class StockDetailScreen extends ConsumerWidget {
     return Scaffold(
       body: stocksAsync.when(
         data: (stocks) {
-          final stock = stocks.firstWhere((s) => s.ticker == ticker);
+          final stock = stocks.where((s) => s.ticker == ticker).firstOrNull;
+          if (stock == null) {
+            return Center(
+              child: Text('Stock $ticker not found', style: const TextStyle(color: Colors.white38)),
+            );
+          }
           return _DetailContent(stock: stock);
         },
         loading: () => const Center(child: CircularProgressIndicator()),
@@ -247,11 +252,22 @@ class _DetailHeader extends ConsumerWidget {
             isInWatchlist ? Icons.star_rounded : Icons.star_outline_rounded,
             color: isInWatchlist ? AppTheme.goldAmber : Colors.white38,
           ),
-          onPressed: () {
-            if (isInWatchlist) {
-              ref.read(watchlistProvider.notifier).remove(ticker);
-            } else {
-              ref.read(watchlistProvider.notifier).add(ticker);
+          onPressed: () async {
+            try {
+              if (isInWatchlist) {
+                await ref.read(watchlistProvider.notifier).remove(ticker);
+              } else {
+                await ref.read(watchlistProvider.notifier).add(ticker);
+              }
+            } catch (_) {
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Could not update watchlist'),
+                    behavior: SnackBarBehavior.floating,
+                  ),
+                );
+              }
             }
           },
         ),
