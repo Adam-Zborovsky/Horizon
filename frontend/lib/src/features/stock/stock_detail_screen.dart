@@ -102,28 +102,25 @@ class _DetailContent extends ConsumerWidget {
                   child: _MainChart(data: stock.history, color: color),
                 ),
                 const SizedBox(height: 40),
-                if (stock.horizon != null) ...[
-                  Text(
-                    'STRATEGIC HORIZON',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: AppTheme.goldAmber,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 1.5,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
+                if (stock.horizon != null || stock.direction != null) ...[
                   Row(
                     children: [
-                      const Icon(Icons.timer_outlined, color: AppTheme.goldAmber, size: 16),
-                      const SizedBox(width: 8),
-                      Text(
-                        stock.horizon!.toUpperCase(),
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
+                      if (stock.direction != null) ...[
+                        _DirectionBadge(direction: stock.direction!),
+                        if (stock.horizon != null) const SizedBox(width: 16),
+                      ],
+                      if (stock.horizon != null) ...[
+                        const Icon(Icons.timer_outlined, color: AppTheme.goldAmber, size: 16),
+                        const SizedBox(width: 8),
+                        Text(
+                          stock.horizon!.toUpperCase(),
+                          style: const TextStyle(
+                            color: Colors.white70,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
+                          ),
                         ),
-                      ),
+                      ],
                     ],
                   ),
                   const SizedBox(height: 30),
@@ -482,6 +479,44 @@ class _MacroItem extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _DirectionBadge extends StatelessWidget {
+  final String direction;
+  const _DirectionBadge({required this.direction});
+
+  @override
+  Widget build(BuildContext context) {
+    final isLong = direction.toLowerCase() == 'long';
+    final color = isLong ? AppTheme.goldAmber : AppTheme.softCrimson;
+    final icon = isLong ? Icons.trending_up_rounded : Icons.trending_down_rounded;
+    final label = isLong ? 'LONG' : 'SHORT';
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color.withOpacity(0.3)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, color: color, size: 14),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: TextStyle(
+              color: color,
+              fontSize: 11,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 1,
+            ),
+          ),
+        ],
       ),
     );
   }

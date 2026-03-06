@@ -8,6 +8,7 @@ import '../briefing/briefing_model.dart';
 import '../stock/opportunity_stats_provider.dart';
 import 'saved_articles_provider.dart';
 import '../onboarding/onboarding_wrapper.dart';
+import '../../core/services/notification_service.dart';
 import '../onboarding/tutorial_keys.dart';
 
 class IntelligenceVaultScreen extends ConsumerStatefulWidget {
@@ -37,6 +38,24 @@ class _IntelligenceVaultScreenState extends ConsumerState<IntelligenceVaultScree
     }
   }
 
+  Future<void> _onRefresh() async {
+    ref.invalidate(briefingRepositoryProvider);
+    try {
+      await ref.read(briefingRepositoryProvider.future);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Updated', style: TextStyle(color: Colors.white70, fontSize: 13)),
+            backgroundColor: Color(0xFF1A1A2E),
+            behavior: SnackBarBehavior.floating,
+            duration: Duration(seconds: 1),
+          ),
+        );
+      }
+      NotificationService.showRefreshNotification('Reports refreshed');
+    } catch (_) {}
+  }
+
   @override
   Widget build(BuildContext context) {
     final briefingAsync = ref.watch(briefingRepositoryProvider);
@@ -55,9 +74,13 @@ class _IntelligenceVaultScreenState extends ConsumerState<IntelligenceVaultScree
               ],
             ),
           ),
-          child: CustomScrollView(
-            physics: const BouncingScrollPhysics(),
-            slivers: [
+          child: RefreshIndicator(
+            onRefresh: _onRefresh,
+            color: AppTheme.goldAmber,
+            backgroundColor: const Color(0xFF1A1A2E),
+            child: CustomScrollView(
+              physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+              slivers: [
               const _VaultHeader(),
               briefingAsync.when(
                 data: (briefing) {
@@ -122,6 +145,7 @@ class _IntelligenceVaultScreenState extends ConsumerState<IntelligenceVaultScree
               ),
               const SliverToBoxAdapter(child: SizedBox(height: 120)),
             ],
+          ),
           ),
         ),
       ),

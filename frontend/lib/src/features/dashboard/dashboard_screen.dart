@@ -10,12 +10,36 @@ import '../stock/stock_repository.dart';
 import '../briefing/briefing_model.dart';
 import '../onboarding/onboarding_wrapper.dart';
 import '../onboarding/tutorial_keys.dart';
+import '../../core/services/notification_service.dart';
 
-class DashboardScreen extends ConsumerWidget {
+class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<DashboardScreen> createState() => _DashboardScreenState();
+}
+
+class _DashboardScreenState extends ConsumerState<DashboardScreen> {
+  Future<void> _onRefresh() async {
+    ref.invalidate(briefingRepositoryProvider);
+    try {
+      await ref.read(briefingRepositoryProvider.future);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Updated', style: TextStyle(color: Colors.white70, fontSize: 13)),
+            backgroundColor: Color(0xFF1A1A2E),
+            behavior: SnackBarBehavior.floating,
+            duration: Duration(seconds: 1),
+          ),
+        );
+      }
+      NotificationService.showRefreshNotification('Intelligence data refreshed');
+    } catch (_) {}
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final briefingAsync = ref.watch(briefingRepositoryProvider);
     final stocksAsync = ref.watch(stockRepositoryProvider);
 
@@ -33,9 +57,13 @@ class DashboardScreen extends ConsumerWidget {
               ],
             ),
           ),
-          child: CustomScrollView(
-            physics: const BouncingScrollPhysics(),
-            slivers: [
+          child: RefreshIndicator(
+            onRefresh: _onRefresh,
+            color: AppTheme.goldAmber,
+            backgroundColor: const Color(0xFF1A1A2E),
+            child: CustomScrollView(
+              physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+              slivers: [
               const _WarRoomHeader(),
               SliverPadding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -118,6 +146,7 @@ class DashboardScreen extends ConsumerWidget {
                 ),
               ),
             ],
+          ),
           ),
         ),
       ),

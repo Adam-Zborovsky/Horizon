@@ -53,6 +53,7 @@ _BriefingItem _$BriefingItemFromJson(Map<String, dynamic> json) =>
       change: json['change'] as String?,
       analysis: json['analysis'],
       explanation: json['explanation'] as String?,
+      direction: json['direction'] as String?,
       horizon: json['horizon'] as String?,
       catalysts: (json['catalysts'] as List<dynamic>?)
           ?.map((e) => e as String)
@@ -80,6 +81,7 @@ Map<String, dynamic> _$BriefingItemToJson(_BriefingItem instance) =>
       'change': instance.change,
       'analysis': instance.analysis,
       'explanation': instance.explanation,
+      'direction': instance.direction,
       'horizon': instance.horizon,
       'catalysts': instance.catalysts,
       'risks': instance.risks,

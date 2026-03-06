@@ -92,9 +92,17 @@ class BriefingRepository extends _$BriefingRepository {
       }
     }
 
-    // Handle analysis if it's still not a string
+    // Handle analysis if it's still not a string — extract market_outlook, not raw toString()
     if (result['analysis'] != null && result['analysis'] is! String) {
-      result['analysis'] = result['analysis'].toString();
+      if (result['analysis'] is Map) {
+        final analysisMap = result['analysis'] as Map;
+        result['analysis'] = analysisMap['market_outlook']?.toString() ??
+            analysisMap['outlook']?.toString() ??
+            analysisMap.values.whereType<String>().firstOrNull ??
+            '';
+      } else {
+        result['analysis'] = result['analysis'].toString();
+      }
     }
 
     // Ensure catalysts and risks are List<String>

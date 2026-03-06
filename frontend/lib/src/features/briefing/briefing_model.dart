@@ -39,6 +39,7 @@ abstract class BriefingItem with _$BriefingItem {
     String? change,
     dynamic analysis, // Changed to dynamic to handle both String and Map
     String? explanation,
+    String? direction, // "long" or "short" for opportunities
     String? horizon,
     // New fields from market_analysis
     List<String>? catalysts,

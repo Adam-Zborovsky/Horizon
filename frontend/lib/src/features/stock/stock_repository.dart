@@ -20,6 +20,7 @@ abstract class StockData with _$StockData {
     required double sentiment,
     required StockSource source,
     String? analysis,
+    String? direction, // "long" or "short" for opportunities
     String? horizon,
     List<String>? catalysts,
     List<String>? risks,
@@ -147,6 +148,7 @@ class StockRepository extends _$StockRepository {
             sentiment: sentiment,
             source: isOpportunityCategory ? StockSource.opportunity : StockSource.watchlist,
             analysis: analysisText,
+            direction: item.direction,
             horizon: item.horizon,
             catalysts: item.catalysts,
             risks: item.risks,

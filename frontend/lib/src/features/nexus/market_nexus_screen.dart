@@ -5,14 +5,39 @@ import 'package:go_router/go_router.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/glass_card.dart';
 import '../stock/stock_repository.dart';
+import '../briefing/briefing_repository.dart';
 import '../onboarding/onboarding_wrapper.dart';
+import '../../core/services/notification_service.dart';
 import '../onboarding/tutorial_keys.dart';
 
-class MarketNexusScreen extends ConsumerWidget {
+class MarketNexusScreen extends ConsumerStatefulWidget {
   const MarketNexusScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<MarketNexusScreen> createState() => _MarketNexusScreenState();
+}
+
+class _MarketNexusScreenState extends ConsumerState<MarketNexusScreen> {
+  Future<void> _onRefresh() async {
+    ref.invalidate(briefingRepositoryProvider);
+    try {
+      await ref.read(briefingRepositoryProvider.future);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Updated', style: TextStyle(color: Colors.white70, fontSize: 13)),
+            backgroundColor: Color(0xFF1A1A2E),
+            behavior: SnackBarBehavior.floating,
+            duration: Duration(seconds: 1),
+          ),
+        );
+      }
+      NotificationService.showRefreshNotification('Market data refreshed');
+    } catch (_) {}
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final stocksAsync = ref.watch(stockRepositoryProvider);
 
     return OnboardingWrapper(
@@ -29,9 +54,13 @@ class MarketNexusScreen extends ConsumerWidget {
               ],
             ),
           ),
-          child: CustomScrollView(
-            physics: const BouncingScrollPhysics(),
-            slivers: [
+          child: RefreshIndicator(
+            onRefresh: _onRefresh,
+            color: AppTheme.goldAmber,
+            backgroundColor: const Color(0xFF1A1A2E),
+            child: CustomScrollView(
+              physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+              slivers: [
               const _NexusHeader(),
               const _NexusToolbar(),
               stocksAsync.when(
@@ -90,6 +119,7 @@ class MarketNexusScreen extends ConsumerWidget {
               ),
               const SliverToBoxAdapter(child: SizedBox(height: 120)),
             ],
+          ),
           ),
         ),
       ),

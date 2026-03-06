@@ -14,9 +14,13 @@ import 'src/features/notifications/notifications_screen.dart';
 import 'src/features/auth/login_screen.dart';
 import 'src/features/auth/auth_provider.dart';
 import 'src/core/widgets/glass_card.dart';
+import 'src/core/services/notification_service.dart';
 import 'src/features/onboarding/tutorial_keys.dart';
+import 'src/features/briefing/briefing_repository.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await NotificationService.init();
   runApp(
     const ProviderScope(
       child: HorizonApp(),
@@ -127,11 +131,35 @@ final _routerProvider = Provider<GoRouter>((ref) {
   );
 });
 
-class HorizonApp extends ConsumerWidget {
+class HorizonApp extends ConsumerStatefulWidget {
   const HorizonApp({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<HorizonApp> createState() => _HorizonAppState();
+}
+
+class _HorizonAppState extends ConsumerState<HorizonApp> with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      ref.invalidate(briefingRepositoryProvider);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final authState = ref.watch(authProvider);
 
     // Show a splash screen while auth resolves to prevent blank first frame.
