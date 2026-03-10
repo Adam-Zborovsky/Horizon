@@ -505,6 +505,17 @@ class BriefingService {
   }
 
   /**
+   * Get the timestamp of the latest briefing for a user (lightweight check)
+   */
+  async getLatestTimestamp(userId) {
+    const briefing = await Briefing.findOne({ user: userId })
+      .sort({ createdAt: -1 })
+      .select('createdAt')
+      .lean();
+    return briefing ? briefing.createdAt : null;
+  }
+
+  /**
    * Get historical briefings for a user
    */
   async getHistory(userId, page = 1, limit = 20) {

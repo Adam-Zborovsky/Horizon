@@ -15,6 +15,7 @@ class ApiConfig {
   static const String briefingEndpoint = '$baseUrl/briefing';
   static const String briefingTriggerEndpoint = '$baseUrl/briefing/trigger';
   static const String briefingConfigEndpoint = '$baseUrl/briefing/config';
+  static const String briefingStatusEndpoint = '$baseUrl/briefing/status';
   static const String briefingSearchEndpoint = '$baseUrl/briefing/search';
   static String opportunityStatsEndpoint(String ticker) => '$baseUrl/briefing/opportunity-stats/$ticker';
   

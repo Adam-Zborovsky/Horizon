@@ -17,6 +17,7 @@ import 'src/core/widgets/glass_card.dart';
 import 'src/core/services/notification_service.dart';
 import 'src/features/onboarding/tutorial_keys.dart';
 import 'src/features/briefing/briefing_repository.dart';
+import 'src/core/services/data_polling_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -178,6 +179,9 @@ class _HorizonAppState extends ConsumerState<HorizonApp> with WidgetsBindingObse
         ),
       );
     }
+
+    // Start the background polling service for auto-refresh & notifications
+    ref.watch(dataPollingServiceProvider);
 
     final router = ref.watch(_routerProvider);
 

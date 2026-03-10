@@ -10,8 +10,6 @@ import '../stock/stock_repository.dart';
 import '../briefing/briefing_model.dart';
 import '../onboarding/onboarding_wrapper.dart';
 import '../onboarding/tutorial_keys.dart';
-import '../../core/services/notification_service.dart';
-
 class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
 
@@ -34,7 +32,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           ),
         );
       }
-      NotificationService.showRefreshNotification('Intelligence data refreshed');
     } catch (_) {}
   }
 

@@ -161,6 +161,18 @@ class BriefingController {
   }
 
   /**
+   * Lightweight check: returns only the timestamp of the latest briefing
+   */
+  async getLatestTimestamp(req, res, next) {
+    try {
+      const timestamp = await briefingService.getLatestTimestamp(req.user._id);
+      res.status(200).json({ latestTimestamp: timestamp });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  /**
    * Update full configuration
    */
   async updateConfig(req, res, next) {

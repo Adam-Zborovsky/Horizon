@@ -31,6 +31,19 @@ android {
         versionName = flutter.versionName
     }
 
+    flavorDimensions += "device"
+    productFlavors {
+        create("mobile") {
+            dimension = "device"
+            // Default mobile app
+        }
+        create("wear") {
+            dimension = "device"
+            applicationIdSuffix = ".wear"
+            minSdk = 30 // Wear OS 3+ minimum
+        }
+    }
+
     buildTypes {
         release {
             // TODO: Add your own signing config for the release build.

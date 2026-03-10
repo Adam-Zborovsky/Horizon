@@ -35,6 +35,12 @@ router.get('/', briefingController.getLatest);
 router.post('/trigger', briefingController.triggerManual);
 
 /**
+ * @route GET /api/v1/briefing/status
+ * Lightweight endpoint returning only the latest briefing timestamp
+ */
+router.get('/status', briefingController.getLatestTimestamp);
+
+/**
  * @route GET /api/v1/briefing/search
  * Search for tickers via autocomplete
  */
