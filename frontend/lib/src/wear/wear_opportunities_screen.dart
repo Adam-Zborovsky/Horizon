@@ -2,14 +2,29 @@ import 'package:flutter/material.dart';
 import '../core/theme/app_theme.dart';
 import '../features/stock/stock_repository.dart';
 import 'wear_glass_card.dart';
+import 'wear_rotary_scroll.dart';
 
-class WearOpportunitiesScreen extends StatelessWidget {
+class WearOpportunitiesScreen extends StatefulWidget {
   final List<StockData> stocks;
   const WearOpportunitiesScreen({super.key, required this.stocks});
 
   @override
+  State<WearOpportunitiesScreen> createState() => _WearOpportunitiesScreenState();
+}
+
+class _WearOpportunitiesScreenState extends State<WearOpportunitiesScreen> {
+  final _scrollController = ScrollController();
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
+    final stocks = widget.stocks;
 
     return Scaffold(
       backgroundColor: AppTheme.obsidian,
@@ -43,7 +58,10 @@ class WearOpportunitiesScreen extends StatelessWidget {
                     ],
                   ),
                 )
-              : ListView.builder(
+              : WearRotaryScroll(
+                  controller: _scrollController,
+                  child: ListView.builder(
+                  controller: _scrollController,
                   padding: EdgeInsets.symmetric(
                     horizontal: size.width * 0.08,
                     vertical: 8,
@@ -149,6 +167,7 @@ class WearOpportunitiesScreen extends StatelessWidget {
                       ),
                     );
                   },
+                ),
                 ),
         ),
       ),

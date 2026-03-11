@@ -9,6 +9,7 @@ abstract class BriefingData with _$BriefingData {
     required Map<String, CategoryData> data,
     String? message,
     required bool success,
+    DateTime? createdAt,
   }) = _BriefingData;
 
   factory BriefingData.fromJson(Map<String, dynamic> json) => _$BriefingDataFromJson(json);
@@ -30,18 +31,17 @@ abstract class BriefingItem with _$BriefingItem {
   const factory BriefingItem({
     String? title,
     String? l,
-    dynamic sentiment, // Changed to dynamic to handle both double and String
+    dynamic sentiment, 
     String? img,
     String? takeaway,
     String? ticker,
     String? name,
     String? price,
     String? change,
-    dynamic analysis, // Changed to dynamic to handle both String and Map
+    dynamic analysis, 
     String? explanation,
-    String? direction, // "long" or "short" for opportunities
+    String? direction, 
     String? horizon,
-    // New fields from market_analysis
     List<String>? catalysts,
     List<String>? risks,
     @JsonKey(name: 'potential_price_action') String? potentialPriceAction,

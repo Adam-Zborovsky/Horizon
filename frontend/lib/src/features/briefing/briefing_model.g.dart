@@ -13,6 +13,9 @@ _BriefingData _$BriefingDataFromJson(Map<String, dynamic> json) =>
       ),
       message: json['message'] as String?,
       success: json['success'] as bool,
+      createdAt: json['createdAt'] == null
+          ? null
+          : DateTime.parse(json['createdAt'] as String),
     );
 
 Map<String, dynamic> _$BriefingDataToJson(_BriefingData instance) =>
@@ -20,6 +23,7 @@ Map<String, dynamic> _$BriefingDataToJson(_BriefingData instance) =>
       'data': instance.data,
       'message': instance.message,
       'success': instance.success,
+      'createdAt': instance.createdAt?.toIso8601String(),
     };
 
 _CategoryData _$CategoryDataFromJson(Map<String, dynamic> json) =>

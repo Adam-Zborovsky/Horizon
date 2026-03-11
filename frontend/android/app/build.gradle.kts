@@ -39,7 +39,6 @@ android {
         }
         create("wear") {
             dimension = "device"
-            applicationIdSuffix = ".wear"
             minSdk = 30 // Wear OS 3+ minimum
         }
     }
@@ -55,6 +54,15 @@ android {
 
 dependencies {
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
+
+    // Wear OS Tiles (wear flavor only)
+    "wearImplementation"("androidx.wear.tiles:tiles:1.4.1")
+    "wearImplementation"("androidx.wear.protolayout:protolayout:1.2.1")
+    "wearImplementation"("androidx.wear.protolayout:protolayout-material:1.2.1")
+    "wearImplementation"("androidx.wear.protolayout:protolayout-expression:1.2.1")
+    "wearImplementation"("androidx.work:work-runtime-ktx:2.10.0")
+    "wearImplementation"("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0")
+    "wearImplementation"("org.jetbrains.kotlinx:kotlinx-coroutines-guava:1.9.0")
 }
 
 flutter {

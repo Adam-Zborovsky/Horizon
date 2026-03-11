@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Base size for scaling -->
+    <item android:width="192dp" android:height="192dp">
+        <!-- Obsidian circular background -->
+        <shape android:shape="oval">
+            <solid android:color="#0C0C0C" />
+        </shape>
+    </item>
+
+    <!-- Subtle gold gradient glow top-right -->
+    <item>
+        <shape android:shape="oval">
+            <gradient
+                android:type="radial"
+                android:gradientRadius="120dp"
+                android:centerX="0.85"
+                android:centerY="0.15"
+                android:startColor="#22FFB800"
+                android:endColor="#000C0C0C" />
+        </shape>
+    </item>
+
+    <!-- Title bar area -->
+    <item
+        android:top="32dp"
+        android:left="48dp"
+        android:right="48dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#00000000" />
+            <size android:height="16dp" />
+        </shape>
+    </item>
+
+    <!-- Gold accent line (represents title "WATCHLIST") -->
+    <item
+        android:top="38dp"
+        android:left="72dp"
+        android:right="72dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#FFB800" />
+            <corners android:radius="2dp" />
+            <size android:height="2dp" />
+        </shape>
+    </item>
+
+    <!-- Glass card background -->
+    <item
+        android:top="52dp"
+        android:left="24dp"
+        android:right="24dp"
+        android:bottom="36dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#14FFFFFF" />
+            <corners android:radius="12dp" />
+            <stroke
+                android:width="1dp"
+                android:color="#14FFFFFF" />
+        </shape>
+    </item>
+
+    <!-- Stock rows container padding logic -->
+    <!-- Stock row 1 -->
+    <item
+        android:top="64dp"
+        android:left="36dp"
+        android:right="74dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#4DFFFFFF" />
+            <corners android:radius="2dp" />
+            <size android:height="3dp" />
+        </shape>
+    </item>
+    <!-- Change badge 1 (green/gold) -->
+    <item
+        android:top="61dp"
+        android:right="36dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#26FFB800" />
+            <corners android:radius="3dp" />
+            <size android:width="22dp" android:height="9dp" />
+        </shape>
+    </item>
+
+    <!-- Stock row 2 -->
+    <item
+        android:top="82dp"
+        android:left="36dp"
+        android:right="84dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#4DFFFFFF" />
+            <corners android:radius="2dp" />
+            <size android:height="3dp" />
+        </shape>
+    </item>
+    <!-- Change badge 2 (crimson) -->
+    <item
+        android:top="79dp"
+        android:right="36dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#26FF4B5C" />
+            <corners android:radius="3dp" />
+            <size android:width="22dp" android:height="9dp" />
+        </shape>
+    </item>
+
+    <!-- Stock row 3 -->
+    <item
+        android:top="100dp"
+        android:left="36dp"
+        android:right="68dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#4DFFFFFF" />
+            <corners android:radius="2dp" />
+            <size android:height="3dp" />
+        </shape>
+    </item>
+    <!-- Change badge 3 (gold) -->
+    <item
+        android:top="97dp"
+        android:right="36dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#26FFB800" />
+            <corners android:radius="3dp" />
+            <size android:width="22dp" android:height="9dp" />
+        </shape>
+    </item>
+
+    <!-- Stock row 4 -->
+    <item
+        android:top="118dp"
+        android:left="36dp"
+        android:right="78dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#4DFFFFFF" />
+            <corners android:radius="2dp" />
+            <size android:height="3dp" />
+        </shape>
+    </item>
+    <!-- Change badge 4 (gold) -->
+    <item
+        android:top="115dp"
+        android:right="36dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#26FFB800" />
+            <corners android:radius="3dp" />
+            <size android:width="22dp" android:height="9dp" />
+        </shape>
+    </item>
+</layer-list>

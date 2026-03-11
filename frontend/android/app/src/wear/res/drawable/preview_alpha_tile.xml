@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Base size for scaling -->
+    <item android:width="192dp" android:height="192dp">
+        <!-- Obsidian circular background -->
+        <shape android:shape="oval">
+            <solid android:color="#0C0C0C" />
+        </shape>
+    </item>
+
+    <!-- Subtle gold gradient glow top-left -->
+    <item>
+        <shape android:shape="oval">
+            <gradient
+                android:type="radial"
+                android:gradientRadius="120dp"
+                android:centerX="0.15"
+                android:centerY="0.15"
+                android:startColor="#22FFB800"
+                android:endColor="#000C0C0C" />
+        </shape>
+    </item>
+
+    <!-- Gold accent line (represents title "ALPHA SIGNALS") -->
+    <item
+        android:top="38dp"
+        android:left="60dp"
+        android:right="60dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#FFB800" />
+            <corners android:radius="2dp" />
+            <size android:height="2dp" />
+        </shape>
+    </item>
+
+    <!-- Glass card background -->
+    <item
+        android:top="52dp"
+        android:left="24dp"
+        android:right="24dp"
+        android:bottom="36dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#14FFFFFF" />
+            <corners android:radius="12dp" />
+            <stroke
+                android:width="1dp"
+                android:color="#14FFFFFF" />
+        </shape>
+    </item>
+
+    <!-- Opportunity 1: ticker -->
+    <item
+        android:top="68dp"
+        android:left="36dp"
+        android:right="110dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#4DFFFFFF" />
+            <corners android:radius="2dp" />
+            <size android:height="3dp" />
+        </shape>
+    </item>
+    <!-- Direction badge 1 (LONG - gold) -->
+    <item
+        android:top="65dp"
+        android:left="86dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#26FFB800" />
+            <corners android:radius="3dp" />
+            <size android:width="20dp" android:height="9dp" />
+        </shape>
+    </item>
+    <!-- Analysis snippet 1 -->
+    <item
+        android:top="80dp"
+        android:left="36dp"
+        android:right="48dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#1AFFFFFF" />
+            <corners android:radius="1dp" />
+            <size android:height="2dp" />
+        </shape>
+    </item>
+
+    <!-- Opportunity 2: ticker -->
+    <item
+        android:top="98dp"
+        android:left="36dp"
+        android:right="100dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#4DFFFFFF" />
+            <corners android:radius="2dp" />
+            <size android:height="3dp" />
+        </shape>
+    </item>
+    <!-- Direction badge 2 (SHORT - crimson) -->
+    <item
+        android:top="95dp"
+        android:left="96dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#26FF4B5C" />
+            <corners android:radius="3dp" />
+            <size android:width="20dp" android:height="9dp" />
+        </shape>
+    </item>
+    <!-- Analysis snippet 2 -->
+    <item
+        android:top="110dp"
+        android:left="36dp"
+        android:right="58dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#1AFFFFFF" />
+            <corners android:radius="1dp" />
+            <size android:height="2dp" />
+        </shape>
+    </item>
+</layer-list>

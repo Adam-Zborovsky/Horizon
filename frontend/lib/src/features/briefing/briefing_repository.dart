@@ -75,9 +75,6 @@ class BriefingRepository extends _$BriefingRepository {
       if (result['catalysts'] == null && catalysts != null) result['catalysts'] = catalysts;
       if (result['risks'] == null && risks != null) result['risks'] = risks;
       if (result['potential_price_action'] == null && priceAction != null) result['potential_price_action'] = priceAction;
-
-      // DO NOT flatten here anymore, let StockRepository handle the Map structure
-      // result['analysis'] = outlook ?? analysis.values.where((v) => v is String).join('\n');
     }
     
     // Safety: ensure fields expected by json_serializable as String? are actually strings
@@ -92,7 +89,7 @@ class BriefingRepository extends _$BriefingRepository {
       }
     }
 
-    // Handle analysis if it's still not a string — extract market_outlook, not raw toString()
+    // Handle analysis
     if (result['analysis'] != null && result['analysis'] is! String) {
       if (result['analysis'] is Map) {
         final analysisMap = result['analysis'] as Map;
@@ -112,7 +109,6 @@ class BriefingRepository extends _$BriefingRepository {
         if (result[field] is List) {
           result[field] = (result[field] as List).map((e) => e.toString()).toList();
         } else if (result[field] is String) {
-          // If it's a string, try to split it or put it in a list
           final String val = result[field];
           if (val.contains(',')) {
             result[field] = val.split(',').map((e) => e.trim()).toList();
@@ -134,7 +130,7 @@ class BriefingRepository extends _$BriefingRepository {
           return 0.0;
         }).toList();
       } else {
-        result.remove('history'); // Remove if it's not a list to avoid crash
+        result.remove('history');
       }
     }
     
@@ -241,7 +237,6 @@ class BriefingRepository extends _$BriefingRepository {
                           count++;
                         }
                       }
-                      // Build summary from first item's takeaway if available
                       final firstTakeaway = items.where((i) => i.takeaway != null && i.takeaway!.isNotEmpty).firstOrNull?.takeaway;
                       categoriesMap[categoryName] = CategoryData(
                         sentimentScore: count > 0 ? totalSentiment / count : 0.0,
@@ -331,10 +326,9 @@ class BriefingRepository extends _$BriefingRepository {
             }
           }
 
-          // 4. Handle any other top-level categories (Generic Support)
+          // 4. Handle any other top-level categories
           decodedContent.forEach((key, value) {
             final String categoryName = _formatCategory(key);
-            // Skip already processed standard containers
             if (newsContainers.contains(key) || 
                 marketContainers.contains(key) || 
                 opportunityContainers.contains(key)) return;
@@ -376,6 +370,7 @@ class BriefingRepository extends _$BriefingRepository {
           data: categoriesMap,
           success: firstBriefing['success'] as bool? ?? true,
           message: firstBriefing['message'] as String?,
+          createdAt: firstBriefing['createdAt'] != null ? DateTime.parse(firstBriefing['createdAt']) : null,
         );
       } else {
         throw Exception('Server error: ${response.statusCode}');

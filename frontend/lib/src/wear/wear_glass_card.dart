@@ -1,7 +1,9 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import '../core/theme/app_theme.dart';
 
-/// Compact glassmorphism card optimized for round watch displays.
+/// Compact obsidian card optimized for round watch displays.
+/// Uses the Obsidian color for the tile background as requested.
 class WearGlassCard extends StatelessWidget {
   final Widget child;
   final EdgeInsetsGeometry? padding;
@@ -13,8 +15,8 @@ class WearGlassCard extends StatelessWidget {
     super.key,
     required this.child,
     this.padding,
-    this.blur = 10,
-    this.borderRadius = 16,
+    this.blur = 8,
+    this.borderRadius = 18,
     this.color,
   });
 
@@ -27,12 +29,20 @@ class WearGlassCard extends StatelessWidget {
         child: Container(
           padding: padding ?? const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: color ?? Colors.white.withOpacity(0.06),
+            // Tiles use Obsidian background
+            color: color ?? AppTheme.obsidian.withOpacity(0.8),
             borderRadius: BorderRadius.circular(borderRadius),
             border: Border.all(
-              color: Colors.white.withOpacity(0.08),
+              color: Colors.white.withOpacity(0.12),
               width: 1,
             ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.2),
+                blurRadius: 4,
+                offset: const Offset(0, 2),
+              ),
+            ],
           ),
           child: child,
         ),

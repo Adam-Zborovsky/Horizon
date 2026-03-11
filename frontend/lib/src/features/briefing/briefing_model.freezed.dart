@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$BriefingData {
 
- Map<String, CategoryData> get data; String? get message; bool get success;
+ Map<String, CategoryData> get data; String? get message; bool get success; DateTime? get createdAt;
 /// Create a copy of BriefingData
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -28,16 +28,16 @@ $BriefingDataCopyWith<BriefingData> get copyWith => _$BriefingDataCopyWithImpl<B
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is BriefingData&&const DeepCollectionEquality().equals(other.data, data)&&(identical(other.message, message) || other.message == message)&&(identical(other.success, success) || other.success == success));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is BriefingData&&const DeepCollectionEquality().equals(other.data, data)&&(identical(other.message, message) || other.message == message)&&(identical(other.success, success) || other.success == success)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(data),message,success);
+int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(data),message,success,createdAt);
 
 @override
 String toString() {
-  return 'BriefingData(data: $data, message: $message, success: $success)';
+  return 'BriefingData(data: $data, message: $message, success: $success, createdAt: $createdAt)';
 }
 
 
@@ -48,7 +48,7 @@ abstract mixin class $BriefingDataCopyWith<$Res>  {
   factory $BriefingDataCopyWith(BriefingData value, $Res Function(BriefingData) _then) = _$BriefingDataCopyWithImpl;
 @useResult
 $Res call({
- Map<String, CategoryData> data, String? message, bool success
+ Map<String, CategoryData> data, String? message, bool success, DateTime? createdAt
 });
 
 
@@ -65,12 +65,13 @@ class _$BriefingDataCopyWithImpl<$Res>
 
 /// Create a copy of BriefingData
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? data = null,Object? message = freezed,Object? success = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? data = null,Object? message = freezed,Object? success = null,Object? createdAt = freezed,}) {
   return _then(_self.copyWith(
 data: null == data ? _self.data : data // ignore: cast_nullable_to_non_nullable
 as Map<String, CategoryData>,message: freezed == message ? _self.message : message // ignore: cast_nullable_to_non_nullable
 as String?,success: null == success ? _self.success : success // ignore: cast_nullable_to_non_nullable
-as bool,
+as bool,createdAt: freezed == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
+as DateTime?,
   ));
 }
 
@@ -155,10 +156,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( Map<String, CategoryData> data,  String? message,  bool success)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( Map<String, CategoryData> data,  String? message,  bool success,  DateTime? createdAt)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _BriefingData() when $default != null:
-return $default(_that.data,_that.message,_that.success);case _:
+return $default(_that.data,_that.message,_that.success,_that.createdAt);case _:
   return orElse();
 
 }
@@ -176,10 +177,10 @@ return $default(_that.data,_that.message,_that.success);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( Map<String, CategoryData> data,  String? message,  bool success)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( Map<String, CategoryData> data,  String? message,  bool success,  DateTime? createdAt)  $default,) {final _that = this;
 switch (_that) {
 case _BriefingData():
-return $default(_that.data,_that.message,_that.success);case _:
+return $default(_that.data,_that.message,_that.success,_that.createdAt);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -196,10 +197,10 @@ return $default(_that.data,_that.message,_that.success);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( Map<String, CategoryData> data,  String? message,  bool success)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( Map<String, CategoryData> data,  String? message,  bool success,  DateTime? createdAt)?  $default,) {final _that = this;
 switch (_that) {
 case _BriefingData() when $default != null:
-return $default(_that.data,_that.message,_that.success);case _:
+return $default(_that.data,_that.message,_that.success,_that.createdAt);case _:
   return null;
 
 }
@@ -211,7 +212,7 @@ return $default(_that.data,_that.message,_that.success);case _:
 @JsonSerializable()
 
 class _BriefingData implements BriefingData {
-  const _BriefingData({required final  Map<String, CategoryData> data, this.message, required this.success}): _data = data;
+  const _BriefingData({required final  Map<String, CategoryData> data, this.message, required this.success, this.createdAt}): _data = data;
   factory _BriefingData.fromJson(Map<String, dynamic> json) => _$BriefingDataFromJson(json);
 
  final  Map<String, CategoryData> _data;
@@ -223,6 +224,7 @@ class _BriefingData implements BriefingData {
 
 @override final  String? message;
 @override final  bool success;
+@override final  DateTime? createdAt;
 
 /// Create a copy of BriefingData
 /// with the given fields replaced by the non-null parameter values.
@@ -237,16 +239,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _BriefingData&&const DeepCollectionEquality().equals(other._data, _data)&&(identical(other.message, message) || other.message == message)&&(identical(other.success, success) || other.success == success));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _BriefingData&&const DeepCollectionEquality().equals(other._data, _data)&&(identical(other.message, message) || other.message == message)&&(identical(other.success, success) || other.success == success)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_data),message,success);
+int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_data),message,success,createdAt);
 
 @override
 String toString() {
-  return 'BriefingData(data: $data, message: $message, success: $success)';
+  return 'BriefingData(data: $data, message: $message, success: $success, createdAt: $createdAt)';
 }
 
 
@@ -257,7 +259,7 @@ abstract mixin class _$BriefingDataCopyWith<$Res> implements $BriefingDataCopyWi
   factory _$BriefingDataCopyWith(_BriefingData value, $Res Function(_BriefingData) _then) = __$BriefingDataCopyWithImpl;
 @override @useResult
 $Res call({
- Map<String, CategoryData> data, String? message, bool success
+ Map<String, CategoryData> data, String? message, bool success, DateTime? createdAt
 });
 
 
@@ -274,12 +276,13 @@ class __$BriefingDataCopyWithImpl<$Res>
 
 /// Create a copy of BriefingData
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? data = null,Object? message = freezed,Object? success = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? data = null,Object? message = freezed,Object? success = null,Object? createdAt = freezed,}) {
   return _then(_BriefingData(
 data: null == data ? _self._data : data // ignore: cast_nullable_to_non_nullable
 as Map<String, CategoryData>,message: freezed == message ? _self.message : message // ignore: cast_nullable_to_non_nullable
 as String?,success: null == success ? _self.success : success // ignore: cast_nullable_to_non_nullable
-as bool,
+as bool,createdAt: freezed == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
+as DateTime?,
   ));
 }
 
@@ -565,11 +568,7 @@ as List<BriefingItem>,
 /// @nodoc
 mixin _$BriefingItem {
 
- String? get title; String? get l; dynamic get sentiment;// Changed to dynamic to handle both double and String
- String? get img; String? get takeaway; String? get ticker; String? get name; String? get price; String? get change; dynamic get analysis;// Changed to dynamic to handle both String and Map
- String? get explanation; String? get direction;// "long" or "short" for opportunities
- String? get horizon;// New fields from market_analysis
- List<String>? get catalysts; List<String>? get risks;@JsonKey(name: 'potential_price_action') String? get potentialPriceAction;@JsonKey(name: 'sentiment_score') double? get sentimentScore; List<double>? get history;
+ String? get title; String? get l; dynamic get sentiment; String? get img; String? get takeaway; String? get ticker; String? get name; String? get price; String? get change; dynamic get analysis; String? get explanation; String? get direction; String? get horizon; List<String>? get catalysts; List<String>? get risks;@JsonKey(name: 'potential_price_action') String? get potentialPriceAction;@JsonKey(name: 'sentiment_score') double? get sentimentScore; List<double>? get history;
 /// Create a copy of BriefingItem
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -786,7 +785,6 @@ class _BriefingItem implements BriefingItem {
 @override final  String? title;
 @override final  String? l;
 @override final  dynamic sentiment;
-// Changed to dynamic to handle both double and String
 @override final  String? img;
 @override final  String? takeaway;
 @override final  String? ticker;
@@ -794,14 +792,10 @@ class _BriefingItem implements BriefingItem {
 @override final  String? price;
 @override final  String? change;
 @override final  dynamic analysis;
-// Changed to dynamic to handle both String and Map
 @override final  String? explanation;
 @override final  String? direction;
-// "long" or "short" for opportunities
 @override final  String? horizon;
-// New fields from market_analysis
  final  List<String>? _catalysts;
-// New fields from market_analysis
 @override List<String>? get catalysts {
   final value = _catalysts;
   if (value == null) return null;
