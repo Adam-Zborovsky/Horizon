@@ -3,8 +3,6 @@ services:
     build: ./backend
     container_name: horizon-backend
     restart: unless-stopped
-    ports:
-      - "8181:8181"
     env_file:
       - .env
     depends_on:
@@ -16,12 +14,11 @@ services:
     build: ./frontend
     container_name: horizon-frontend
     restart: unless-stopped
-    # Note: Run 'flutter build web' in the frontend directory before building this container
     depends_on:
       - horizon-backend
     networks:
       - horizon-network
-      - adam
+      - adam-cloud
 
   mongodb:
     image: mongo:latest
@@ -35,7 +32,7 @@ services:
 networks:
   horizon-network:
     driver: bridge
-  adam:
+  adam-cloud:
     external: true
 
 volumes:
