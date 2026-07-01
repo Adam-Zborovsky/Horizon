@@ -1,10 +1,13 @@
 import 'package:flutter/foundation.dart';
 
 class ApiConfig {
-  // Use absolute URL for mobile, relative for web
-  // For local mobile development, you can use 'http://10.0.2.2:8181' (Android) 
+  // Use absolute URL for mobile, relative for web.
+  // For local mobile development, use 'http://10.0.2.2:8181' (Android emulator)
   // or your machine's local IP address.
-  static const String _host = kIsWeb ? '' : 'https://horizon.adamzborovsky.com';
+  // For production, set HORIZON_API_HOST in your build environment.
+  static const String _host = kIsWeb
+      ? ''
+      : String.fromEnvironment('HORIZON_API_HOST', defaultValue: 'http://10.0.2.2:8181');
   static const String baseUrl = '$_host/api/v1';
   
   static const String authEndpoint = '$baseUrl/auth';

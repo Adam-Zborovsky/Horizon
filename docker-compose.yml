@@ -18,10 +18,9 @@ services:
       - horizon-backend
     networks:
       - horizon-network
-      - adam-cloud
 
   mongodb:
-    image: mongo:latest
+    image: mongo:8
     container_name: horizon-db
     restart: unless-stopped
     volumes:
@@ -32,8 +31,6 @@ services:
 networks:
   horizon-network:
     driver: bridge
-  adam-cloud:
-    external: true
 
 volumes:
   mongodb_data:
