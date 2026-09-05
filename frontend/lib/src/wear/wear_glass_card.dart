@@ -30,15 +30,15 @@ class WearGlassCard extends StatelessWidget {
           padding: padding ?? const EdgeInsets.all(12),
           decoration: BoxDecoration(
             // Tiles use Obsidian background
-            color: color ?? AppTheme.obsidian.withOpacity(0.8),
+            color: color ?? AppTheme.obsidian.withValues(alpha: 0.8),
             borderRadius: BorderRadius.circular(borderRadius),
             border: Border.all(
-              color: Colors.white.withOpacity(0.12),
+              color: Colors.white.withValues(alpha: 0.12),
               width: 1,
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.2),
+                color: Colors.black.withValues(alpha: 0.2),
                 blurRadius: 4,
                 offset: const Offset(0, 2),
               ),

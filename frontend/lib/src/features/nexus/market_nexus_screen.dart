@@ -25,7 +25,10 @@ class _MarketNexusScreenState extends ConsumerState<MarketNexusScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Updated', style: TextStyle(color: Colors.white70, fontSize: 13)),
+            content: Text(
+              'Updated',
+              style: TextStyle(color: Colors.white70, fontSize: 13),
+            ),
             backgroundColor: Color(0xFF1A1A2E),
             behavior: SnackBarBehavior.floating,
             duration: Duration(seconds: 1),
@@ -48,10 +51,7 @@ class _MarketNexusScreenState extends ConsumerState<MarketNexusScreen> {
             gradient: LinearGradient(
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
-              colors: [
-                Color(0x11FFB800),
-                AppTheme.obsidian,
-              ],
+              colors: [Color(0x11FFB800), AppTheme.obsidian],
             ),
           ),
           child: RefreshIndicator(
@@ -59,67 +59,83 @@ class _MarketNexusScreenState extends ConsumerState<MarketNexusScreen> {
             color: AppTheme.goldAmber,
             backgroundColor: const Color(0xFF1A1A2E),
             child: CustomScrollView(
-              physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
-              slivers: [
-              const _NexusHeader(),
-              const _NexusToolbar(),
-              stocksAsync.when(
-                data: (stocks) {
-                  final watchlist = stocks.where((s) => s.source == StockSource.watchlist).toList();
-                  final opportunities = stocks.where((s) => s.source == StockSource.opportunity).toList();
-                  
-                  return SliverMainAxisGroup(
-                    slivers: [
-                      if (watchlist.isNotEmpty) ...[
-                        const SliverToBoxAdapter(
-                          child: Padding(
-                            padding: EdgeInsets.fromLTRB(24, 20, 24, 10),
-                            child: Text(
-                              'STRATEGIC WATCHLIST',
-                              style: TextStyle(
-                                color: Colors.white38,
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: 1.5,
-                              ),
-                            ),
-                          ),
-                        ),
-                        _NexusList(stocks: watchlist),
-                      ],
-                      if (opportunities.isNotEmpty) ...[
-                        const SliverToBoxAdapter(
-                          child: Padding(
-                            padding: EdgeInsets.fromLTRB(24, 40, 24, 10),
-                            child: Text(
-                              'OPPORTUNITY SCOUT',
-                              style: TextStyle(
-                                color: AppTheme.goldAmber,
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: 1.5,
-                              ),
-                            ),
-                          ),
-                        ),
-                        _NexusList(stocks: opportunities, isOpportunity: true),
-                      ],
-                      if (watchlist.isEmpty && opportunities.isEmpty)
-                        const SliverFillRemaining(
-                          hasScrollBody: false,
-                          child: Center(
-                            child: Text('Add stocks to start tracking prices.', style: TextStyle(color: Colors.white24)),
-                          ),
-                        ),
-                    ],
-                  );
-                },
-                loading: () => const SliverFillRemaining(child: Center(child: CircularProgressIndicator())),
-                error: (err, stack) => SliverToBoxAdapter(child: Center(child: Text('Error: $err'))),
+              physics: const AlwaysScrollableScrollPhysics(
+                parent: BouncingScrollPhysics(),
               ),
-              const SliverToBoxAdapter(child: SizedBox(height: 120)),
-            ],
-          ),
+              slivers: [
+                const _NexusHeader(),
+                const _NexusToolbar(),
+                stocksAsync.when(
+                  data: (stocks) {
+                    final watchlist = stocks
+                        .where((s) => s.source == StockSource.watchlist)
+                        .toList();
+                    final opportunities = stocks
+                        .where((s) => s.source == StockSource.opportunity)
+                        .toList();
+
+                    return SliverMainAxisGroup(
+                      slivers: [
+                        if (watchlist.isNotEmpty) ...[
+                          const SliverToBoxAdapter(
+                            child: Padding(
+                              padding: EdgeInsets.fromLTRB(24, 20, 24, 10),
+                              child: Text(
+                                'STRATEGIC WATCHLIST',
+                                style: TextStyle(
+                                  color: Colors.white38,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: 1.5,
+                                ),
+                              ),
+                            ),
+                          ),
+                          _NexusList(stocks: watchlist),
+                        ],
+                        if (opportunities.isNotEmpty) ...[
+                          const SliverToBoxAdapter(
+                            child: Padding(
+                              padding: EdgeInsets.fromLTRB(24, 40, 24, 10),
+                              child: Text(
+                                'OPPORTUNITY SCOUT',
+                                style: TextStyle(
+                                  color: AppTheme.goldAmber,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: 1.5,
+                                ),
+                              ),
+                            ),
+                          ),
+                          _NexusList(
+                            stocks: opportunities,
+                            isOpportunity: true,
+                          ),
+                        ],
+                        if (watchlist.isEmpty && opportunities.isEmpty)
+                          const SliverFillRemaining(
+                            hasScrollBody: false,
+                            child: Center(
+                              child: Text(
+                                'Add stocks to start tracking prices.',
+                                style: TextStyle(color: Colors.white24),
+                              ),
+                            ),
+                          ),
+                      ],
+                    );
+                  },
+                  loading: () => const SliverFillRemaining(
+                    child: Center(child: CircularProgressIndicator()),
+                  ),
+                  error: (err, stack) => SliverToBoxAdapter(
+                    child: Center(child: Text('Error: $err')),
+                  ),
+                ),
+                const SliverToBoxAdapter(child: SizedBox(height: 120)),
+              ],
+            ),
           ),
         ),
       ),
@@ -148,7 +164,10 @@ class _NexusHeader extends StatelessWidget {
       actions: [
         IconButton(
           onPressed: () => context.push('/manage-watchlist'),
-          icon: const Icon(Icons.add_circle_outline_rounded, color: AppTheme.goldAmber),
+          icon: const Icon(
+            Icons.add_circle_outline_rounded,
+            color: AppTheme.goldAmber,
+          ),
         ),
         const SizedBox(width: 10),
       ],
@@ -170,15 +189,25 @@ class _NexusToolbar extends StatelessWidget {
                 key: TutorialKeys.nexusManage,
                 onTap: () => context.push('/manage-watchlist'),
                 child: GlassCard(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 10,
+                  ),
                   borderRadius: 15,
                   child: Row(
                     children: [
-                      const Icon(Icons.search_rounded, color: Colors.white24, size: 20),
+                      const Icon(
+                        Icons.search_rounded,
+                        color: Colors.white24,
+                        size: 20,
+                      ),
                       const SizedBox(width: 12),
                       Text(
                         'Search Assets...',
-                        style: TextStyle(color: Colors.white.withOpacity(0.2), fontSize: 14),
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.2),
+                          fontSize: 14,
+                        ),
                       ),
                     ],
                   ),
@@ -189,7 +218,11 @@ class _NexusToolbar extends StatelessWidget {
             GlassCard(
               padding: const EdgeInsets.all(10),
               borderRadius: 15,
-              child: const Icon(Icons.filter_list_rounded, color: AppTheme.goldAmber, size: 20),
+              child: const Icon(
+                Icons.filter_list_rounded,
+                color: AppTheme.goldAmber,
+                size: 20,
+              ),
             ),
           ],
         ),
@@ -206,13 +239,10 @@ class _NexusList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SliverList(
-      delegate: SliverChildBuilderDelegate(
-        (context, index) {
-          final stock = stocks[index];
-          return _NexusCard(stock: stock, isOpportunity: isOpportunity);
-        },
-        childCount: stocks.length,
-      ),
+      delegate: SliverChildBuilderDelegate((context, index) {
+        final stock = stocks[index];
+        return _NexusCard(stock: stock, isOpportunity: isOpportunity);
+      }, childCount: stocks.length),
     );
   }
 }
@@ -224,7 +254,9 @@ class _NexusCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = stock.changePercent >= 0 ? AppTheme.goldAmber : AppTheme.softCrimson;
+    final color = stock.changePercent >= 0
+        ? AppTheme.goldAmber
+        : AppTheme.softCrimson;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
@@ -254,11 +286,20 @@ class _NexusCard extends StatelessWidget {
                           if (isOpportunity) ...[
                             const SizedBox(width: 10),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 2,
+                              ),
                               decoration: BoxDecoration(
-                                color: AppTheme.goldAmber.withOpacity(0.1),
+                                color: AppTheme.goldAmber.withValues(
+                                  alpha: 0.1,
+                                ),
                                 borderRadius: BorderRadius.circular(4),
-                                border: Border.all(color: AppTheme.goldAmber.withOpacity(0.2)),
+                                border: Border.all(
+                                  color: AppTheme.goldAmber.withValues(
+                                    alpha: 0.2,
+                                  ),
+                                ),
                               ),
                               child: const Text(
                                 'ALPHA',
@@ -274,7 +315,10 @@ class _NexusCard extends StatelessWidget {
                       ),
                       Text(
                         stock.name,
-                        style: TextStyle(fontSize: 12, color: Colors.white.withOpacity(0.3)),
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.white.withValues(alpha: 0.3),
+                        ),
                       ),
                     ],
                   ),
@@ -292,11 +336,16 @@ class _NexusCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 2,
+                        ),
                         decoration: BoxDecoration(
-                          color: color.withOpacity(0.1),
+                          color: color.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(6),
-                          border: Border.all(color: color.withOpacity(0.2)),
+                          border: Border.all(
+                            color: color.withValues(alpha: 0.2),
+                          ),
                         ),
                         child: Text(
                           '${stock.changePercent >= 0 ? "+" : ""}${stock.changePercent.toStringAsFixed(2)}%',
@@ -337,7 +386,7 @@ class _NexusSparkline extends StatelessWidget {
     final minVal = data.reduce((a, b) => a < b ? a : b);
     final maxVal = data.reduce((a, b) => a > b ? a : b);
     final range = maxVal - minVal;
-    
+
     final padding = range == 0 ? 1.0 : range * 0.1;
 
     return LineChart(
@@ -350,7 +399,11 @@ class _NexusSparkline extends StatelessWidget {
         lineTouchData: const LineTouchData(enabled: false),
         lineBarsData: [
           LineChartBarData(
-            spots: data.asMap().entries.map((e) => FlSpot(e.key.toDouble(), e.value)).toList(),
+            spots: data
+                .asMap()
+                .entries
+                .map((e) => FlSpot(e.key.toDouble(), e.value))
+                .toList(),
             isCurved: true,
             color: color,
             barWidth: 3,
@@ -362,8 +415,8 @@ class _NexusSparkline extends StatelessWidget {
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
                 colors: [
-                  color.withOpacity(0.1),
-                  color.withOpacity(0),
+                  color.withValues(alpha: 0.1),
+                  color.withValues(alpha: 0),
                 ],
               ),
             ),

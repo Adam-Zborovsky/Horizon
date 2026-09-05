@@ -62,10 +62,7 @@ class _WearLoginScreenState extends ConsumerState<WearLoginScreen> {
           gradient: RadialGradient(
             center: Alignment.topRight,
             radius: 1.8,
-            colors: [
-              Color(0x11FFB800),
-              AppTheme.obsidian,
-            ],
+            colors: [Color(0x11FFB800), AppTheme.obsidian],
           ),
         ),
         child: WearRotaryScroll(
@@ -191,8 +188,11 @@ class _WearTextField extends StatelessWidget {
           prefixIcon: Icon(icon, color: Colors.white24, size: 14),
           prefixIconConstraints: const BoxConstraints(minWidth: 30),
           filled: true,
-          fillColor: Colors.white.withOpacity(0.05),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
+          fillColor: Colors.white.withValues(alpha: 0.05),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 8,
+            vertical: 0,
+          ),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(8),
             borderSide: BorderSide.none,

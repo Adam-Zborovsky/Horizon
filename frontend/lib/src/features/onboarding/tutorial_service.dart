@@ -251,7 +251,7 @@ class TutorialService {
                 child: Container(
                   decoration: BoxDecoration(
                     // Frosted dark glass panel
-                    color: const Color(0xFF0C0C1A).withOpacity(0.78),
+                    color: const Color(0xFF0C0C1A).withValues(alpha: 0.78),
                     borderRadius: BorderRadius.circular(18),
                     border: Border(
                       // Gold accent on top for brand alignment
@@ -260,15 +260,15 @@ class TutorialService {
                         width: 1.5,
                       ),
                       left: BorderSide(
-                        color: Colors.white.withOpacity(0.10),
+                        color: Colors.white.withValues(alpha: 0.10),
                         width: 1,
                       ),
                       right: BorderSide(
-                        color: Colors.white.withOpacity(0.10),
+                        color: Colors.white.withValues(alpha: 0.10),
                         width: 1,
                       ),
                       bottom: BorderSide(
-                        color: Colors.white.withOpacity(0.10),
+                        color: Colors.white.withValues(alpha: 0.10),
                         width: 1,
                       ),
                     ),
@@ -291,7 +291,7 @@ class TutorialService {
                       Text(
                         content,
                         style: TextStyle(
-                          color: Colors.white.withOpacity(0.88),
+                          color: Colors.white.withValues(alpha: 0.88),
                           fontSize: 14,
                           height: 1.55,
                         ),

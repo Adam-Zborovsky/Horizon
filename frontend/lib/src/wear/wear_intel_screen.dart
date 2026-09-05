@@ -13,13 +13,19 @@ class WearIntelScreen extends StatefulWidget {
 
   static IconData categoryIcon(String name) {
     final n = name.toLowerCase();
-    if (n.contains('market') || n.contains('analysis')) return Icons.candlestick_chart_rounded;
-    if (n.contains('opportunit') || n.contains('divergent')) return Icons.bolt_rounded;
-    if (n.contains('defense') || n.contains('military')) return Icons.shield_outlined;
-    if (n.contains('ai') || n.contains('cyber') || n.contains('tech')) return Icons.memory;
+    if (n.contains('market') || n.contains('analysis'))
+      return Icons.candlestick_chart_rounded;
+    if (n.contains('opportunit') || n.contains('divergent'))
+      return Icons.bolt_rounded;
+    if (n.contains('defense') || n.contains('military'))
+      return Icons.shield_outlined;
+    if (n.contains('ai') || n.contains('cyber') || n.contains('tech'))
+      return Icons.memory;
     if (n.contains('geo') || n.contains('diplom')) return Icons.public;
-    if (n.contains('econom') || n.contains('trade')) return Icons.account_balance_outlined;
-    if (n.contains('energy') || n.contains('nuclear')) return Icons.flash_on_rounded;
+    if (n.contains('econom') || n.contains('trade'))
+      return Icons.account_balance_outlined;
+    if (n.contains('energy') || n.contains('nuclear'))
+      return Icons.flash_on_rounded;
     return Icons.hub_outlined;
   }
 }
@@ -55,15 +61,25 @@ class _WearIntelScreenState extends State<WearIntelScreen> {
             controller: _scrollController,
             child: ListView.builder(
               controller: _scrollController,
-              padding: EdgeInsets.symmetric(horizontal: size.width * 0.08, vertical: 8),
+              padding: EdgeInsets.symmetric(
+                horizontal: size.width * 0.08,
+                vertical: 8,
+              ),
               itemCount: categories.length + 1,
               itemBuilder: (context, index) {
                 if (index == 0) {
                   return const Padding(
                     padding: EdgeInsets.only(bottom: 8, top: 4),
                     child: Center(
-                      child: Text('INTEL PILLARS',
-                          style: TextStyle(color: AppTheme.goldAmber, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 2)),
+                      child: Text(
+                        'INTEL PILLARS',
+                        style: TextStyle(
+                          color: AppTheme.goldAmber,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 2,
+                        ),
+                      ),
                     ),
                   );
                 }
@@ -78,7 +94,12 @@ class _WearIntelScreenState extends State<WearIntelScreen> {
                   child: GestureDetector(
                     onTap: () => Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (_) => _WearCategoryDetail(name: catName, category: catData)),
+                      MaterialPageRoute(
+                        builder: (_) => _WearCategoryDetail(
+                          name: catName,
+                          category: catData,
+                        ),
+                      ),
                     ),
                     child: WearGlassCard(
                       padding: const EdgeInsets.all(12),
@@ -87,25 +108,45 @@ class _WearIntelScreenState extends State<WearIntelScreen> {
                           Container(
                             padding: const EdgeInsets.all(6),
                             decoration: BoxDecoration(
-                              color: AppTheme.goldAmber.withOpacity(0.1),
+                              color: AppTheme.goldAmber.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(8),
                             ),
-                            child: Icon(WearIntelScreen.categoryIcon(catName), color: AppTheme.goldAmber, size: 14),
+                            child: Icon(
+                              WearIntelScreen.categoryIcon(catName),
+                              color: AppTheme.goldAmber,
+                              size: 14,
+                            ),
                           ),
                           const SizedBox(width: 10),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(catName,
-                                    style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
-                                    maxLines: 1, overflow: TextOverflow.ellipsis),
-                                Text('$itemCount items',
-                                    style: TextStyle(color: Colors.white.withOpacity(0.3), fontSize: 9)),
+                                Text(
+                                  catName,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                Text(
+                                  '$itemCount items',
+                                  style: TextStyle(
+                                    color: Colors.white.withValues(alpha: 0.3),
+                                    fontSize: 9,
+                                  ),
+                                ),
                               ],
                             ),
                           ),
-                          const Icon(Icons.chevron_right_rounded, color: Colors.white24, size: 16),
+                          const Icon(
+                            Icons.chevron_right_rounded,
+                            color: Colors.white24,
+                            size: 16,
+                          ),
                         ],
                       ),
                     ),
@@ -161,22 +202,35 @@ class _WearCategoryDetailState extends State<_WearCategoryDetail> {
             controller: _scrollController,
             child: ListView.builder(
               controller: _scrollController,
-              padding: EdgeInsets.symmetric(horizontal: size.width * 0.08, vertical: 8),
+              padding: EdgeInsets.symmetric(
+                horizontal: size.width * 0.08,
+                vertical: 8,
+              ),
               itemCount: items.length + 1,
               itemBuilder: (context, index) {
                 if (index == 0) {
                   return Padding(
                     padding: const EdgeInsets.only(bottom: 8, top: 4),
                     child: Center(
-                      child: Text(widget.name.toUpperCase(),
-                          style: const TextStyle(color: AppTheme.goldAmber, fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 1.5),
-                          maxLines: 1, overflow: TextOverflow.ellipsis, textAlign: TextAlign.center),
+                      child: Text(
+                        widget.name.toUpperCase(),
+                        style: const TextStyle(
+                          color: AppTheme.goldAmber,
+                          fontSize: 9,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1.5,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.center,
+                      ),
                     ),
                   );
                 }
 
                 final item = items[index - 1];
-                final title = item.title ?? item.ticker ?? item.name ?? 'Report';
+                final title =
+                    item.title ?? item.ticker ?? item.name ?? 'Report';
                 final summary = item.takeaway ?? item.explanation ?? '';
 
                 return Padding(
@@ -186,14 +240,27 @@ class _WearCategoryDetailState extends State<_WearCategoryDetail> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(title,
-                            style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
-                            maxLines: 2, overflow: TextOverflow.ellipsis),
+                        Text(
+                          title,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                         if (summary.isNotEmpty) ...[
                           const SizedBox(height: 4),
-                          Text(summary,
-                              style: TextStyle(color: Colors.white.withOpacity(0.4), fontSize: 9),
-                              maxLines: 3, overflow: TextOverflow.ellipsis),
+                          Text(
+                            summary,
+                            style: TextStyle(
+                              color: Colors.white.withValues(alpha: 0.4),
+                              fontSize: 9,
+                            ),
+                            maxLines: 3,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ],
                       ],
                     ),

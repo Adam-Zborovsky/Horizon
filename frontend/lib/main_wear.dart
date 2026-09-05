@@ -7,11 +7,7 @@ import 'src/wear/wear_login_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(
-    const ProviderScope(
-      child: HorizonWearApp(),
-    ),
-  );
+  runApp(const ProviderScope(child: HorizonWearApp()));
 }
 
 class HorizonWearApp extends ConsumerWidget {
@@ -26,11 +22,21 @@ class HorizonWearApp extends ConsumerWidget {
       debugShowCheckedModeBanner: false,
       theme: AppTheme.darkTheme.copyWith(
         textTheme: AppTheme.darkTheme.textTheme.copyWith(
-          displayLarge: AppTheme.darkTheme.textTheme.displayLarge?.copyWith(fontSize: 18),
-          displayMedium: AppTheme.darkTheme.textTheme.displayMedium?.copyWith(fontSize: 16),
-          titleLarge: AppTheme.darkTheme.textTheme.titleLarge?.copyWith(fontSize: 14),
-          bodyLarge: AppTheme.darkTheme.textTheme.bodyLarge?.copyWith(fontSize: 12),
-          bodyMedium: AppTheme.darkTheme.textTheme.bodyMedium?.copyWith(fontSize: 11),
+          displayLarge: AppTheme.darkTheme.textTheme.displayLarge?.copyWith(
+            fontSize: 18,
+          ),
+          displayMedium: AppTheme.darkTheme.textTheme.displayMedium?.copyWith(
+            fontSize: 16,
+          ),
+          titleLarge: AppTheme.darkTheme.textTheme.titleLarge?.copyWith(
+            fontSize: 14,
+          ),
+          bodyLarge: AppTheme.darkTheme.textTheme.bodyLarge?.copyWith(
+            fontSize: 12,
+          ),
+          bodyMedium: AppTheme.darkTheme.textTheme.bodyMedium?.copyWith(
+            fontSize: 11,
+          ),
         ),
       ),
       home: authState.when(
@@ -47,7 +53,7 @@ class HorizonWearApp extends ConsumerWidget {
             ),
           ),
         ),
-        error: (_, __) => const WearLoginScreen(),
+        error: (_, _) => const WearLoginScreen(),
       ),
     );
   }

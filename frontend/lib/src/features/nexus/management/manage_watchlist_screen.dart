@@ -10,7 +10,8 @@ class ManageWatchlistScreen extends ConsumerStatefulWidget {
   const ManageWatchlistScreen({super.key});
 
   @override
-  ConsumerState<ManageWatchlistScreen> createState() => _ManageWatchlistScreenState();
+  ConsumerState<ManageWatchlistScreen> createState() =>
+      _ManageWatchlistScreenState();
 }
 
 class _ManageWatchlistScreenState extends ConsumerState<ManageWatchlistScreen> {
@@ -63,7 +64,7 @@ class _ManageWatchlistScreenState extends ConsumerState<ManageWatchlistScreen> {
               }
             },
           ),
-          
+
           // Search Suggestions (Autocomplete)
           if (_searchQuery.isNotEmpty) ...[
             const SliverPadding(
@@ -83,36 +84,63 @@ class _ManageWatchlistScreenState extends ConsumerState<ManageWatchlistScreen> {
             Consumer(
               builder: (context, ref, child) {
                 final searchResults = ref.watch(stockSearchProvider);
-                
+
                 return searchResults.when(
                   data: (results) {
                     if (results.isEmpty) {
                       return SliverToBoxAdapter(
                         child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 24,
+                            vertical: 10,
+                          ),
                           child: GestureDetector(
                             onTap: () async {
-                              await ref.read(watchlistProvider.notifier).add(_searchQuery);
+                              await ref
+                                  .read(watchlistProvider.notifier)
+                                  .add(_searchQuery);
                               _searchController.clear();
                             },
                             child: Container(
                               padding: const EdgeInsets.all(16),
                               decoration: BoxDecoration(
-                                color: AppTheme.glassWhite.withOpacity(0.1),
+                                color: AppTheme.glassWhite.withValues(
+                                  alpha: 0.1,
+                                ),
                                 borderRadius: BorderRadius.circular(12),
-                                border: Border.all(color: AppTheme.goldAmber.withOpacity(0.3)),
+                                border: Border.all(
+                                  color: AppTheme.goldAmber.withValues(
+                                    alpha: 0.3,
+                                  ),
+                                ),
                               ),
                               child: Row(
                                 children: [
                                   Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
-                                      Text(_searchQuery, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                                      const Text('No matches found. Tap to add anyway.', style: TextStyle(color: Colors.white38, fontSize: 12)),
+                                      Text(
+                                        _searchQuery,
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 16,
+                                        ),
+                                      ),
+                                      const Text(
+                                        'No matches found. Tap to add anyway.',
+                                        style: TextStyle(
+                                          color: Colors.white38,
+                                          fontSize: 12,
+                                        ),
+                                      ),
                                     ],
                                   ),
                                   const Spacer(),
-                                  const Icon(Icons.add_circle_outline_rounded, color: AppTheme.goldAmber),
+                                  const Icon(
+                                    Icons.add_circle_outline_rounded,
+                                    color: AppTheme.goldAmber,
+                                  ),
                                 ],
                               ),
                             ),
@@ -120,76 +148,116 @@ class _ManageWatchlistScreenState extends ConsumerState<ManageWatchlistScreen> {
                         ),
                       );
                     }
-                    
+
                     return SliverList(
-                      delegate: SliverChildBuilderDelegate(
-                        (context, index) {
-                          final result = results[index];
-                          final isAdded = watchlist.contains(result.symbol);
-                          
-                          return Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 4),
-                            child: GestureDetector(
-                              onTap: isAdded ? null : () async {
-                                await ref.read(watchlistProvider.notifier).add(result.symbol);
-                                _searchController.clear();
-                              },
-                              child: Container(
-                                padding: const EdgeInsets.all(12),
-                                decoration: BoxDecoration(
-                                  color: AppTheme.glassWhite.withOpacity(0.05),
-                                  borderRadius: BorderRadius.circular(10),
-                                  border: Border.all(color: Colors.white.withOpacity(0.05)),
+                      delegate: SliverChildBuilderDelegate((context, index) {
+                        final result = results[index];
+                        final isAdded = watchlist.contains(result.symbol);
+
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 24,
+                            vertical: 4,
+                          ),
+                          child: GestureDetector(
+                            onTap: isAdded
+                                ? null
+                                : () async {
+                                    await ref
+                                        .read(watchlistProvider.notifier)
+                                        .add(result.symbol);
+                                    _searchController.clear();
+                                  },
+                            child: Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: AppTheme.glassWhite.withValues(
+                                  alpha: 0.05,
                                 ),
-                                child: Row(
-                                  children: [
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            result.symbol,
-                                            style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
-                                          ),
-                                          Text(
-                                            result.name,
-                                            style: TextStyle(color: Colors.white.withOpacity(0.4), fontSize: 12),
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    if (isAdded)
-                                      const Icon(Icons.check_circle_rounded, color: Colors.green, size: 20)
-                                    else
-                                      const Icon(Icons.add_circle_outline_rounded, color: AppTheme.goldAmber, size: 20),
-                                  ],
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(
+                                  color: Colors.white.withValues(alpha: 0.05),
                                 ),
                               ),
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          result.symbol,
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                        Text(
+                                          result.name,
+                                          style: TextStyle(
+                                            color: Colors.white.withValues(
+                                              alpha: 0.4,
+                                            ),
+                                            fontSize: 12,
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  if (isAdded)
+                                    const Icon(
+                                      Icons.check_circle_rounded,
+                                      color: Colors.green,
+                                      size: 20,
+                                    )
+                                  else
+                                    const Icon(
+                                      Icons.add_circle_outline_rounded,
+                                      color: AppTheme.goldAmber,
+                                      size: 20,
+                                    ),
+                                ],
+                              ),
                             ),
-                          );
-                        },
-                        childCount: results.length,
-                      ),
+                          ),
+                        );
+                      }, childCount: results.length),
                     );
                   },
                   loading: () => const SliverToBoxAdapter(
                     child: Padding(
                       padding: EdgeInsets.all(24),
-                      child: Center(child: CircularProgressIndicator(color: AppTheme.goldAmber, strokeWidth: 2)),
+                      child: Center(
+                        child: CircularProgressIndicator(
+                          color: AppTheme.goldAmber,
+                          strokeWidth: 2,
+                        ),
+                      ),
                     ),
                   ),
                   error: (err, stack) => SliverToBoxAdapter(
                     child: Padding(
                       padding: const EdgeInsets.all(24),
-                      child: Text('Error: $err', style: const TextStyle(color: AppTheme.softCrimson)),
+                      child: Text(
+                        'Error: $err',
+                        style: const TextStyle(color: AppTheme.softCrimson),
+                      ),
                     ),
                   ),
                 );
               },
             ),
-            const SliverToBoxAdapter(child: Divider(color: Colors.white10, indent: 24, endIndent: 24, height: 40)),
+            const SliverToBoxAdapter(
+              child: Divider(
+                color: Colors.white10,
+                indent: 24,
+                endIndent: 24,
+                height: 40,
+              ),
+            ),
           ],
 
           const SliverPadding(
@@ -210,23 +278,24 @@ class _ManageWatchlistScreenState extends ConsumerState<ManageWatchlistScreen> {
             const SliverFillRemaining(
               hasScrollBody: false,
               child: Center(
-                child: Text('No stocks in watchlist', style: TextStyle(color: Colors.white24)),
+                child: Text(
+                  'No stocks in watchlist',
+                  style: TextStyle(color: Colors.white24),
+                ),
               ),
             )
           else
             SliverList(
-              delegate: SliverChildBuilderDelegate(
-                (context, index) {
-                  final ticker = watchlist.toList()[index];
+              delegate: SliverChildBuilderDelegate((context, index) {
+                final ticker = watchlist.toList()[index];
 
-                  return _WatchlistItem(
-                    ticker: ticker,
-                    name: ticker,
-                    onRemove: () async => await ref.read(watchlistProvider.notifier).remove(ticker),
-                  );
-                },
-                childCount: watchlist.length,
-              ),
+                return _WatchlistItem(
+                  ticker: ticker,
+                  name: ticker,
+                  onRemove: () async =>
+                      await ref.read(watchlistProvider.notifier).remove(ticker),
+                );
+              }, childCount: watchlist.length),
             ),
           const SliverToBoxAdapter(child: SizedBox(height: 100)),
         ],
@@ -239,7 +308,10 @@ class _SliverSearchHeader extends StatelessWidget {
   final TextEditingController controller;
   final Function(String) onSubmitted;
 
-  const _SliverSearchHeader({required this.controller, required this.onSubmitted});
+  const _SliverSearchHeader({
+    required this.controller,
+    required this.onSubmitted,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -253,14 +325,23 @@ class _SliverSearchHeader extends StatelessWidget {
       flexibleSpace: GlassCard(
         borderRadius: 0,
         blur: 20,
-        padding: const EdgeInsets.only(top: 40, left: 24, right: 24, bottom: 10),
-        color: AppTheme.obsidian.withOpacity(0.7),
+        padding: const EdgeInsets.only(
+          top: 40,
+          left: 24,
+          right: 24,
+          bottom: 10,
+        ),
+        color: AppTheme.obsidian.withValues(alpha: 0.7),
         border: const Border(bottom: BorderSide(color: Colors.white10)),
         child: Row(
           children: [
             IconButton(
               onPressed: () => Navigator.pop(context),
-              icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
+              icon: const Icon(
+                Icons.arrow_back_ios_new_rounded,
+                color: Colors.white,
+                size: 20,
+              ),
               padding: EdgeInsets.zero,
               constraints: const BoxConstraints(),
             ),
@@ -272,9 +353,16 @@ class _SliverSearchHeader extends StatelessWidget {
                 style: const TextStyle(color: Colors.white, fontSize: 16),
                 decoration: InputDecoration(
                   hintText: 'SEARCH TICKERS...',
-                  hintStyle: TextStyle(color: Colors.white.withOpacity(0.2), fontSize: 14, letterSpacing: 1),
+                  hintStyle: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.2),
+                    fontSize: 14,
+                    letterSpacing: 1,
+                  ),
                   border: InputBorder.none,
-                  suffixIcon: Icon(Icons.search_rounded, color: AppTheme.goldAmber.withOpacity(0.5)),
+                  suffixIcon: Icon(
+                    Icons.search_rounded,
+                    color: AppTheme.goldAmber.withValues(alpha: 0.5),
+                  ),
                 ),
               ),
             ),
@@ -290,7 +378,11 @@ class _WatchlistItem extends StatelessWidget {
   final String name;
   final VoidCallback onRemove;
 
-  const _WatchlistItem({required this.ticker, required this.name, required this.onRemove});
+  const _WatchlistItem({
+    required this.ticker,
+    required this.name,
+    required this.onRemove,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -305,18 +397,30 @@ class _WatchlistItem extends StatelessWidget {
               children: [
                 Text(
                   ticker,
-                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white, fontFamily: 'Montserrat'),
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                    fontFamily: 'Montserrat',
+                  ),
                 ),
                 Text(
                   name,
-                  style: TextStyle(fontSize: 12, color: Colors.white.withOpacity(0.3)),
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.white.withValues(alpha: 0.3),
+                  ),
                 ),
               ],
             ),
             const Spacer(),
             IconButton(
               onPressed: onRemove,
-              icon: const Icon(Icons.remove_circle_outline_rounded, color: AppTheme.softCrimson, size: 22),
+              icon: const Icon(
+                Icons.remove_circle_outline_rounded,
+                color: AppTheme.softCrimson,
+                size: 22,
+              ),
             ),
           ],
         ),

@@ -10,6 +10,7 @@ import '../stock/stock_repository.dart';
 import '../briefing/briefing_model.dart';
 import '../onboarding/onboarding_wrapper.dart';
 import '../onboarding/tutorial_keys.dart';
+
 class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
 
@@ -25,7 +26,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Updated', style: TextStyle(color: Colors.white70, fontSize: 13)),
+            content: Text(
+              'Updated',
+              style: TextStyle(color: Colors.white70, fontSize: 13),
+            ),
             backgroundColor: Color(0xFF1A1A2E),
             behavior: SnackBarBehavior.floating,
             duration: Duration(seconds: 1),
@@ -48,10 +52,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             gradient: RadialGradient(
               center: Alignment.topRight,
               radius: 1.5,
-              colors: [
-                Color(0x11FFB800),
-                AppTheme.obsidian,
-              ],
+              colors: [Color(0x11FFB800), AppTheme.obsidian],
             ),
           ),
           child: RefreshIndicator(
@@ -59,91 +60,119 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             color: AppTheme.goldAmber,
             backgroundColor: const Color(0xFF1A1A2E),
             child: CustomScrollView(
-              physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+              physics: const AlwaysScrollableScrollPhysics(
+                parent: BouncingScrollPhysics(),
+              ),
               slivers: [
-              const _WarRoomHeader(),
-              SliverPadding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                sliver: SliverToBoxAdapter(
-                  child: briefingAsync.when(
-                    data: (briefing) => _DailyBriefingSummary(
-                      key: TutorialKeys.dashBriefing,
-                      briefing: briefing,
+                const _WarRoomHeader(),
+                SliverPadding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  sliver: SliverToBoxAdapter(
+                    child: briefingAsync.when(
+                      data: (briefing) => _DailyBriefingSummary(
+                        key: TutorialKeys.dashBriefing,
+                        briefing: briefing,
+                      ),
+                      loading: () => const _ShimmerCard(height: 200),
+                      error: (err, stack) =>
+                          _ErrorWidget(error: err.toString()),
                     ),
-                    loading: () => const _ShimmerCard(height: 200),
-                    error: (err, stack) => _ErrorWidget(error: err.toString()),
                   ),
                 ),
-              ),
-              const SliverToBoxAdapter(child: SizedBox(height: 30)),
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: SectionHeader(
-                    title: 'Intelligence Pillars',
-                    onTap: () => context.go('/vault'),
+                const SliverToBoxAdapter(child: SizedBox(height: 30)),
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: SectionHeader(
+                      title: 'Intelligence Pillars',
+                      onTap: () => context.go('/vault'),
+                    ),
                   ),
                 ),
-              ),
-              const SliverToBoxAdapter(child: SizedBox(height: 15)),
-              briefingAsync.when(
-                data: (briefing) => _IntelPillarsGrid(
-                  key: TutorialKeys.dashPillars,
-                  briefing: briefing,
+                const SliverToBoxAdapter(child: SizedBox(height: 15)),
+                briefingAsync.when(
+                  data: (briefing) => _IntelPillarsGrid(
+                    key: TutorialKeys.dashPillars,
+                    briefing: briefing,
+                  ),
+                  loading: () => const SliverToBoxAdapter(
+                    child: Center(child: CircularProgressIndicator()),
+                  ),
+                  error: (err, stack) =>
+                      const SliverToBoxAdapter(child: SizedBox.shrink()),
                 ),
-                loading: () => const SliverToBoxAdapter(child: Center(child: CircularProgressIndicator())),
-                error: (err, stack) => const SliverToBoxAdapter(child: SizedBox.shrink()),
-              ),
-              const SliverToBoxAdapter(child: SizedBox(height: 30)),
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: SectionHeader(
-                    title: 'Strategic Watchlist',
-                    onTap: () => context.push('/manage-watchlist'),
+                const SliverToBoxAdapter(child: SizedBox(height: 30)),
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: SectionHeader(
+                      title: 'Strategic Watchlist',
+                      onTap: () => context.push('/manage-watchlist'),
+                    ),
                   ),
                 ),
-              ),
-              const SliverToBoxAdapter(child: SizedBox(height: 15)),
-              stocksAsync.when(
-                data: (stocks) => _MarketNexusList(
-                  stocks: stocks.where((s) => s.source == StockSource.watchlist).toList(),
-                  emptyLabel: 'No stocks in watchlist',
-                  emptyAction: 'Add Stocks',
-                  onEmptyTap: () => context.push('/manage-watchlist'),
-                ),
-                loading: () => const SliverToBoxAdapter(child: Center(child: CircularProgressIndicator())),
-                error: (err, stack) => SliverToBoxAdapter(child: Center(child: Text('Stock error: $err', style: const TextStyle(color: Colors.white24)))),
-              ),
-              const SliverToBoxAdapter(child: SizedBox(height: 30)),
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: SectionHeader(
-                    title: 'Opportunity Scout',
-                    onTap: () => context.go('/nexus'),
+                const SliverToBoxAdapter(child: SizedBox(height: 15)),
+                stocksAsync.when(
+                  data: (stocks) => _MarketNexusList(
+                    stocks: stocks
+                        .where((s) => s.source == StockSource.watchlist)
+                        .toList(),
+                    emptyLabel: 'No stocks in watchlist',
+                    emptyAction: 'Add Stocks',
+                    onEmptyTap: () => context.push('/manage-watchlist'),
+                  ),
+                  loading: () => const SliverToBoxAdapter(
+                    child: Center(child: CircularProgressIndicator()),
+                  ),
+                  error: (err, stack) => SliverToBoxAdapter(
+                    child: Center(
+                      child: Text(
+                        'Stock error: $err',
+                        style: const TextStyle(color: Colors.white24),
+                      ),
+                    ),
                   ),
                 ),
-              ),
-              const SliverToBoxAdapter(child: SizedBox(height: 15)),
-              stocksAsync.when(
-                data: (stocks) => _MarketNexusList(
-                  stocks: stocks.where((s) => s.source == StockSource.opportunity).toList(),
-                  isOpportunity: true,
-                  emptyLabel: 'Searching for market anomalies...',
-                  emptyAction: 'View Nexus',
-                  onEmptyTap: () => context.go('/nexus'),
+                const SliverToBoxAdapter(child: SizedBox(height: 30)),
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: SectionHeader(
+                      title: 'Opportunity Scout',
+                      onTap: () => context.go('/nexus'),
+                    ),
+                  ),
                 ),
-                loading: () => const SliverToBoxAdapter(child: Center(child: CircularProgressIndicator())),
-                error: (err, stack) => SliverToBoxAdapter(child: Center(child: Text('Stock error: $err', style: const TextStyle(color: Colors.white24)))),
-              ),
-              SliverToBoxAdapter(
-                child: SizedBox(
-                  height: 100 + MediaQuery.of(context).padding.bottom,
+                const SliverToBoxAdapter(child: SizedBox(height: 15)),
+                stocksAsync.when(
+                  data: (stocks) => _MarketNexusList(
+                    stocks: stocks
+                        .where((s) => s.source == StockSource.opportunity)
+                        .toList(),
+                    isOpportunity: true,
+                    emptyLabel: 'Searching for market anomalies...',
+                    emptyAction: 'View Nexus',
+                    onEmptyTap: () => context.go('/nexus'),
+                  ),
+                  loading: () => const SliverToBoxAdapter(
+                    child: Center(child: CircularProgressIndicator()),
+                  ),
+                  error: (err, stack) => SliverToBoxAdapter(
+                    child: Center(
+                      child: Text(
+                        'Stock error: $err',
+                        style: const TextStyle(color: Colors.white24),
+                      ),
+                    ),
+                  ),
                 ),
-              ),
-            ],
-          ),
+                SliverToBoxAdapter(
+                  child: SizedBox(
+                    height: 100 + MediaQuery.of(context).padding.bottom,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -161,11 +190,17 @@ class _ErrorWidget extends StatelessWidget {
       padding: const EdgeInsets.all(24),
       child: Column(
         children: [
-          const Icon(Icons.error_outline_rounded, color: AppTheme.softCrimson, size: 32),
+          const Icon(
+            Icons.error_outline_rounded,
+            color: AppTheme.softCrimson,
+            size: 32,
+          ),
           const SizedBox(height: 12),
           Text(
             'Connection Error',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(color: AppTheme.softCrimson),
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(color: AppTheme.softCrimson),
           ),
           const SizedBox(height: 8),
           Text(
@@ -175,7 +210,9 @@ class _ErrorWidget extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           ElevatedButton(
-            onPressed: () => ProviderScope.containerOf(context).invalidate(briefingRepositoryProvider),
+            onPressed: () => ProviderScope.containerOf(
+              context,
+            ).invalidate(briefingRepositoryProvider),
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.white10,
               foregroundColor: Colors.white,
@@ -211,7 +248,10 @@ class _WarRoomHeader extends StatelessWidget {
       actions: [
         IconButton(
           onPressed: () => context.push('/notifications'),
-          icon: const Icon(Icons.notifications_none_rounded, color: Colors.white70),
+          icon: const Icon(
+            Icons.notifications_none_rounded,
+            color: Colors.white70,
+          ),
         ),
         Padding(
           padding: const EdgeInsets.only(right: 20, left: 10),
@@ -221,7 +261,11 @@ class _WarRoomHeader extends StatelessWidget {
             child: const CircleAvatar(
               radius: 16,
               backgroundColor: AppTheme.glassWhite,
-              child: Icon(Icons.person_outline_rounded, color: Colors.white70, size: 18),
+              child: Icon(
+                Icons.person_outline_rounded,
+                color: Colors.white70,
+                size: 18,
+              ),
             ),
           ),
         ),
@@ -241,7 +285,10 @@ class _DailyBriefingSummary extends StatelessWidget {
         child: Padding(
           padding: EdgeInsets.all(40),
           child: Center(
-            child: Text('No reports available yet.', style: TextStyle(color: Colors.white24)),
+            child: Text(
+              'No reports available yet.',
+              style: TextStyle(color: Colors.white24),
+            ),
           ),
         ),
       );
@@ -249,15 +296,17 @@ class _DailyBriefingSummary extends StatelessWidget {
 
     String? categoryName;
     CategoryData? category;
-    
+
     for (var entry in briefing.data.entries) {
-      if (entry.value.summary.isNotEmpty && entry.value.summary != 'Direct item list' && entry.value.summary != 'Strategic news analysis for ${entry.key}.') {
+      if (entry.value.summary.isNotEmpty &&
+          entry.value.summary != 'Direct item list' &&
+          entry.value.summary != 'Strategic news analysis for ${entry.key}.') {
         categoryName = entry.key;
         category = entry.value;
         break;
       }
     }
-    
+
     categoryName ??= briefing.data.keys.first;
     category ??= briefing.data.values.first;
 
@@ -265,7 +314,8 @@ class _DailyBriefingSummary extends StatelessWidget {
     final score = category.sentimentScore;
 
     return GestureDetector(
-      onTap: () => context.push('/vault?category=${Uri.encodeComponent(categoryName!)}'),
+      onTap: () =>
+          context.push('/vault?category=${Uri.encodeComponent(categoryName!)}'),
       child: GlassCard(
         padding: const EdgeInsets.all(24),
         child: Column(
@@ -281,15 +331,17 @@ class _DailyBriefingSummary extends StatelessWidget {
                       Text(
                         'Daily Analysis',
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: AppTheme.goldAmber,
-                              fontWeight: FontWeight.bold,
-                              letterSpacing: 1.2,
-                            ),
+                          color: AppTheme.goldAmber,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1.2,
+                        ),
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        categoryName, 
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(fontSize: 18),
+                        categoryName,
+                        style: Theme.of(
+                          context,
+                        ).textTheme.titleLarge?.copyWith(fontSize: 18),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -301,8 +353,12 @@ class _DailyBriefingSummary extends StatelessWidget {
             ),
             const SizedBox(height: 20),
             Text(
-              summary.isEmpty ? 'Tap to view latest intelligence reports.' : summary,
-              style: Theme.of(context).textTheme.bodyLarge?.copyWith(height: 1.4),
+              summary.isEmpty
+                  ? 'Tap to view latest intelligence reports.'
+                  : summary,
+              style: Theme.of(
+                context,
+              ).textTheme.bodyLarge?.copyWith(height: 1.4),
               maxLines: 4,
               overflow: TextOverflow.ellipsis,
             ),
@@ -319,7 +375,11 @@ class _DailyBriefingSummary extends StatelessWidget {
                   ),
                 ),
                 SizedBox(width: 8),
-                Icon(Icons.north_east_rounded, size: 14, color: AppTheme.goldAmber),
+                Icon(
+                  Icons.north_east_rounded,
+                  size: 14,
+                  color: AppTheme.goldAmber,
+                ),
               ],
             ),
           ],
@@ -370,7 +430,7 @@ class _IntelPillarsGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final categories = briefing.data.keys.toList();
-    
+
     return SliverPadding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       sliver: SliverGrid(
@@ -380,17 +440,15 @@ class _IntelPillarsGrid extends StatelessWidget {
           crossAxisSpacing: 12,
           childAspectRatio: 1.1,
         ),
-        delegate: SliverChildBuilderDelegate(
-          (context, index) {
-            final catName = categories[index];
-            final catData = briefing.data[catName]!;
-            return GestureDetector(
-              onTap: () => context.go('/vault?category=${Uri.encodeComponent(catName)}'),
-              child: _IntelCard(name: catName, score: catData.sentimentScore),
-            );
-          },
-          childCount: categories.length,
-        ),
+        delegate: SliverChildBuilderDelegate((context, index) {
+          final catName = categories[index];
+          final catData = briefing.data[catName]!;
+          return GestureDetector(
+            onTap: () =>
+                context.go('/vault?category=${Uri.encodeComponent(catName)}'),
+            child: _IntelCard(name: catName, score: catData.sentimentScore),
+          );
+        }, childCount: categories.length),
       ),
     );
   }
@@ -403,14 +461,21 @@ class _IntelCard extends StatelessWidget {
 
   static IconData _categoryIcon(String name) {
     final n = name.toLowerCase();
-    if (n.contains('market') || n.contains('analysis')) return Icons.candlestick_chart_rounded;
-    if (n.contains('opportunit') || n.contains('divergent')) return Icons.bolt_rounded;
-    if (n.contains('defense') || n.contains('military')) return Icons.shield_outlined;
-    if (n.contains('ai') || n.contains('cyber') || n.contains('tech')) return Icons.memory;
+    if (n.contains('market') || n.contains('analysis'))
+      return Icons.candlestick_chart_rounded;
+    if (n.contains('opportunit') || n.contains('divergent'))
+      return Icons.bolt_rounded;
+    if (n.contains('defense') || n.contains('military'))
+      return Icons.shield_outlined;
+    if (n.contains('ai') || n.contains('cyber') || n.contains('tech'))
+      return Icons.memory;
     if (n.contains('geo') || n.contains('diplom')) return Icons.public;
-    if (n.contains('econom') || n.contains('trade') || n.contains('infra')) return Icons.account_balance_outlined;
-    if (n.contains('energy') || n.contains('nuclear')) return Icons.flash_on_rounded;
-    if (n.contains('health') || n.contains('social') || n.contains('cultur')) return Icons.groups_outlined;
+    if (n.contains('econom') || n.contains('trade') || n.contains('infra'))
+      return Icons.account_balance_outlined;
+    if (n.contains('energy') || n.contains('nuclear'))
+      return Icons.flash_on_rounded;
+    if (n.contains('health') || n.contains('social') || n.contains('cultur'))
+      return Icons.groups_outlined;
     return Icons.hub_outlined;
   }
 
@@ -426,14 +491,10 @@ class _IntelCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
+              color: color.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: Icon(
-              _categoryIcon(name),
-              color: color,
-              size: 18,
-            ),
+            child: Icon(_categoryIcon(name), color: color, size: 18),
           ),
           Text(
             name,
@@ -463,7 +524,10 @@ class _IntelCard extends StatelessWidget {
                       color: color,
                       borderRadius: BorderRadius.circular(2),
                       boxShadow: [
-                        BoxShadow(color: color.withOpacity(0.4), blurRadius: 4),
+                        BoxShadow(
+                          color: color.withValues(alpha: 0.4),
+                          blurRadius: 4,
+                        ),
                       ],
                     ),
                   ),
@@ -514,20 +578,25 @@ class _MarketNexusList extends StatelessWidget {
               child: Column(
                 children: [
                   Icon(
-                    isOpportunity ? Icons.radar_rounded : Icons.add_chart_rounded, 
-                    color: Colors.white10, 
-                    size: 32
+                    isOpportunity
+                        ? Icons.radar_rounded
+                        : Icons.add_chart_rounded,
+                    color: Colors.white10,
+                    size: 32,
                   ),
                   const SizedBox(height: 12),
-                  Text(emptyLabel, style: const TextStyle(color: Colors.white24)),
+                  Text(
+                    emptyLabel,
+                    style: const TextStyle(color: Colors.white24),
+                  ),
                   const SizedBox(height: 8),
                   Text(
-                    emptyAction, 
+                    emptyAction,
                     style: TextStyle(
-                      color: AppTheme.goldAmber.withOpacity(0.5), 
-                      fontSize: 11, 
-                      fontWeight: FontWeight.bold
-                    )
+                      color: AppTheme.goldAmber.withValues(alpha: 0.5),
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ],
               ),
@@ -538,107 +607,115 @@ class _MarketNexusList extends StatelessWidget {
     }
 
     return SliverList(
-      delegate: SliverChildBuilderDelegate(
-        (context, index) {
-          final stock = stocks[index];
-          final color = stock.changePercent >= 0 ? AppTheme.goldAmber : AppTheme.softCrimson;
-          
-          return Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
-            child: GestureDetector(
-              onTap: () => context.push('/stock/${stock.ticker}'),
-              child: GlassCard(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                child: Row(
-                  children: [
-                    Expanded(
-                      flex: 3,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Text(
-                                stock.ticker,
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                  letterSpacing: 0.5,
-                                ),
+      delegate: SliverChildBuilderDelegate((context, index) {
+        final stock = stocks[index];
+        final color = stock.changePercent >= 0
+            ? AppTheme.goldAmber
+            : AppTheme.softCrimson;
+
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
+          child: GestureDetector(
+            onTap: () => context.push('/stock/${stock.ticker}'),
+            child: GlassCard(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              child: Row(
+                children: [
+                  Expanded(
+                    flex: 3,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Text(
+                              stock.ticker,
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                                letterSpacing: 0.5,
                               ),
-                              if (isOpportunity) ...[
-                                const SizedBox(width: 8),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-                                  decoration: BoxDecoration(
-                                    color: AppTheme.goldAmber.withOpacity(0.1),
-                                    borderRadius: BorderRadius.circular(4),
-                                    border: Border.all(color: AppTheme.goldAmber.withOpacity(0.2)),
+                            ),
+                            if (isOpportunity) ...[
+                              const SizedBox(width: 8),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 4,
+                                  vertical: 1,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppTheme.goldAmber.withValues(
+                                    alpha: 0.1,
                                   ),
-                                  child: const Text(
-                                    'ALPHA',
-                                    style: TextStyle(
-                                      color: AppTheme.goldAmber,
-                                      fontSize: 8,
-                                      fontWeight: FontWeight.bold,
-                                      letterSpacing: 0.5,
+                                  borderRadius: BorderRadius.circular(4),
+                                  border: Border.all(
+                                    color: AppTheme.goldAmber.withValues(
+                                      alpha: 0.2,
                                     ),
                                   ),
                                 ),
-                              ],
+                                child: const Text(
+                                  'ALPHA',
+                                  style: TextStyle(
+                                    color: AppTheme.goldAmber,
+                                    fontSize: 8,
+                                    fontWeight: FontWeight.bold,
+                                    letterSpacing: 0.5,
+                                  ),
+                                ),
+                              ),
                             ],
-                          ),
-                          Text(
-                            stock.name,
-                            style: TextStyle(fontSize: 11, color: Colors.white.withOpacity(0.3)),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      flex: 2,
-                      child: SizedBox(
-                        height: 30,
-                        child: _MiniSparkline(
-                          data: stock.history, 
-                          color: color,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 15),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Text(
-                          '\$${stock.currentPrice.toStringAsFixed(2)}',
-                          style: const TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
+                          ],
                         ),
                         Text(
-                          '${stock.changePercent >= 0 ? "+" : ""}${stock.changePercent.toStringAsFixed(2)}%',
+                          stock.name,
                           style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                            color: color,
+                            fontSize: 11,
+                            color: Colors.white.withValues(alpha: 0.3),
                           ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ],
                     ),
-                  ],
-                ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    flex: 2,
+                    child: SizedBox(
+                      height: 30,
+                      child: _MiniSparkline(data: stock.history, color: color),
+                    ),
+                  ),
+                  const SizedBox(width: 15),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text(
+                        '\$${stock.currentPrice.toStringAsFixed(2)}',
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                      Text(
+                        '${stock.changePercent >= 0 ? "+" : ""}${stock.changePercent.toStringAsFixed(2)}%',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: color,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ),
-          );
-        },
-        childCount: stocks.length,
-      ),
+          ),
+        );
+      }, childCount: stocks.length),
     );
   }
 }
@@ -651,7 +728,7 @@ class _MiniSparkline extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (data.isEmpty) return const SizedBox.shrink();
-    
+
     final minVal = data.reduce((a, b) => a < b ? a : b);
     final maxVal = data.reduce((a, b) => a > b ? a : b);
     final range = maxVal - minVal;
@@ -667,7 +744,11 @@ class _MiniSparkline extends StatelessWidget {
         lineTouchData: const LineTouchData(enabled: false),
         lineBarsData: [
           LineChartBarData(
-            spots: data.asMap().entries.map((e) => FlSpot(e.key.toDouble(), e.value)).toList(),
+            spots: data
+                .asMap()
+                .entries
+                .map((e) => FlSpot(e.key.toDouble(), e.value))
+                .toList(),
             isCurved: true,
             color: color,
             barWidth: 2,
@@ -675,7 +756,7 @@ class _MiniSparkline extends StatelessWidget {
             dotData: const FlDotData(show: false),
             belowBarData: BarAreaData(
               show: true,
-              color: color.withOpacity(0.05),
+              color: color.withValues(alpha: 0.05),
             ),
           ),
         ],
@@ -693,7 +774,7 @@ class _ShimmerCard extends StatelessWidget {
     return Container(
       height: height,
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.05),
+        color: Colors.white.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(20),
       ),
     );

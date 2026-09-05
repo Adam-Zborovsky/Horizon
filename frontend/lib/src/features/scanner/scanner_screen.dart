@@ -26,7 +26,10 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Updated', style: TextStyle(color: Colors.white70, fontSize: 13)),
+            content: Text(
+              'Updated',
+              style: TextStyle(color: Colors.white70, fontSize: 13),
+            ),
             backgroundColor: Color(0xFF1A1A2E),
             behavior: SnackBarBehavior.floating,
             duration: Duration(seconds: 1),
@@ -50,10 +53,7 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
             gradient: RadialGradient(
               center: Alignment.center,
               radius: 1.5,
-              colors: [
-                Color(0x22FFB800),
-                AppTheme.obsidian,
-              ],
+              colors: [Color(0x22FFB800), AppTheme.obsidian],
             ),
           ),
           child: RefreshIndicator(
@@ -61,132 +61,151 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
             color: AppTheme.goldAmber,
             backgroundColor: const Color(0xFF1A1A2E),
             child: CustomScrollView(
-              physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+              physics: const AlwaysScrollableScrollPhysics(
+                parent: BouncingScrollPhysics(),
+              ),
               slivers: [
-              const _ScannerHeader(),
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _ScannerPulse(key: TutorialKeys.scannerPulse),
-                      const SizedBox(height: 30),
+                const _ScannerHeader(),
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _ScannerPulse(key: TutorialKeys.scannerPulse),
+                        const SizedBox(height: 30),
 
-                      SectionHeader(
-                        key: TutorialKeys.scannerOpportunities,
-                        title: 'Strategic Opportunities',
-                      ),
-                      const SizedBox(height: 8),
-                      const Text(
-                        'The best stock ideas found by the AI in your daily reports.',
-                        style: TextStyle(color: Colors.white24, fontSize: 11),
-                      ),
-                      const SizedBox(height: 15),
-                      briefingAsync.when(
-                        data: (briefing) {
-                          final oppEntry = briefing.data.entries.where(
-                            (e) =>
-                                e.key.toLowerCase().contains('opportunit') ||
-                                                e.key.toLowerCase().contains('divergent'),
-                          );
-                          final opportunities = oppEntry.isNotEmpty
-                              ? oppEntry.first.value.items
-                              : <BriefingItem>[];
-                          if (opportunities.isEmpty) {
-                            return const _EmptyScannerState(
-                              message:
-                                  'No trade ideas yet. Go to your profile and tap "Refresh Now" to generate your first report.',
+                        SectionHeader(
+                          key: TutorialKeys.scannerOpportunities,
+                          title: 'Strategic Opportunities',
+                        ),
+                        const SizedBox(height: 8),
+                        const Text(
+                          'The best stock ideas found by the AI in your daily reports.',
+                          style: TextStyle(color: Colors.white24, fontSize: 11),
+                        ),
+                        const SizedBox(height: 15),
+                        briefingAsync.when(
+                          data: (briefing) {
+                            final oppEntry = briefing.data.entries.where(
+                              (e) =>
+                                  e.key.toLowerCase().contains('opportunit') ||
+                                  e.key.toLowerCase().contains('divergent'),
                             );
-                          }
-                          return Column(
-                            children: opportunities
-                                .map((item) => _StrategicOpportunityCard(item: item))
-                                .toList(),
-                          );
-                        },
-                        loading: () => const LinearProgressIndicator(color: AppTheme.goldAmber),
-                        error: (e, s) =>
-                            const _EmptyScannerState(message: 'Could not load trade ideas.'),
-                      ),
-
-                      const SizedBox(height: 30),
-                      SectionHeader(
-                        key: TutorialKeys.scannerDivergences,
-                        title: 'High-Signal Divergences',
-                      ),
-                      const SizedBox(height: 8),
-                      const Text(
-                        'The AI sees positive news, but the stock price has not moved up yet.',
-                        style: TextStyle(color: Colors.white24, fontSize: 11),
-                      ),
-                      const SizedBox(height: 15),
-                      stocksAsync.when(
-                        data: (stocks) {
-                          final divergences = stocks
-                              .where((s) => s.sentiment > 0.5 && s.changePercent <= 0.5)
-                              .toList();
-                          if (divergences.isEmpty) {
-                            return const _EmptyScannerState(
-                              message:
-                                  'No signals detected. Add stocks to your watchlist to enable this section.',
-                            );
-                          }
-                          return Column(
-                            children:
-                                divergences.map((s) => _DivergenceCard(stock: s)).toList(),
-                          );
-                        },
-                        loading: () => const LinearProgressIndicator(color: AppTheme.goldAmber),
-                        error: (e, s) => const SizedBox.shrink(),
-                      ),
-
-                      const SizedBox(height: 30),
-                      SectionHeader(
-                        key: TutorialKeys.scannerCatalysts,
-                        title: 'Strategic Catalysts',
-                      ),
-                      const SizedBox(height: 8),
-                      const Text(
-                        'Important news events that could affect stock prices soon.',
-                        style: TextStyle(color: Colors.white24, fontSize: 11),
-                      ),
-                      const SizedBox(height: 15),
-                      briefingAsync.when(
-                        data: (briefing) {
-                          final List<BriefingItem> catalysts = [];
-                          briefing.data.forEach((key, cat) {
-                            final lk = key.toLowerCase();
-                            if (!lk.contains('opportunit') && !lk.contains('divergent')) {
-                              catalysts.addAll(
-                                cat.items.where((i) => i.takeaway != null || i.title != null),
+                            final opportunities = oppEntry.isNotEmpty
+                                ? oppEntry.first.value.items
+                                : <BriefingItem>[];
+                            if (opportunities.isEmpty) {
+                              return const _EmptyScannerState(
+                                message:
+                                    'No trade ideas yet. Go to your profile and tap "Refresh Now" to generate your first report.',
                               );
                             }
-                          });
-                          if (catalysts.isEmpty) {
-                            return const _EmptyScannerState(
-                              message:
-                                  'No key events found yet. Run a refresh from your profile to populate this section.',
+                            return Column(
+                              children: opportunities
+                                  .map(
+                                    (item) =>
+                                        _StrategicOpportunityCard(item: item),
+                                  )
+                                  .toList(),
                             );
-                          }
-                          return Column(
-                            children: catalysts
-                                .take(5)
-                                .map((i) => _CatalystCard(item: i))
-                                .toList(),
-                          );
-                        },
-                        loading: () => const SizedBox.shrink(),
-                        error: (e, s) => const SizedBox.shrink(),
-                      ),
+                          },
+                          loading: () => const LinearProgressIndicator(
+                            color: AppTheme.goldAmber,
+                          ),
+                          error: (e, s) => const _EmptyScannerState(
+                            message: 'Could not load trade ideas.',
+                          ),
+                        ),
 
-                      const SizedBox(height: 120),
-                    ],
+                        const SizedBox(height: 30),
+                        SectionHeader(
+                          key: TutorialKeys.scannerDivergences,
+                          title: 'High-Signal Divergences',
+                        ),
+                        const SizedBox(height: 8),
+                        const Text(
+                          'The AI sees positive news, but the stock price has not moved up yet.',
+                          style: TextStyle(color: Colors.white24, fontSize: 11),
+                        ),
+                        const SizedBox(height: 15),
+                        stocksAsync.when(
+                          data: (stocks) {
+                            final divergences = stocks
+                                .where(
+                                  (s) =>
+                                      s.sentiment > 0.5 &&
+                                      s.changePercent <= 0.5,
+                                )
+                                .toList();
+                            if (divergences.isEmpty) {
+                              return const _EmptyScannerState(
+                                message:
+                                    'No signals detected. Add stocks to your watchlist to enable this section.',
+                              );
+                            }
+                            return Column(
+                              children: divergences
+                                  .map((s) => _DivergenceCard(stock: s))
+                                  .toList(),
+                            );
+                          },
+                          loading: () => const LinearProgressIndicator(
+                            color: AppTheme.goldAmber,
+                          ),
+                          error: (e, s) => const SizedBox.shrink(),
+                        ),
+
+                        const SizedBox(height: 30),
+                        SectionHeader(
+                          key: TutorialKeys.scannerCatalysts,
+                          title: 'Strategic Catalysts',
+                        ),
+                        const SizedBox(height: 8),
+                        const Text(
+                          'Important news events that could affect stock prices soon.',
+                          style: TextStyle(color: Colors.white24, fontSize: 11),
+                        ),
+                        const SizedBox(height: 15),
+                        briefingAsync.when(
+                          data: (briefing) {
+                            final List<BriefingItem> catalysts = [];
+                            briefing.data.forEach((key, cat) {
+                              final lk = key.toLowerCase();
+                              if (!lk.contains('opportunit') &&
+                                  !lk.contains('divergent')) {
+                                catalysts.addAll(
+                                  cat.items.where(
+                                    (i) =>
+                                        i.takeaway != null || i.title != null,
+                                  ),
+                                );
+                              }
+                            });
+                            if (catalysts.isEmpty) {
+                              return const _EmptyScannerState(
+                                message:
+                                    'No key events found yet. Run a refresh from your profile to populate this section.',
+                              );
+                            }
+                            return Column(
+                              children: catalysts
+                                  .take(5)
+                                  .map((i) => _CatalystCard(item: i))
+                                  .toList(),
+                            );
+                          },
+                          loading: () => const SizedBox.shrink(),
+                          error: (e, s) => const SizedBox.shrink(),
+                        ),
+
+                        const SizedBox(height: 120),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            ],
-          ),
+              ],
+            ),
           ),
         ),
       ),
@@ -195,7 +214,7 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
 }
 
 class _ScannerHeader extends StatelessWidget {
-  const _ScannerHeader({super.key});
+  const _ScannerHeader();
 
   @override
   Widget build(BuildContext context) {
@@ -209,9 +228,9 @@ class _ScannerHeader extends StatelessWidget {
       title: Text(
         'Scanner',
         style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.bold,
-              letterSpacing: -0.5,
-            ),
+          fontWeight: FontWeight.bold,
+          letterSpacing: -0.5,
+        ),
       ),
     );
   }
@@ -224,19 +243,22 @@ class _ScannerPulse extends StatefulWidget {
   State<_ScannerPulse> createState() => _ScannerPulseState();
 }
 
-class _ScannerPulseState extends State<_ScannerPulse> with SingleTickerProviderStateMixin {
+class _ScannerPulseState extends State<_ScannerPulse>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _animation;
 
   @override
   void initState() {
     super.initState();
-    _controller =
-        AnimationController(vsync: this, duration: const Duration(seconds: 3))
-          ..repeat(reverse: true);
-    _animation = Tween<double>(begin: 0.1, end: 0.4).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-    );
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 3),
+    )..repeat(reverse: true);
+    _animation = Tween<double>(
+      begin: 0.1,
+      end: 0.4,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
   }
 
   @override
@@ -256,7 +278,9 @@ class _ScannerPulseState extends State<_ScannerPulse> with SingleTickerProviderS
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: AppTheme.goldAmber.withAlpha((255 * _animation.value).toInt()),
+              color: AppTheme.goldAmber.withAlpha(
+                (255 * _animation.value).toInt(),
+              ),
             ),
             gradient: LinearGradient(
               begin: Alignment.topCenter,
@@ -272,8 +296,9 @@ class _ScannerPulseState extends State<_ScannerPulse> with SingleTickerProviderS
             children: [
               Icon(
                 Icons.radar_rounded,
-                color: AppTheme.goldAmber
-                    .withAlpha((255 * (_animation.value + 0.4)).toInt()),
+                color: AppTheme.goldAmber.withAlpha(
+                  (255 * (_animation.value + 0.4)).toInt(),
+                ),
                 size: 20,
               ),
               const SizedBox(width: 12),
@@ -296,7 +321,7 @@ class _ScannerPulseState extends State<_ScannerPulse> with SingleTickerProviderS
 
 class _StrategicOpportunityCard extends StatelessWidget {
   final BriefingItem item;
-  const _StrategicOpportunityCard({super.key, required this.item});
+  const _StrategicOpportunityCard({required this.item});
 
   @override
   Widget build(BuildContext context) {
@@ -362,7 +387,10 @@ class _StrategicOpportunityCard extends StatelessWidget {
                       ),
                       Text(
                         item.horizon?.toUpperCase() ?? 'MID-TERM',
-                        style: TextStyle(color: Colors.white.withAlpha(96), fontSize: 10),
+                        style: TextStyle(
+                          color: Colors.white.withAlpha(96),
+                          fontSize: 10,
+                        ),
                       ),
                     ],
                   ),
@@ -399,7 +427,7 @@ class _StrategicOpportunityCard extends StatelessWidget {
 
 class _DivergenceCard extends StatelessWidget {
   final StockData stock;
-  const _DivergenceCard({super.key, required this.stock});
+  const _DivergenceCard({required this.stock});
 
   @override
   Widget build(BuildContext context) {
@@ -453,7 +481,11 @@ class _DivergenceCard extends StatelessWidget {
                 ],
               ),
               const SizedBox(width: 16),
-              const Icon(Icons.arrow_forward_ios_rounded, size: 12, color: Colors.white10),
+              const Icon(
+                Icons.arrow_forward_ios_rounded,
+                size: 12,
+                color: Colors.white10,
+              ),
             ],
           ),
         ),
@@ -464,7 +496,7 @@ class _DivergenceCard extends StatelessWidget {
 
 class _CatalystCard extends StatelessWidget {
   final BriefingItem item;
-  const _CatalystCard({super.key, required this.item});
+  const _CatalystCard({required this.item});
 
   @override
   Widget build(BuildContext context) {
@@ -482,7 +514,11 @@ class _CatalystCard extends StatelessWidget {
                   color: AppTheme.goldAmber.withAlpha(25),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Icon(Icons.bolt_rounded, color: AppTheme.goldAmber, size: 16),
+                child: const Icon(
+                  Icons.bolt_rounded,
+                  color: AppTheme.goldAmber,
+                  size: 16,
+                ),
               ),
               const SizedBox(width: 16),
               Expanded(
@@ -523,7 +559,7 @@ class _CatalystCard extends StatelessWidget {
 
 class _EmptyScannerState extends StatelessWidget {
   final String message;
-  const _EmptyScannerState({super.key, required this.message});
+  const _EmptyScannerState({required this.message});
 
   @override
   Widget build(BuildContext context) {

@@ -36,10 +36,7 @@ class ProfileScreen extends ConsumerWidget {
                     gradient: RadialGradient(
                       center: Alignment.topRight,
                       radius: 1.2,
-                      colors: [
-                        Color(0x22FFB800),
-                        AppTheme.obsidian,
-                      ],
+                      colors: [Color(0x22FFB800), AppTheme.obsidian],
                     ),
                   ),
                   child: Column(
@@ -50,10 +47,13 @@ class ProfileScreen extends ConsumerWidget {
                         padding: const EdgeInsets.all(4),
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          border: Border.all(color: AppTheme.goldAmber, width: 2),
+                          border: Border.all(
+                            color: AppTheme.goldAmber,
+                            width: 2,
+                          ),
                           boxShadow: [
                             BoxShadow(
-                              color: AppTheme.goldAmber.withOpacity(0.2),
+                              color: AppTheme.goldAmber.withValues(alpha: 0.2),
                               blurRadius: 20,
                               spreadRadius: 5,
                             ),
@@ -62,22 +62,27 @@ class ProfileScreen extends ConsumerWidget {
                         child: const CircleAvatar(
                           radius: 40,
                           backgroundColor: Colors.white10,
-                          child: Icon(Icons.person, size: 40, color: Colors.white),
+                          child: Icon(
+                            Icons.person,
+                            size: 40,
+                            color: Colors.white,
+                          ),
                         ),
                       ),
                       const SizedBox(height: 16),
                       Text(
                         username.toUpperCase(),
-                        style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 24,
-                          letterSpacing: 2,
-                        ),
+                        style: Theme.of(context).textTheme.displaySmall
+                            ?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 24,
+                              letterSpacing: 2,
+                            ),
                       ),
                       Text(
                         'LOGGED IN',
                         style: TextStyle(
-                          color: AppTheme.goldAmber.withOpacity(0.7),
+                          color: AppTheme.goldAmber.withValues(alpha: 0.7),
                           fontSize: 10,
                           fontWeight: FontWeight.bold,
                           letterSpacing: 4,
@@ -88,7 +93,10 @@ class ProfileScreen extends ConsumerWidget {
                 ),
               ),
               leading: IconButton(
-                icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
+                icon: const Icon(
+                  Icons.arrow_back_ios_new_rounded,
+                  color: Colors.white,
+                ),
                 onPressed: () => context.pop(),
               ),
             ),
@@ -103,16 +111,24 @@ class ProfileScreen extends ConsumerWidget {
                     _SettingsGroup(
                       title: 'ACCOUNT',
                       items: [
-                        _SettingsItem(icon: Icons.person_outline_rounded, title: 'Personal Information'),
-                        _SettingsItem(icon: Icons.lock_outline_rounded, title: 'Security & Privacy'),
+                        _SettingsItem(
+                          icon: Icons.person_outline_rounded,
+                          title: 'Personal Information',
+                        ),
+                        _SettingsItem(
+                          icon: Icons.lock_outline_rounded,
+                          title: 'Security & Privacy',
+                        ),
                         _SettingsItem(
                           icon: Icons.fingerprint_rounded,
                           title: 'Biometric Auth',
                           trailing: Switch(
                             value: true,
                             onChanged: (v) {},
-                            activeColor: AppTheme.goldAmber,
-                            activeTrackColor: AppTheme.goldAmber.withOpacity(0.3),
+                            activeThumbColor: AppTheme.goldAmber,
+                            activeTrackColor: AppTheme.goldAmber.withValues(
+                              alpha: 0.3,
+                            ),
                           ),
                         ),
                       ],
@@ -121,9 +137,26 @@ class ProfileScreen extends ConsumerWidget {
                     _SettingsGroup(
                       title: 'PREFERENCES',
                       items: [
-                        _SettingsItem(icon: Icons.notifications_outlined, title: 'Notifications'),
-                        _SettingsItem(icon: Icons.palette_outlined, title: 'Appearance', trailing: const Text('Dark', style: TextStyle(color: Colors.white38))),
-                        _SettingsItem(icon: Icons.language_outlined, title: 'Language', trailing: const Text('English', style: TextStyle(color: Colors.white38))),
+                        _SettingsItem(
+                          icon: Icons.notifications_outlined,
+                          title: 'Notifications',
+                        ),
+                        _SettingsItem(
+                          icon: Icons.palette_outlined,
+                          title: 'Appearance',
+                          trailing: const Text(
+                            'Dark',
+                            style: TextStyle(color: Colors.white38),
+                          ),
+                        ),
+                        _SettingsItem(
+                          icon: Icons.language_outlined,
+                          title: 'Language',
+                          trailing: const Text(
+                            'English',
+                            style: TextStyle(color: Colors.white38),
+                          ),
+                        ),
                       ],
                     ),
                     const SizedBox(height: 20),
@@ -137,15 +170,30 @@ class ProfileScreen extends ConsumerWidget {
                           onTap: () async {
                             try {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Getting your latest reports...'), backgroundColor: AppTheme.obsidian),
+                                const SnackBar(
+                                  content: Text(
+                                    'Getting your latest reports...',
+                                  ),
+                                  backgroundColor: AppTheme.obsidian,
+                                ),
                               );
-                              await ref.read(briefingRepositoryProvider.notifier).triggerBriefing();
+                              await ref
+                                  .read(briefingRepositoryProvider.notifier)
+                                  .triggerBriefing();
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Reports are being updated. Check back soon.'), backgroundColor: Colors.green),
+                                const SnackBar(
+                                  content: Text(
+                                    'Reports are being updated. Check back soon.',
+                                  ),
+                                  backgroundColor: Colors.green,
+                                ),
                               );
                             } catch (e) {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text('Refresh failed: $e'), backgroundColor: AppTheme.softCrimson),
+                                SnackBar(
+                                  content: Text('Refresh failed: $e'),
+                                  backgroundColor: AppTheme.softCrimson,
+                                ),
                               );
                             }
                           },
@@ -168,7 +216,9 @@ class ProfileScreen extends ConsumerWidget {
                             // then navigate to dashboard so the tutorial fires fresh.
                             // Using go('/') replaces the entire navigation stack back
                             // to the shell root, ensuring DashboardScreen remounts.
-                            await ref.read(onboardingProvider.notifier).resetOnboarding();
+                            await ref
+                                .read(onboardingProvider.notifier)
+                                .resetOnboarding();
                             if (context.mounted) {
                               // Pop profile off the root navigator first, then go to
                               // dashboard so the shell route child is fully replaced.
@@ -186,7 +236,9 @@ class ProfileScreen extends ConsumerWidget {
                       },
                       style: OutlinedButton.styleFrom(
                         side: const BorderSide(color: AppTheme.softCrimson),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(15),
+                        ),
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         minimumSize: const Size(double.infinity, 0),
                       ),
@@ -231,17 +283,26 @@ class _StatsRow extends ConsumerWidget {
     );
 
     final divergenceCount = stocksAsync.maybeWhen(
-      data: (stocks) => stocks.where((s) => s.sentiment > 0.5 && s.changePercent <= 0.5).length.toString(),
+      data: (stocks) => stocks
+          .where((s) => s.sentiment > 0.5 && s.changePercent <= 0.5)
+          .length
+          .toString(),
       orElse: () => '-',
     );
 
     return Row(
       children: [
-        Expanded(child: _StatCard(label: 'Stocks Watched', value: tickerCount)),
+        Expanded(
+          child: _StatCard(label: 'Stocks Watched', value: tickerCount),
+        ),
         const SizedBox(width: 12),
-        Expanded(child: _StatCard(label: 'Intel Pillars', value: categoryCount)),
+        Expanded(
+          child: _StatCard(label: 'Intel Pillars', value: categoryCount),
+        ),
         const SizedBox(width: 12),
-        Expanded(child: _StatCard(label: 'Divergences', value: divergenceCount)),
+        Expanded(
+          child: _StatCard(label: 'Divergences', value: divergenceCount),
+        ),
       ],
     );
   }
@@ -274,7 +335,7 @@ class _StatCard extends StatelessWidget {
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 10,
-              color: Colors.white.withOpacity(0.5),
+              color: Colors.white.withValues(alpha: 0.5),
               height: 1.2,
             ),
           ),
@@ -309,9 +370,7 @@ class _SettingsGroup extends StatelessWidget {
         ),
         GlassCard(
           padding: EdgeInsets.zero,
-          child: Column(
-            children: items,
-          ),
+          child: Column(children: items),
         ),
       ],
     );
@@ -326,9 +385,9 @@ class _SettingsItem extends StatelessWidget {
 
   const _SettingsItem({
     super.key,
-    required this.icon, 
-    required this.title, 
-    this.trailing, 
+    required this.icon,
+    required this.title,
+    this.trailing,
     this.onTap,
   });
 
@@ -340,7 +399,9 @@ class _SettingsItem extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         decoration: BoxDecoration(
-          border: Border(bottom: BorderSide(color: Colors.white.withOpacity(0.05))),
+          border: Border(
+            bottom: BorderSide(color: Colors.white.withValues(alpha: 0.05)),
+          ),
         ),
         child: Row(
           children: [
@@ -355,7 +416,11 @@ class _SettingsItem extends StatelessWidget {
             if (trailing != null)
               trailing!
             else
-              Icon(Icons.arrow_forward_ios_rounded, size: 14, color: Colors.white.withOpacity(0.3)),
+              Icon(
+                Icons.arrow_forward_ios_rounded,
+                size: 14,
+                color: Colors.white.withValues(alpha: 0.3),
+              ),
           ],
         ),
       ),

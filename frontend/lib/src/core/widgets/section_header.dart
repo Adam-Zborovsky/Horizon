@@ -5,12 +5,8 @@ import '../theme/app_theme.dart';
 class SectionHeader extends StatelessWidget {
   final String title;
   final VoidCallback? onTap;
-  
-  const SectionHeader({
-    super.key, 
-    required this.title,
-    this.onTap,
-  });
+
+  const SectionHeader({super.key, required this.title, this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -26,9 +22,9 @@ class SectionHeader extends StatelessWidget {
                 Text(
                   title,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white70,
-                      ),
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white70,
+                  ),
                 ),
                 const SizedBox(width: 8),
                 Container(
@@ -45,7 +41,7 @@ class SectionHeader extends StatelessWidget {
               Icon(
                 Icons.arrow_forward_ios_rounded,
                 size: 12,
-                color: AppTheme.goldAmber.withOpacity(0.5),
+                color: AppTheme.goldAmber.withValues(alpha: 0.5),
               ),
           ],
         ),

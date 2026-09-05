@@ -22,11 +22,7 @@ import 'src/core/services/data_polling_service.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await NotificationService.init();
-  runApp(
-    const ProviderScope(
-      child: HorizonApp(),
-    ),
-  );
+  runApp(const ProviderScope(child: HorizonApp()));
 }
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
@@ -36,7 +32,7 @@ final _shellNavigatorKey = GlobalKey<NavigatorState>();
 // without recreating the GoRouter instance itself.
 class _RouterNotifier extends ChangeNotifier {
   _RouterNotifier(this._ref) {
-    _ref.listen<AsyncValue<dynamic>>(authProvider, (_, __) => notifyListeners());
+    _ref.listen<AsyncValue<dynamic>>(authProvider, (_, _) => notifyListeners());
   }
   final Ref _ref;
 
@@ -139,7 +135,8 @@ class HorizonApp extends ConsumerStatefulWidget {
   ConsumerState<HorizonApp> createState() => _HorizonAppState();
 }
 
-class _HorizonAppState extends ConsumerState<HorizonApp> with WidgetsBindingObserver {
+class _HorizonAppState extends ConsumerState<HorizonApp>
+    with WidgetsBindingObserver {
   @override
   void initState() {
     super.initState();
@@ -195,10 +192,7 @@ class _HorizonAppState extends ConsumerState<HorizonApp> with WidgetsBindingObse
 }
 
 class ScaffoldWithNavBar extends StatelessWidget {
-  const ScaffoldWithNavBar({
-    required this.child,
-    super.key,
-  });
+  const ScaffoldWithNavBar({required this.child, super.key});
 
   final Widget child;
 
@@ -217,26 +211,26 @@ class ScaffoldWithNavBar extends StatelessWidget {
             children: [
               _NavItem(
                 key: TutorialKeys.navDash,
-                icon: Icons.dashboard_rounded, 
-                label: 'Dash', 
+                icon: Icons.dashboard_rounded,
+                label: 'Dash',
                 location: '/',
               ),
               _NavItem(
                 key: TutorialKeys.navVault,
-                icon: Icons.analytics_rounded, 
-                label: 'Vault', 
+                icon: Icons.analytics_rounded,
+                label: 'Vault',
                 location: '/vault',
               ),
               _NavItem(
                 key: TutorialKeys.navNexus,
-                icon: Icons.show_chart_rounded, 
-                label: 'Nexus', 
+                icon: Icons.show_chart_rounded,
+                label: 'Nexus',
                 location: '/nexus',
               ),
               _NavItem(
                 key: TutorialKeys.navScan,
-                icon: Icons.radar_rounded, 
-                label: 'Scan', 
+                icon: Icons.radar_rounded,
+                label: 'Scan',
                 location: '/scanner',
               ),
             ],
@@ -254,8 +248,8 @@ class _NavItem extends StatelessWidget {
 
   const _NavItem({
     super.key,
-    required this.icon, 
-    required this.label, 
+    required this.icon,
+    required this.label,
     required this.location,
   });
 
@@ -264,7 +258,9 @@ class _NavItem extends StatelessWidget {
     final GoRouterState state = GoRouterState.of(context);
     final String matchedLocation = state.matchedLocation;
     // Special handling for home path
-    final bool isActive = matchedLocation == location || (location == '/' && matchedLocation == '');
+    final bool isActive =
+        matchedLocation == location ||
+        (location == '/' && matchedLocation == '');
 
     return GestureDetector(
       onTap: () => context.go(location),

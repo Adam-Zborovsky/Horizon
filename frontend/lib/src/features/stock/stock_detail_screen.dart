@@ -22,7 +22,10 @@ class StockDetailScreen extends ConsumerWidget {
           final stock = stocks.where((s) => s.ticker == ticker).firstOrNull;
           if (stock == null) {
             return Center(
-              child: Text('Stock $ticker not found', style: const TextStyle(color: Colors.white38)),
+              child: Text(
+                'Stock $ticker not found',
+                style: const TextStyle(color: Colors.white38),
+              ),
             );
           }
           return _DetailContent(stock: stock);
@@ -41,13 +44,15 @@ class _DetailContent extends ConsumerWidget {
   String? _getDisplayString(dynamic value) {
     if (value == null) return null;
     if (value is String) return value;
-    if (value is Map) return value.values.where((v) => v is String).join('\n');
+    if (value is Map) return value.values.whereType<String>().join('\n');
     return value.toString();
   }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final color = stock.changePercent > 0 ? AppTheme.goldAmber : AppTheme.softCrimson;
+    final color = stock.changePercent > 0
+        ? AppTheme.goldAmber
+        : AppTheme.softCrimson;
 
     return CustomScrollView(
       slivers: [
@@ -83,11 +88,14 @@ class _DetailContent extends ConsumerWidget {
                     ),
                     const SizedBox(width: 16),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
-                        color: color.withOpacity(0.1),
+                        color: color.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: color.withOpacity(0.2)),
+                        border: Border.all(color: color.withValues(alpha: 0.2)),
                       ),
                       child: Text(
                         '${stock.changePercent > 0 ? "+" : ""}${stock.changePercent.toStringAsFixed(2)}%',
@@ -115,7 +123,11 @@ class _DetailContent extends ConsumerWidget {
                         if (stock.horizon != null) const SizedBox(width: 16),
                       ],
                       if (stock.horizon != null) ...[
-                        const Icon(Icons.timer_outlined, color: AppTheme.goldAmber, size: 16),
+                        const Icon(
+                          Icons.timer_outlined,
+                          color: AppTheme.goldAmber,
+                          size: 16,
+                        ),
                         const SizedBox(width: 8),
                         Text(
                           stock.horizon!.toUpperCase(),
@@ -131,7 +143,9 @@ class _DetailContent extends ConsumerWidget {
                   const SizedBox(height: 30),
                 ],
                 Text(
-                  stock.source == StockSource.opportunity ? 'TACTICAL SETUP' : 'AI STRATEGIC SIGNAL',
+                  stock.source == StockSource.opportunity
+                      ? 'TACTICAL SETUP'
+                      : 'AI STRATEGIC SIGNAL',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: AppTheme.goldAmber,
                     fontWeight: FontWeight.bold,
@@ -148,43 +162,72 @@ class _DetailContent extends ConsumerWidget {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                            stock.source == StockSource.opportunity ? 'Opportunity Thesis' : 'Strategic Position',
-                            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+                            stock.source == StockSource.opportunity
+                                ? 'Opportunity Thesis'
+                                : 'Strategic Position',
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
                           ),
                           _SentimentPill(score: stock.sentiment),
                         ],
                       ),
                       const SizedBox(height: 16),
                       Text(
-                        _getDisplayString(stock.analysis) ?? (stock.source == StockSource.opportunity 
-                            ? "AI discovery algorithm identified this as a high-potential target, but detailed reasoning is still being synthesized."
-                            : "No AI analysis available for this ticker today. Ticker is being tracked in your strategic watchlist."),
-                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(height: 1.5),
+                        _getDisplayString(stock.analysis) ??
+                            (stock.source == StockSource.opportunity
+                                ? "AI discovery algorithm identified this as a high-potential target, but detailed reasoning is still being synthesized."
+                                : "No AI analysis available for this ticker today. Ticker is being tracked in your strategic watchlist."),
+                        style: Theme.of(
+                          context,
+                        ).textTheme.bodyLarge?.copyWith(height: 1.5),
                       ),
                       const SizedBox(height: 20),
                       OutlinedButton.icon(
-                        onPressed: () => context.go('/vault?category=${Uri.encodeComponent(stock.source == StockSource.opportunity ? 'Opportunities' : 'Market Analysis')}'),
+                        onPressed: () => context.go(
+                          '/vault?category=${Uri.encodeComponent(stock.source == StockSource.opportunity ? 'Opportunities' : 'Market Analysis')}',
+                        ),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: AppTheme.goldAmber,
-                          side: BorderSide(color: AppTheme.goldAmber.withOpacity(0.3)),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          side: BorderSide(
+                            color: AppTheme.goldAmber.withValues(alpha: 0.3),
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
                         ),
                         icon: const Icon(Icons.analytics_outlined, size: 18),
                         label: Text(
-                          stock.source == StockSource.opportunity ? 'VIEW ALL OPPORTUNITIES' : 'VIEW MARKET ANALYSIS', 
-                          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1)
+                          stock.source == StockSource.opportunity
+                              ? 'VIEW ALL OPPORTUNITIES'
+                              : 'VIEW MARKET ANALYSIS',
+                          style: const TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 1,
+                          ),
                         ),
                       ),
                       if (stock.potentialPriceAction != null) ...[
                         const SizedBox(height: 20),
                         const Text(
                           'EXPECTED ACTION',
-                          style: TextStyle(color: AppTheme.goldAmber, fontWeight: FontWeight.bold, fontSize: 10, letterSpacing: 1),
+                          style: TextStyle(
+                            color: AppTheme.goldAmber,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 10,
+                            letterSpacing: 1,
+                          ),
                         ),
                         const SizedBox(height: 4),
                         Text(
                           _getDisplayString(stock.potentialPriceAction)!,
-                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
                       ],
                     ],
@@ -201,7 +244,13 @@ class _DetailContent extends ConsumerWidget {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  ...stock.catalysts!.map((c) => _MacroItem(title: 'Bullish Driver', description: c, icon: Icons.trending_up_rounded)),
+                  ...stock.catalysts!.map(
+                    (c) => _MacroItem(
+                      title: 'Bullish Driver',
+                      description: c,
+                      icon: Icons.trending_up_rounded,
+                    ),
+                  ),
                 ],
                 if (stock.risks != null && stock.risks!.isNotEmpty) ...[
                   const SizedBox(height: 30),
@@ -214,7 +263,14 @@ class _DetailContent extends ConsumerWidget {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  ...stock.risks!.map((r) => _MacroItem(title: 'Risk Factor', description: r, icon: Icons.warning_amber_rounded, color: AppTheme.softCrimson)),
+                  ...stock.risks!.map(
+                    (r) => _MacroItem(
+                      title: 'Risk Factor',
+                      description: r,
+                      icon: Icons.warning_amber_rounded,
+                      color: AppTheme.softCrimson,
+                    ),
+                  ),
                 ],
                 const SizedBox(height: 30),
                 _OpportunityScoutStats(ticker: stock.ticker),
@@ -288,7 +344,7 @@ class _MainChart extends StatelessWidget {
     final minVal = data.reduce((a, b) => a < b ? a : b);
     final maxVal = data.reduce((a, b) => a > b ? a : b);
     final range = maxVal - minVal;
-    
+
     // Add 15% padding to the range to make the chart look tactical and not hit the edges
     final padding = range == 0 ? 1.0 : range * 0.15;
 
@@ -301,12 +357,16 @@ class _MainChart extends StatelessWidget {
         borderData: FlBorderData(show: false),
         lineTouchData: LineTouchData(
           touchTooltipData: LineTouchTooltipData(
-            getTooltipColor: (touchedSpot) => Colors.black.withOpacity(0.8),
+            getTooltipColor: (touchedSpot) =>
+                Colors.black.withValues(alpha: 0.8),
             getTooltipItems: (List<LineBarSpot> touchedBarSpots) {
               return touchedBarSpots.map((barSpot) {
                 return LineTooltipItem(
                   '\$${barSpot.y.toStringAsFixed(2)}',
-                  const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                  const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
                 );
               }).toList();
             },
@@ -314,7 +374,11 @@ class _MainChart extends StatelessWidget {
         ),
         lineBarsData: [
           LineChartBarData(
-            spots: data.asMap().entries.map((e) => FlSpot(e.key.toDouble(), e.value)).toList(),
+            spots: data
+                .asMap()
+                .entries
+                .map((e) => FlSpot(e.key.toDouble(), e.value))
+                .toList(),
             isCurved: true,
             color: color,
             barWidth: 4,
@@ -326,8 +390,8 @@ class _MainChart extends StatelessWidget {
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
                 colors: [
-                  color.withOpacity(0.15),
-                  color.withOpacity(0),
+                  color.withValues(alpha: 0.15),
+                  color.withValues(alpha: 0),
                 ],
               ),
             ),
@@ -348,13 +412,17 @@ class _SentimentPill extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withOpacity(0.3)),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
       child: Text(
         '${score > 0 ? "+" : ""}${score.toStringAsFixed(1)} SNT',
-        style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 12),
+        style: TextStyle(
+          color: color,
+          fontWeight: FontWeight.bold,
+          fontSize: 12,
+        ),
       ),
     );
   }
@@ -391,8 +459,12 @@ class _OpportunityScoutStats extends ConsumerWidget {
                     child: _ScoutStatTile(
                       icon: Icons.local_fire_department_rounded,
                       value: '${stats.consecutiveTradingDays}',
-                      label: stats.consecutiveTradingDays == 1 ? 'day streak' : 'days in a row',
-                      color: stats.consecutiveTradingDays >= 3 ? AppTheme.goldAmber : Colors.white70,
+                      label: stats.consecutiveTradingDays == 1
+                          ? 'day streak'
+                          : 'days in a row',
+                      color: stats.consecutiveTradingDays >= 3
+                          ? AppTheme.goldAmber
+                          : Colors.white70,
                     ),
                   ),
                   Container(width: 1, height: 50, color: Colors.white10),
@@ -411,7 +483,7 @@ class _OpportunityScoutStats extends ConsumerWidget {
         );
       },
       loading: () => const SizedBox.shrink(),
-      error: (_, __) => const SizedBox.shrink(),
+      error: (_, _) => const SizedBox.shrink(),
     );
   }
 }
@@ -478,7 +550,7 @@ class _MacroItem extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
+                color: color.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Icon(icon, color: color, size: 18),
@@ -488,8 +560,20 @@ class _MacroItem extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                  Text(description, style: TextStyle(color: Colors.white.withOpacity(0.4), fontSize: 12)),
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ),
+                  ),
+                  Text(
+                    description,
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.4),
+                      fontSize: 12,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -508,15 +592,17 @@ class _DirectionBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final isLong = direction.toLowerCase() == 'long';
     final color = isLong ? AppTheme.goldAmber : AppTheme.softCrimson;
-    final icon = isLong ? Icons.trending_up_rounded : Icons.trending_down_rounded;
+    final icon = isLong
+        ? Icons.trending_up_rounded
+        : Icons.trending_down_rounded;
     final label = isLong ? 'LONG' : 'SHORT';
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withOpacity(0.3)),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -546,13 +632,13 @@ class _SourceBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final isOpp = source == StockSource.opportunity;
     final color = isOpp ? AppTheme.goldAmber : Colors.white38;
-    
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: color.withOpacity(0.2)),
+        border: Border.all(color: color.withValues(alpha: 0.2)),
       ),
       child: Text(
         isOpp ? 'ALPHA' : 'WATCHLIST',

@@ -34,11 +34,12 @@ class GlassCard extends StatelessWidget {
           height: height,
           padding: padding ?? const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            color: color ?? Colors.white.withOpacity(0.06),
+            color: color ?? Colors.white.withValues(alpha: 0.06),
             borderRadius: BorderRadius.circular(borderRadius),
-            border: border ??
+            border:
+                border ??
                 Border.all(
-                  color: Colors.white.withOpacity(0.08),
+                  color: Colors.white.withValues(alpha: 0.08),
                   width: 1.2,
                 ),
           ),
@@ -70,7 +71,7 @@ class GlowingCircle extends StatelessWidget {
         shape: BoxShape.circle,
         boxShadow: [
           BoxShadow(
-            color: color.withOpacity(0.2),
+            color: color.withValues(alpha: 0.2),
             blurRadius: blurRadius,
             spreadRadius: blurRadius / 2,
           ),

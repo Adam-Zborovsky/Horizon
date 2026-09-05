@@ -75,7 +75,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             end: Alignment.bottomRight,
             colors: [
               AppTheme.charcoalBlack,
-              AppTheme.charcoalBlack.withOpacity(0.8),
+              AppTheme.charcoalBlack.withValues(alpha: 0.8),
               Colors.black,
             ],
           ),
@@ -95,7 +95,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                          color: AppTheme.goldAmber.withOpacity(0.3),
+                          color: AppTheme.goldAmber.withValues(alpha: 0.3),
                           blurRadius: 30,
                           spreadRadius: 5,
                         ),
@@ -111,7 +111,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ),
                   ),
                   const SizedBox(height: 32),
-                  
+
                   // Welcome Text
                   Text(
                     'HORIZON',
@@ -127,7 +127,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     'Strategic Intelligence Protocol',
                     style: TextStyle(
                       fontSize: 14,
-                      color: Colors.white.withOpacity(0.5),
+                      color: Colors.white.withValues(alpha: 0.5),
                       letterSpacing: 1.5,
                     ),
                   ),
@@ -146,12 +146,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
-                            color: Colors.white.withOpacity(0.9),
+                            color: Colors.white.withValues(alpha: 0.9),
                             letterSpacing: 2,
                           ),
                         ),
                         const SizedBox(height: 32),
-                        
+
                         // Username Field
                         _buildTextField(
                           controller: _usernameController,
@@ -167,7 +167,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           icon: Icons.lock_outline,
                           isPassword: true,
                         ),
-                        
+
                         if (_error != null) ...[
                           const SizedBox(height: 16),
                           Text(
@@ -179,9 +179,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             ),
                           ),
                         ],
-                        
+
                         const SizedBox(height: 32),
-                        
+
                         // Login/Register Button
                         ElevatedButton(
                           onPressed: _isLoading ? null : _handleAuth,
@@ -193,7 +193,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               borderRadius: BorderRadius.circular(12),
                             ),
                             elevation: 8,
-                            shadowColor: AppTheme.goldAmber.withOpacity(0.5),
+                            shadowColor: AppTheme.goldAmber.withValues(
+                              alpha: 0.5,
+                            ),
                           ),
                           child: _isLoading
                               ? const SizedBox(
@@ -212,24 +214,26 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                   ),
                                 ),
                         ),
-                        
+
                         const SizedBox(height: 16),
                         TextButton(
-                          onPressed: _isLoading ? null : () {
-                            setState(() {
-                              _isLogin = !_isLogin;
-                              _error = null;
-                            });
-                          },
+                          onPressed: _isLoading
+                              ? null
+                              : () {
+                                  setState(() {
+                                    _isLogin = !_isLogin;
+                                    _error = null;
+                                  });
+                                },
                           child: Text(
                             _isLogin
-                              ? 'NEW USER? CREATE AN ACCOUNT'
-                              : 'ALREADY HAVE AN ACCOUNT? LOG IN',
+                                ? 'NEW USER? CREATE AN ACCOUNT'
+                                : 'ALREADY HAVE AN ACCOUNT? LOG IN',
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.bold,
-                              color: AppTheme.goldAmber.withOpacity(0.6),
+                              color: AppTheme.goldAmber.withValues(alpha: 0.6),
                               letterSpacing: 1,
                             ),
                           ),
@@ -237,13 +241,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       ],
                     ),
                   ),
-                  
+
                   const SizedBox(height: 48),
                   Text(
                     'v1.0.0 | HORIZON TERMINAL',
                     style: GoogleFonts.spaceMono(
                       fontSize: 10,
-                      color: Colors.white.withOpacity(0.2),
+                      color: Colors.white.withValues(alpha: 0.2),
                     ),
                   ),
                 ],
@@ -269,18 +273,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           style: TextStyle(
             fontSize: 11,
             fontWeight: FontWeight.bold,
-            color: AppTheme.goldAmber.withOpacity(0.7),
+            color: AppTheme.goldAmber.withValues(alpha: 0.7),
             letterSpacing: 1,
           ),
         ),
         const SizedBox(height: 8),
         Container(
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.05),
+            color: Colors.white.withValues(alpha: 0.05),
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: Colors.white.withOpacity(0.1),
-            ),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
           ),
           child: TextField(
             controller: controller,

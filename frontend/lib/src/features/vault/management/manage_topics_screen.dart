@@ -12,11 +12,15 @@ class ManageTopicsScreen extends ConsumerStatefulWidget {
     if (key == 'news_intel') return 'Strategic News Intel';
     if (key == 'market_analyst') return 'Market Analysis';
     if (key == 'opportunity_scout') return 'Opportunities';
-    
-    return key.replaceAll('_', ' ').split(' ').map((word) {
-      if (word.isEmpty) return '';
-      return '${word[0].toUpperCase()}${word.substring(1).toLowerCase()}';
-    }).join(' ');
+
+    return key
+        .replaceAll('_', ' ')
+        .split(' ')
+        .map((word) {
+          if (word.isEmpty) return '';
+          return '${word[0].toUpperCase()}${word.substring(1).toLowerCase()}';
+        })
+        .join(' ');
   }
 
   @override
@@ -25,7 +29,6 @@ class ManageTopicsScreen extends ConsumerStatefulWidget {
 
 class _ManageTopicsScreenState extends ConsumerState<ManageTopicsScreen> {
   final TextEditingController _searchController = TextEditingController();
-  
 
   @override
   void dispose() {
@@ -43,11 +46,13 @@ class _ManageTopicsScreenState extends ConsumerState<ManageTopicsScreen> {
       body: CustomScrollView(
         slivers: [
           _SliverSearchHeader(
-            controller: _searchController, 
+            controller: _searchController,
             onSubmitted: (val) async {
               if (val.isNotEmpty) {
                 // Add the new topic and enable it
-                await ref.read(briefingConfigRepositoryProvider.notifier).toggleTopic(val, true);
+                await ref
+                    .read(briefingConfigRepositoryProvider.notifier)
+                    .toggleTopic(val, true);
                 _searchController.clear();
               }
             },
@@ -58,16 +63,24 @@ class _ManageTopicsScreenState extends ConsumerState<ManageTopicsScreen> {
                 return recommendedTopicsAsync.when(
                   data: (newsRecommended) {
                     final combinedRecommended = newsRecommended.toList();
-                    
+
                     // Filter out topics already in the config to avoid duplicates
-                    final filtered = combinedRecommended.where(
-                      (recTopic) => !config.topics.any((cfgTopic) => cfgTopic.name == recTopic)
-                    ).toList();
+                    final filtered = combinedRecommended
+                        .where(
+                          (recTopic) => !config.topics.any(
+                            (cfgTopic) => cfgTopic.name == recTopic,
+                          ),
+                        )
+                        .toList();
 
                     return _RecommendedSection(
                       recommended: filtered,
-                      onTap: (topic) async => await ref.read(briefingConfigRepositoryProvider.notifier).toggleTopic(topic, true),
-                      displayNames: filtered.map((e) => ManageTopicsScreen.formatTopic(e)).toList(),
+                      onTap: (topic) async => await ref
+                          .read(briefingConfigRepositoryProvider.notifier)
+                          .toggleTopic(topic, true),
+                      displayNames: filtered
+                          .map((e) => ManageTopicsScreen.formatTopic(e))
+                          .toList(),
                     );
                   },
                   loading: () => const SizedBox.shrink(),
@@ -98,54 +111,76 @@ class _ManageTopicsScreenState extends ConsumerState<ManageTopicsScreen> {
                 return const SliverFillRemaining(
                   hasScrollBody: false,
                   child: Center(
-                    child: Text('No topics followed', style: TextStyle(color: Colors.white24)),
+                    child: Text(
+                      'No topics followed',
+                      style: TextStyle(color: Colors.white24),
+                    ),
                   ),
                 );
               }
 
               return SliverList(
-                delegate: SliverChildBuilderDelegate(
-                  (context, index) {
-                    final topic = config.topics[index];
-                    return _TopicItem(
-                      title: ManageTopicsScreen.formatTopic(topic.name),
-                      isEnabled: topic.enabled,
-                      onToggle: (bool newValue) async {
-                        await ref.read(briefingConfigRepositoryProvider.notifier).toggleTopic(topic.name, newValue);
-                      },
-                      onRemove: () async {
-                        // Confirm removal
-                        final confirmed = await showDialog<bool>(
-                          context: context,
-                          builder: (context) => AlertDialog(
-                            backgroundColor: AppTheme.obsidian,
-                            title: const Text('REMOVE TOPIC', style: TextStyle(color: AppTheme.goldAmber, letterSpacing: 1)),
-                            content: Text('Completely remove "${ManageTopicsScreen.formatTopic(topic.name)}" from your intelligence stream?', style: const TextStyle(color: Colors.white70)),
-                            actions: [
-                              TextButton(
-                                onPressed: () => Navigator.pop(context, false),
-                                child: const Text('CANCEL', style: TextStyle(color: Colors.white38)),
-                              ),
-                              TextButton(
-                                onPressed: () => Navigator.pop(context, true),
-                                child: const Text('REMOVE', style: TextStyle(color: Colors.redAccent)),
-                              ),
-                            ],
+                delegate: SliverChildBuilderDelegate((context, index) {
+                  final topic = config.topics[index];
+                  return _TopicItem(
+                    title: ManageTopicsScreen.formatTopic(topic.name),
+                    isEnabled: topic.enabled,
+                    onToggle: (bool newValue) async {
+                      await ref
+                          .read(briefingConfigRepositoryProvider.notifier)
+                          .toggleTopic(topic.name, newValue);
+                    },
+                    onRemove: () async {
+                      // Confirm removal
+                      final confirmed = await showDialog<bool>(
+                        context: context,
+                        builder: (context) => AlertDialog(
+                          backgroundColor: AppTheme.obsidian,
+                          title: const Text(
+                            'REMOVE TOPIC',
+                            style: TextStyle(
+                              color: AppTheme.goldAmber,
+                              letterSpacing: 1,
+                            ),
                           ),
-                        );
+                          content: Text(
+                            'Completely remove "${ManageTopicsScreen.formatTopic(topic.name)}" from your intelligence stream?',
+                            style: const TextStyle(color: Colors.white70),
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(context, false),
+                              child: const Text(
+                                'CANCEL',
+                                style: TextStyle(color: Colors.white38),
+                              ),
+                            ),
+                            TextButton(
+                              onPressed: () => Navigator.pop(context, true),
+                              child: const Text(
+                                'REMOVE',
+                                style: TextStyle(color: Colors.redAccent),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
 
-                        if (confirmed == true) {
-                          await ref.read(briefingConfigRepositoryProvider.notifier).removeTopic(topic.name);
-                        }
-                      },
-                    );
-                  },
-                  childCount: config.topics.length,
-                ),
+                      if (confirmed == true) {
+                        await ref
+                            .read(briefingConfigRepositoryProvider.notifier)
+                            .removeTopic(topic.name);
+                      }
+                    },
+                  );
+                }, childCount: config.topics.length),
               );
             },
-            loading: () => const SliverFillRemaining(child: Center(child: CircularProgressIndicator())),
-            error: (err, stack) => SliverToBoxAdapter(child: Center(child: Text('Error: $err'))),
+            loading: () => const SliverFillRemaining(
+              child: Center(child: CircularProgressIndicator()),
+            ),
+            error: (err, stack) =>
+                SliverToBoxAdapter(child: Center(child: Text('Error: $err'))),
           ),
           const SliverToBoxAdapter(child: SizedBox(height: 100)),
         ],
@@ -158,7 +193,10 @@ class _SliverSearchHeader extends StatelessWidget {
   final TextEditingController controller;
   final Function(String) onSubmitted;
 
-  const _SliverSearchHeader({required this.controller, required this.onSubmitted});
+  const _SliverSearchHeader({
+    required this.controller,
+    required this.onSubmitted,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -172,14 +210,23 @@ class _SliverSearchHeader extends StatelessWidget {
       flexibleSpace: GlassCard(
         borderRadius: 0,
         blur: 20,
-        padding: const EdgeInsets.only(top: 40, left: 24, right: 24, bottom: 10),
-        color: AppTheme.obsidian.withOpacity(0.7),
+        padding: const EdgeInsets.only(
+          top: 40,
+          left: 24,
+          right: 24,
+          bottom: 10,
+        ),
+        color: AppTheme.obsidian.withValues(alpha: 0.7),
         border: const Border(bottom: BorderSide(color: Colors.white10)),
         child: Row(
           children: [
             IconButton(
               onPressed: () => Navigator.pop(context),
-              icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
+              icon: const Icon(
+                Icons.arrow_back_ios_new_rounded,
+                color: Colors.white,
+                size: 20,
+              ),
               padding: EdgeInsets.zero,
               constraints: const BoxConstraints(),
             ),
@@ -191,9 +238,16 @@ class _SliverSearchHeader extends StatelessWidget {
                 style: const TextStyle(color: Colors.white, fontSize: 16),
                 decoration: InputDecoration(
                   hintText: 'SEARCH TOPICS...',
-                  hintStyle: TextStyle(color: Colors.white.withOpacity(0.2), fontSize: 14, letterSpacing: 1),
+                  hintStyle: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.2),
+                    fontSize: 14,
+                    letterSpacing: 1,
+                  ),
                   border: InputBorder.none,
-                  suffixIcon: Icon(Icons.search_rounded, color: AppTheme.goldAmber.withOpacity(0.5)),
+                  suffixIcon: Icon(
+                    Icons.search_rounded,
+                    color: AppTheme.goldAmber.withValues(alpha: 0.5),
+                  ),
                 ),
               ),
             ),
@@ -210,14 +264,15 @@ class _RecommendedSection extends StatelessWidget {
   final Function(String) onTap;
 
   const _RecommendedSection({
-    required this.recommended, 
+    required this.recommended,
     required this.onTap,
     required this.displayNames,
   });
 
   @override
   Widget build(BuildContext context) {
-    if (recommended.isEmpty) return const SizedBox.shrink(); // Don't show if no recommendations
+    if (recommended.isEmpty)
+      return const SizedBox.shrink(); // Don't show if no recommendations
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -226,7 +281,12 @@ class _RecommendedSection extends StatelessWidget {
           padding: EdgeInsets.only(left: 24, top: 30, bottom: 12),
           child: Text(
             'TRENDING PILLARS',
-            style: TextStyle(color: Colors.white38, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1.5),
+            style: TextStyle(
+              color: Colors.white38,
+              fontSize: 10,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 1.5,
+            ),
           ),
         ),
         SizedBox(
@@ -242,8 +302,14 @@ class _RecommendedSection extends StatelessWidget {
                   label: Text(displayNames[index]),
                   onPressed: () => onTap(recommended[index]),
                   backgroundColor: AppTheme.glassWhite,
-                  side: BorderSide(color: AppTheme.goldAmber.withOpacity(0.3)),
-                  labelStyle: const TextStyle(color: AppTheme.goldAmber, fontWeight: FontWeight.bold, fontSize: 12),
+                  side: BorderSide(
+                    color: AppTheme.goldAmber.withValues(alpha: 0.3),
+                  ),
+                  labelStyle: const TextStyle(
+                    color: AppTheme.goldAmber,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12,
+                  ),
                   padding: const EdgeInsets.symmetric(horizontal: 12),
                 ),
               );
@@ -262,8 +328,8 @@ class _TopicItem extends StatelessWidget {
   final VoidCallback onRemove;
 
   const _TopicItem({
-    required this.title, 
-    required this.isEnabled, 
+    required this.title,
+    required this.isEnabled,
     required this.onToggle,
     required this.onRemove,
   });
@@ -273,34 +339,49 @@ class _TopicItem extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 6),
       child: GlassCard(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8), // Adjusted vertical padding
+        padding: const EdgeInsets.symmetric(
+          horizontal: 20,
+          vertical: 8,
+        ), // Adjusted vertical padding
         child: Row(
           children: [
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: AppTheme.goldAmber.withOpacity(0.1),
+                color: AppTheme.goldAmber.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: const Icon(Icons.hub_outlined, color: AppTheme.goldAmber, size: 18),
+              child: const Icon(
+                Icons.hub_outlined,
+                color: AppTheme.goldAmber,
+                size: 18,
+              ),
             ),
             const SizedBox(width: 16),
             Expanded(
               child: Text(
                 title,
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
               ),
             ),
             Switch(
               value: isEnabled,
               onChanged: onToggle,
-              activeColor: AppTheme.goldAmber,
+              activeThumbColor: AppTheme.goldAmber,
               inactiveTrackColor: Colors.white10,
               inactiveThumbColor: Colors.white30,
             ),
             IconButton(
               onPressed: onRemove,
-              icon: const Icon(Icons.delete_outline_rounded, color: Colors.white24, size: 20),
+              icon: const Icon(
+                Icons.delete_outline_rounded,
+                color: Colors.white24,
+                size: 20,
+              ),
               tooltip: 'Remove topic completely',
             ),
           ],
