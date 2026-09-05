@@ -40,16 +40,24 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       _error = null;
     });
 
+    final failureMessage = _isLogin
+        ? 'Authentication failed. Please check your credentials.'
+        : 'Registration failed. Username may already be taken.';
+
     try {
       if (_isLogin) {
         await ref.read(authProvider.notifier).login(username, password);
       } else {
         await ref.read(authProvider.notifier).register(username, password);
       }
+      // login()/register() swallow network and non-2xx failures internally
+      // and surface them as an AsyncError state rather than throwing, so
+      // check the resulting state explicitly instead of relying on catch.
+      if (mounted && ref.read(authProvider).hasError) {
+        setState(() => _error = failureMessage);
+      }
     } catch (e) {
-      setState(() => _error = _isLogin 
-        ? 'Authentication failed. Please check your credentials.' 
-        : 'Registration failed. Username may already be taken.');
+      setState(() => _error = failureMessage);
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
