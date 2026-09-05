@@ -18,6 +18,7 @@ services:
       - horizon-backend
     networks:
       - horizon-network
+      - adam-cloud
 
   mongodb:
     image: mongo:8
@@ -31,6 +32,8 @@ services:
 networks:
   horizon-network:
     driver: bridge
+  adam-cloud:
+    external: true
 
 volumes:
   mongodb_data:

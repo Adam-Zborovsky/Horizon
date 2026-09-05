@@ -219,11 +219,8 @@ class BriefingService {
     const cleanData = data.data || data;
     const { topics: newTopics, tickers } = cleanData;
 
-    let config = await BriefingConfig.findOne({ user: userId });
-
-    if (!config) {
-      config = new BriefingConfig({ user: userId });
-    }
+    // getConfig() upserts atomically, so the doc always exists before we mutate it.
+    let config = await this.getConfig(userId);
 
     if (newTopics && Array.isArray(newTopics)) {
       config.topics = [];
@@ -252,20 +249,15 @@ class BriefingService {
    * Toggle the enabled status of a specific topic for a user.
    */
   async toggleTopic(userId, topicName, enabled) {
-    let config = await BriefingConfig.findOne({ user: userId });
-
-    if (!config) {
-      config = new BriefingConfig({ user: userId });
-      config.topics.push({ name: topicName, enabled: enabled });
+    // getConfig() upserts atomically, so the doc always exists before we mutate it.
+    const config = await this.getConfig(userId);
+    const topic = config.topics.find(t => t.name === topicName);
+    if (topic) {
+      topic.enabled = enabled;
     } else {
-      const topic = config.topics.find(t => t.name === topicName);
-      if (topic) {
-        topic.enabled = enabled;
-      } else {
-        config.topics.push({ name: topicName, enabled: enabled });
-      }
+      config.topics.push({ name: topicName, enabled: enabled });
     }
-    
+
     const saved = await config.save();
     // Workflow trigger removed from here to follow daily schedule only.
     return saved;
@@ -375,11 +367,13 @@ class BriefingService {
    * Get the briefing configuration for a user
    */
   async getConfig(userId) {
-    let config = await BriefingConfig.findOne({ user: userId });
-    if (!config) {
-      config = new BriefingConfig({ user: userId });
-      await config.save();
-    }
+    // Atomic upsert: two concurrent requests on a fresh account both used to
+    // findOne -> miss -> insert, and the loser hit E11000 (user_1 unique index).
+    let config = await BriefingConfig.findOneAndUpdate(
+      { user: userId },
+      { $setOnInsert: { user: userId } },
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    );
     return config;
   }
 
