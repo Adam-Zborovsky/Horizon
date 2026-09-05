@@ -1,10 +1,10 @@
 import 'package:flutter/foundation.dart';
 
 class ApiConfig {
-  // Use absolute URL for mobile, relative for web.
-  // For local mobile development, use 'http://10.0.2.2:8181' (Android emulator)
-  // or your machine's local IP address.
-  // For production, set HORIZON_API_HOST in your build environment.
+  // Web uses relative paths (served by the same origin's nginx proxy).
+  // Mobile defaults to the production API through the Cloudflare tunnel
+  // (per DEPLOYMENT.md). For local emulator dev, override at build time:
+  //   flutter run --dart-define=HORIZON_API_HOST=http://10.0.2.2:8181
   static const String _host = kIsWeb
       ? ''
       : String.fromEnvironment('HORIZON_API_HOST', defaultValue: 'http://10.0.2.2:8181');
