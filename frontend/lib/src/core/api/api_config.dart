@@ -9,7 +9,7 @@ class ApiConfig {
       ? ''
       : String.fromEnvironment(
           'HORIZON_API_HOST',
-          defaultValue: 'http://10.0.2.2:8181',
+          defaultValue: 'https://horizon.adamzborovsky.com',
         );
 
   static const String baseUrl = '$_host/api/v1';

@@ -12,7 +12,11 @@ class Auth extends _$Auth {
   }
 
   Future<void> login(String username, String password) async {
-    state = const AsyncValue.loading();
+    // Deliberately not setting state to AsyncValue.loading() here: main.dart
+    // shows a full-screen splash whenever authProvider.isLoading is true,
+    // which would unmount LoginScreen (and its local _isLoading spinner and
+    // _error text) mid-request. The login screen already has its own
+    // loading indicator, so this state only ever transitions to data/error.
     final result = await ref.read(authRepositoryProvider).login(username, password);
     if (result != null) {
       state = AsyncValue.data(result.user);
@@ -22,7 +26,7 @@ class Auth extends _$Auth {
   }
 
   Future<void> register(String username, String password) async {
-    state = const AsyncValue.loading();
+    // See login() above for why this doesn't set AsyncValue.loading().
     final result = await ref.read(authRepositoryProvider).register(username, password);
     if (result != null) {
       state = AsyncValue.data(result.user);

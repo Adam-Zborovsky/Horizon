@@ -253,70 +253,78 @@ class TutorialService {
                     // Frosted dark glass panel
                     color: const Color(0xFF0C0C1A).withValues(alpha: 0.78),
                     borderRadius: BorderRadius.circular(18),
-                    border: Border(
-                      // Gold accent on top for brand alignment
-                      top: const BorderSide(
-                        color: AppTheme.goldAmber,
-                        width: 1.5,
-                      ),
-                      left: BorderSide(
-                        color: Colors.white.withValues(alpha: 0.10),
-                        width: 1,
-                      ),
-                      right: BorderSide(
-                        color: Colors.white.withValues(alpha: 0.10),
-                        width: 1,
-                      ),
-                      bottom: BorderSide(
-                        color: Colors.white.withValues(alpha: 0.10),
-                        width: 1,
-                      ),
+                    // Border.paint asserts on non-uniform side colors when a
+                    // borderRadius is set, so the sides share one subtle
+                    // white stroke; the gold brand accent is drawn as a
+                    // separate top bar below instead of a top BorderSide.
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.10),
+                      width: 1,
                     ),
                   ),
-                  padding: const EdgeInsets.fromLTRB(20, 18, 20, 18),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        title.toUpperCase(),
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
+                      // Gold accent on top for brand alignment
+                      Container(
+                        height: 1.5,
+                        decoration: const BoxDecoration(
                           color: AppTheme.goldAmber,
-                          fontSize: 13,
-                          letterSpacing: 2.0,
+                          borderRadius: BorderRadius.only(
+                            topLeft: Radius.circular(17),
+                            topRight: Radius.circular(17),
+                          ),
                         ),
                       ),
-                      const SizedBox(height: 8),
-                      Text(
-                        content,
-                        style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.88),
-                          fontSize: 14,
-                          height: 1.55,
-                        ),
-                      ),
-                      const SizedBox(height: 18),
-                      GestureDetector(
-                        onTap: controller.next,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 18,
-                            vertical: 9,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppTheme.goldAmber,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(
-                            isGuide ? 'GOT IT' : 'NEXT  →',
-                            style: const TextStyle(
-                              color: Colors.black,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 12,
-                              letterSpacing: 1.4,
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(20, 18, 20, 18),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              title.toUpperCase(),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: AppTheme.goldAmber,
+                                fontSize: 13,
+                                letterSpacing: 2.0,
+                              ),
                             ),
-                          ),
+                            const SizedBox(height: 8),
+                            Text(
+                              content,
+                              style: TextStyle(
+                                color: Colors.white.withValues(alpha: 0.88),
+                                fontSize: 14,
+                                height: 1.55,
+                              ),
+                            ),
+                            const SizedBox(height: 18),
+                            GestureDetector(
+                              onTap: controller.next,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 18,
+                                  vertical: 9,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppTheme.goldAmber,
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text(
+                                  isGuide ? 'GOT IT' : 'NEXT  →',
+                                  style: const TextStyle(
+                                    color: Colors.black,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 12,
+                                    letterSpacing: 1.4,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ],
