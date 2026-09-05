@@ -76,25 +76,25 @@ Horizon transforms global news, geopolitical events, and financial data into act
 
 ## Tech Stack
 
-| Layer | Technology | Version |
-|-------|-----------|---------|
-| **Mobile app** | Flutter (Dart) | SDK ≥3.11.0 |
-| **State management** | Riverpod | 3.2.1 |
-| **Routing** | GoRouter | 17.1.0 |
-| **Data classes** | Freezed + json_serializable | 3.2.5 / 6.13.0 |
-| **Charts** | FL Chart | 1.1.1 |
-| **Fonts** | Google Fonts (Inter, Montserrat) | 8.0.2 |
-| **Wear OS** | wearable_rotary | 2.0.4 |
-| **Notifications** | flutter_local_notifications | 18.0.1 |
-| **API server** | Express.js (Node.js 18) | 5.2.1 |
-| **Database** | MongoDB via Mongoose | 9.2.1 |
-| **Auth** | JWT (jsonwebtoken) + bcryptjs | 9.0.3 / 3.0.3 |
-| **Validation** | Zod | 4.3.6 |
-| **Scheduling** | node-cron | 4.2.1 |
-| **Security** | Helmet + CORS + Morgan | 8.1.0 / 2.8.6 / 1.10.1 |
-| **Automation** | n8n (external) | — |
-| **Web server** | Nginx (Alpine) | latest |
-| **Containerization** | Docker Compose | — |
+| Layer                | Technology                       | Version                |
+| -------------------- | -------------------------------- | ---------------------- |
+| **Mobile app**       | Flutter (Dart)                   | SDK ≥3.11.0            |
+| **State management** | Riverpod                         | 3.2.1                  |
+| **Routing**          | GoRouter                         | 17.1.0                 |
+| **Data classes**     | Freezed + json_serializable      | 3.2.5 / 6.13.0         |
+| **Charts**           | FL Chart                         | 1.1.1                  |
+| **Fonts**            | Google Fonts (Inter, Montserrat) | 8.0.2                  |
+| **Wear OS**          | wearable_rotary                  | 2.0.4                  |
+| **Notifications**    | flutter_local_notifications      | 18.0.1                 |
+| **API server**       | Express.js (Node.js 18)          | 5.2.1                  |
+| **Database**         | MongoDB via Mongoose             | 9.2.1                  |
+| **Auth**             | JWT (jsonwebtoken) + bcryptjs    | 9.0.3 / 3.0.3          |
+| **Validation**       | Zod                              | 4.3.6                  |
+| **Scheduling**       | node-cron                        | 4.2.1                  |
+| **Security**         | Helmet + CORS + Morgan           | 8.1.0 / 2.8.6 / 1.10.1 |
+| **Automation**       | n8n (external)                   | —                      |
+| **Web server**       | Nginx (Alpine)                   | latest                 |
+| **Containerization** | Docker Compose                   | —                      |
 
 ---
 
@@ -204,7 +204,7 @@ node src/server.js
 ```bash
 cd frontend
 flutter pub get
-flutter run
+flutter run --flavor mobile
 # Set HORIZON_API_HOST for non-web targets:
 # flutter run --dart-define=HORIZON_API_HOST=https://your-server.com
 ```
@@ -229,20 +229,20 @@ npm run wipe-db
 
 ### Environment Variables
 
-| Variable | Default | Required | Description |
-|----------|---------|----------|-------------|
-| `PORT` | `8181` | No | Backend listen port |
-| `NODE_ENV` | `development` | No | `development` / `production` / `test` |
-| `MONGODB_URI` | — | **Yes** | MongoDB connection string (e.g., `mongodb://horizon-db:27017/horizon`) |
-| `API_PREFIX` | `/api/v1` | No | API route prefix |
-| `JWT_SECRET` | — | **Yes** | Secret key for signing JWTs |
-| `JWT_EXPIRES_IN` | `30d` | No | JWT token expiration |
-| `N8N_WEBHOOK_URL` | — | No | n8n webhook URL for briefing trigger |
+| Variable          | Default       | Required | Description                                                            |
+| ----------------- | ------------- | -------- | ---------------------------------------------------------------------- |
+| `PORT`            | `8181`        | No       | Backend listen port                                                    |
+| `NODE_ENV`        | `development` | No       | `development` / `production` / `test`                                  |
+| `MONGODB_URI`     | —             | **Yes**  | MongoDB connection string (e.g., `mongodb://horizon-db:27017/horizon`) |
+| `API_PREFIX`      | `/api/v1`     | No       | API route prefix                                                       |
+| `JWT_SECRET`      | —             | **Yes**  | Secret key for signing JWTs                                            |
+| `JWT_EXPIRES_IN`  | `30d`         | No       | JWT token expiration                                                   |
+| `N8N_WEBHOOK_URL` | —             | No       | n8n webhook URL for briefing trigger                                   |
 
 ### Flutter Build Arguments
 
-| Argument | Default | Description |
-|----------|---------|-------------|
+| Argument           | Default                | Description                   |
+| ------------------ | ---------------------- | ----------------------------- |
 | `HORIZON_API_HOST` | `http://10.0.2.2:8181` | Backend URL for mobile builds |
 
 ---
@@ -253,66 +253,69 @@ All endpoints are prefixed with `/api/v1` unless noted.
 
 ### Auth
 
-| Method | Path | Auth | Description |
-|--------|------|------|-------------|
-| `POST` | `/api/v1/auth/register` | No | Register user (`username`, `password`) |
-| `POST` | `/api/v1/auth/login` | No | Login, returns JWT |
-| `GET` | `/api/v1/auth/me` | Bearer | Get current user |
+| Method | Path                    | Auth   | Description                            |
+| ------ | ----------------------- | ------ | -------------------------------------- |
+| `POST` | `/api/v1/auth/register` | No     | Register user (`username`, `password`) |
+| `POST` | `/api/v1/auth/login`    | No     | Login, returns JWT                     |
+| `GET`  | `/api/v1/auth/me`       | Bearer | Get current user                       |
 
 ### Briefing
 
-| Method | Path | Auth | Description |
-|--------|------|------|-------------|
-| `GET` | `/api/v1/briefing` | Bearer | Get latest briefing (filtered by enabled topics) |
-| `GET` | `/api/v1/briefing/status` | Bearer | Lightweight timestamp-only check for polling |
-| `GET` | `/api/v1/briefing/history` | Bearer | Paginated briefing history (`?page=&limit=`) |
-| `GET` | `/api/v1/briefing/config` | Bearer | Get user's topic/ticker configuration |
-| `PUT` | `/api/v1/briefing/config` | Bearer | Update full configuration |
-| `PUT` | `/api/v1/briefing/config/topic/:topicName` | Bearer | Toggle topic enabled/disabled |
-| `DELETE` | `/api/v1/briefing/config/topic/:topicName` | Bearer | Remove topic |
-| `GET` | `/api/v1/briefing/config/recommended` | Bearer | Get recommended topics |
-| `GET` | `/api/v1/briefing/search` | Bearer | Ticker autocomplete (`?q=AAPL`) |
-| `GET` | `/api/v1/briefing/opportunity-stats/:ticker` | Bearer | 30-day appearance count + streak |
-| `POST` | `/api/v1/briefing/trigger` | Bearer | Manually trigger briefing generation |
-| `GET` | `/api/v1/briefing/config/system` | None | Config lookup by `?userId=` (for n8n) |
-| `POST` | `/api/v1/briefing` | None | Save briefing from agents (webhook endpoint) |
+| Method   | Path                                         | Auth   | Description                                      |
+| -------- | -------------------------------------------- | ------ | ------------------------------------------------ |
+| `GET`    | `/api/v1/briefing`                           | Bearer | Get latest briefing (filtered by enabled topics) |
+| `GET`    | `/api/v1/briefing/status`                    | Bearer | Lightweight timestamp-only check for polling     |
+| `GET`    | `/api/v1/briefing/history`                   | Bearer | Paginated briefing history (`?page=&limit=`)     |
+| `GET`    | `/api/v1/briefing/config`                    | Bearer | Get user's topic/ticker configuration            |
+| `PUT`    | `/api/v1/briefing/config`                    | Bearer | Update full configuration                        |
+| `PUT`    | `/api/v1/briefing/config/topic/:topicName`   | Bearer | Toggle topic enabled/disabled                    |
+| `DELETE` | `/api/v1/briefing/config/topic/:topicName`   | Bearer | Remove topic                                     |
+| `GET`    | `/api/v1/briefing/config/recommended`        | Bearer | Get recommended topics                           |
+| `GET`    | `/api/v1/briefing/search`                    | Bearer | Ticker autocomplete (`?q=AAPL`)                  |
+| `GET`    | `/api/v1/briefing/opportunity-stats/:ticker` | Bearer | 30-day appearance count + streak                 |
+| `POST`   | `/api/v1/briefing/trigger`                   | Bearer | Manually trigger briefing generation             |
+| `GET`    | `/api/v1/briefing/config/system`             | None   | Config lookup by `?userId=` (for n8n)            |
+| `POST`   | `/api/v1/briefing`                           | None   | Save briefing from agents (webhook endpoint)     |
 
 ### System
 
-| Method | Path | Auth | Description |
-|--------|------|------|-------------|
-| `GET` | `/health` | No | Health check |
-| `POST` | `/webhook` | No | External webhook receiver (reserved) |
+| Method | Path       | Auth | Description                          |
+| ------ | ---------- | ---- | ------------------------------------ |
+| `GET`  | `/health`  | No   | Health check                         |
+| `POST` | `/webhook` | No   | External webhook receiver (reserved) |
 
 ---
 
 ## Data Model
 
 ### User
-| Field | Type | Notes |
-|-------|------|-------|
-| `_id` | ObjectId | Auto |
-| `username` | String | Unique, lowercase, trimmed |
-| `password` | String | bcrypt-hashed (12 rounds), pre-save hook |
-| `createdAt`, `updatedAt` | Date | Mongoose timestamps |
+
+| Field                    | Type     | Notes                                    |
+| ------------------------ | -------- | ---------------------------------------- |
+| `_id`                    | ObjectId | Auto                                     |
+| `username`               | String   | Unique, lowercase, trimmed               |
+| `password`               | String   | bcrypt-hashed (12 rounds), pre-save hook |
+| `createdAt`, `updatedAt` | Date     | Mongoose timestamps                      |
 
 ### Briefing
-| Field | Type | Notes |
-|-------|------|-------|
-| `_id` | ObjectId | Auto |
-| `user` | ObjectId → User | Required |
-| `data` | Mixed | Freeform JSON from AI agents |
-| `source` | String | `n8n` / `manual` / `agent` |
-| `createdAt` | Date | Indexed (descending) |
+
+| Field       | Type            | Notes                        |
+| ----------- | --------------- | ---------------------------- |
+| `_id`       | ObjectId        | Auto                         |
+| `user`      | ObjectId → User | Required                     |
+| `data`      | Mixed           | Freeform JSON from AI agents |
+| `source`    | String          | `n8n` / `manual` / `agent`   |
+| `createdAt` | Date            | Indexed (descending)         |
 
 ### BriefingConfig
-| Field | Type | Notes |
-|-------|------|-------|
-| `_id` | ObjectId | Auto |
-| `user` | ObjectId → User | Unique (one config per user) |
-| `topics` | [{name, enabled}] | Default: 5 built-in topic pillars |
-| `tickers` | [String] | User's watchlist tickers |
-| `createdAt`, `updatedAt` | Date | Mongoose timestamps |
+
+| Field                    | Type              | Notes                             |
+| ------------------------ | ----------------- | --------------------------------- |
+| `_id`                    | ObjectId          | Auto                              |
+| `user`                   | ObjectId → User   | Unique (one config per user)      |
+| `topics`                 | [{name, enabled}] | Default: 5 built-in topic pillars |
+| `tickers`                | [String]          | User's watchlist tickers          |
+| `createdAt`, `updatedAt` | Date              | Mongoose timestamps               |
 
 ---
 
