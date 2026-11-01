@@ -143,7 +143,7 @@ String _boundedShort(Map<String, dynamic> json, String field, int maxLength) {
 /// One observed bar. `time` is the UTC start of the bucket; daily bars use
 /// `session_date` as exchange-local identity. Null volume means unavailable,
 /// zero volume means zero — the distinction is preserved exactly.
-@freezed
+@Freezed(fromJson: false, toJson: false)
 abstract class MarketBar with _$MarketBar {
   const factory MarketBar({
     required String time,
@@ -223,7 +223,7 @@ abstract class MarketWarning with _$MarketWarning {
 /// `HistoryResponse` for GET /market/instruments/:id/history. Unavailable
 /// responses have an empty bar array and a machine-readable reason; stale
 /// cached results stay explicitly stale and can never claim realtime.
-@freezed
+@Freezed(fromJson: false, toJson: false)
 abstract class HistoryResponse with _$HistoryResponse {
   const factory HistoryResponse({
     required int contractVersion,

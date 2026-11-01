@@ -23,22 +23,22 @@ incomplete and MUST be re-done before building.
 4987729534f3ee382acb5f3cf19be007f6b086f28be765e1adc5fdd612c8b9bc  frontend/integration_test/research_journey_test.dart
 
 # Accepted upstream Flutter sources (frozen baseline, do not edit)
-e8e238d5e93f349ed0379e825d4d5a163a03bf0616cdc83a961f47b524190c02  frontend/pubspec.yaml
+33fd7c1d8338c1a4c4dd85ecae58d88e5d3f533b195fb3d672eb9e6dd59e7227  frontend/pubspec.yaml
 2c3711e4cec167e9bc2eada324d3c42dcecbb5a8f6096045562d67be725d8205  frontend/lib/main.dart
 e929cddd2b81f47c795ce74aa2ff22cf366e1444c32daf92fee2de071c74484e  frontend/lib/main_wear.dart
-e115eebf6299089b1396e819343df2cdb1b8a1f9ac53ab6242bdd9e6f3f16711  frontend/lib/src/features/research/research_models.dart
+abccadd079672cdb6f030a6039d39bf3356e5b2a1f46ec887e1b68896b6e80e3  frontend/lib/src/features/research/research_models.dart
 2d1717e1d023f04e908bec4c99ec00bec0c298872c380621333413326866c52b  frontend/lib/src/features/research/research_repository.dart
 e1bcc2e8ba97ca4d1ec713109d330e0bc84ed9a1612751c515bbd6b923a3963a  frontend/lib/src/features/research/widgets/research_panel.dart
 70b3932d338ebc168ba95f79aaf2591b9672c768490084dbb79ca94ab2d80ba7  frontend/lib/src/features/research/widgets/outlook_panel.dart
 b9c6fdfbf74aa25e95e46730f1e986babcf7da13df8db7a6feee380acafe85d5  frontend/lib/src/features/research/widgets/evidence_sheet.dart
-2ef79950fde0534821ffcae84620791bbe50ed6fc6bebdb8bb69952808b2d20d  frontend/lib/src/features/positions/position_models.dart
+eb96e00d14d48e85ca37817ea819f9c1c4ca519b683064099dad1f6eb37e2f4f  frontend/lib/src/features/positions/position_models.dart
 bad936a37951ad1bb5dcd570241378a6d2b7e9b0312a9dd3b4d1ad5b4976c67a  frontend/lib/src/features/positions/position_repository.dart
 681dd152887e8f5a838cfc67c37808a54c3a03817d21dd58a794709b902b972b  frontend/lib/src/features/stock/stock_detail_screen.dart
 42231476ff810cd2ff55fe897d0c91869dcd7af439363c1b5a89d6adfcc228ec  frontend/lib/src/features/stock/stock_repository.dart
 
 # Accepted upstream Flutter tests (do not edit)
 6b0d0bd6a36d84d18b02915001ef15f953da819f5b5c9cba9afba14989882f07  frontend/test/research_panel_integration_test.dart
-664aee0d26fc9d1d4008fdff9e17f23739561757ff81aa20185d1a090da20c26  frontend/test/research_compatibility_test.dart
+824b4890f33cdbd09a418e7e4319bb9800ee0f45ace0b1f5334802a5f83a7b8a  frontend/test/research_compatibility_test.dart
 ```
 
 ## 2. Generator order (MANDATORY — do not skip or reorder)
@@ -136,3 +136,33 @@ toolchain version is not verifiable and must be rebuilt/recorded.
 - Do not run `git clean`/`git reset`/`git checkout` to "tidy" before transfer:
   the working tree's dirty baseline is intentional and must be preserved.
 - After transfer, run the §1 hash verification first; only then start §2.
+
+
+## 6. Dev-PC gate feedback — 2026-11-01 (first build_runner run)
+
+Four compile defects found on the development PC and fixed server-side (this
+commit), all in files the authoring server could never compile (no Dart SDK):
+
+1. freezed ^3.2.5 emits `@JsonSerializable()` on the generated class whenever
+   a hand-written `fromJson(Map<String, dynamic>)` factory exists, which then
+   requires a `.g.dart` part these hand-parsed files deliberately omit. Fixed
+   by annotating all 20 affected classes
+   `@Freezed(fromJson: false, toJson: false)`
+   (17 in research_models.dart, Position, MarketBar, HistoryResponse).
+2. Unescaped literal `$` in single-quoted strings in
+   research_compatibility_test.dart (7 sites) — Dart interpolation syntax
+   errors. Escaped as `\$`.
+3. chart_probe.dart:175 closed a list literal with `]);` instead of `];`.
+4. `integration_test: {sdk: flutter}` added to pubspec.yaml dev_dependencies.
+
+Updated transfer hashes (§1 for files listed there; the rest here):
+
+```text
+9f1ac0f79ef1414e12ca32cc9f6f872eadfb23bcd4b0426ea9ee31dcf76cc46b  frontend/test/support/chart_probe.dart
+eb96e00d14d48e85ca37817ea819f9c1c4ca519b683064099dad1f6eb37e2f4f  frontend/lib/src/features/positions/position_models.dart
+900e2183b79402df47db4f44ed286bb7d52b0f12db7c2c51f9c9bfa240eaffb6  frontend/lib/src/features/market/market_models.dart
+```
+
+The "frozen baseline" marking in §1 referred to transfer integrity, not
+eternal immutability — these are gate-feedback repairs with this section as
+the audit trail. Re-verify all §1 hashes after pulling this commit.

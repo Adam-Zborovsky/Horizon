@@ -404,7 +404,7 @@ abstract class EvidenceFact with _$EvidenceFact {
 
 /// Source-linked evidence item. Headline-only news stays headline-only; URLs
 /// are vetted source links, never arbitrary model-generated destinations.
-@freezed
+@Freezed(fromJson: false, toJson: false)
 abstract class EvidenceItem with _$EvidenceItem {
   const factory EvidenceItem({
     required String id,
@@ -458,7 +458,7 @@ abstract class EvidenceItem with _$EvidenceItem {
 
 /// A claim with explicit evidence and metric support; reference IDs must be
 /// unique. Source-ID existence alone is not treated as entailment.
-@freezed
+@Freezed(fromJson: false, toJson: false)
 abstract class Claim with _$Claim {
   const factory Claim({
     required String text,
@@ -537,7 +537,7 @@ abstract class ThesisSection with _$ThesisSection {
   }
 }
 
-@freezed
+@Freezed(fromJson: false, toJson: false)
 abstract class MarketThesis with _$MarketThesis {
   const factory MarketThesis({
     required ThesisSection businessAssessment,
@@ -558,7 +558,7 @@ abstract class MarketThesis with _$MarketThesis {
       );
 }
 
-@freezed
+@Freezed(fromJson: false, toJson: false)
 abstract class Recommendation with _$Recommendation {
   const factory Recommendation({
     required RecommendationAction action,
@@ -593,7 +593,7 @@ abstract class Recommendation with _$Recommendation {
 
 /// Assessment position context: exact revision copy. Candidate records cannot
 /// carry executed economics; legacy records keep null economics.
-@freezed
+@Freezed(fromJson: false, toJson: false)
 abstract class AssessmentPositionContext with _$AssessmentPositionContext {
   const factory AssessmentPositionContext({
     required String? positionId,
@@ -689,7 +689,7 @@ Map<String, dynamic>? _optionalObject(Object? value, String field) {
 /// Numeric projection overlay. Null bounds stay null; conditional scenarios
 /// require explicit assumptions; calibrated forecasts require calibration
 /// evidence; volatility references are never directional forecasts.
-@freezed
+@Freezed(fromJson: false, toJson: false)
 abstract class NumericProjection with _$NumericProjection {
   const factory NumericProjection({
     required String id,
@@ -806,7 +806,7 @@ String _bounded(Map<String, dynamic> json, String field, int maxLength) {
   return value;
 }
 
-@freezed
+@Freezed(fromJson: false, toJson: false)
 abstract class CalibrationEvidence with _$CalibrationEvidence {
   const factory CalibrationEvidence({
     required String modelVersion,
@@ -833,7 +833,7 @@ abstract class CalibrationEvidence with _$CalibrationEvidence {
   }
 }
 
-@freezed
+@Freezed(fromJson: false, toJson: false)
 abstract class Outlook with _$Outlook {
   const factory Outlook({
     required int horizonMonths,
@@ -883,7 +883,7 @@ abstract class Outlook with _$Outlook {
 // Checkpoints and thesis continuity (CONTRACTS §6).
 // ---------------------------------------------------------------------------
 
-@freezed
+@Freezed(fromJson: false, toJson: false)
 abstract class Checkpoint with _$Checkpoint {
   const factory Checkpoint({
     required String id,
@@ -964,7 +964,7 @@ abstract class Checkpoint with _$Checkpoint {
   }
 }
 
-@freezed
+@Freezed(fromJson: false, toJson: false)
 abstract class ThesisChange with _$ThesisChange {
   const factory ThesisChange({
     required String component,
@@ -981,7 +981,7 @@ abstract class ThesisChange with _$ThesisChange {
       );
 }
 
-@freezed
+@Freezed(fromJson: false, toJson: false)
 abstract class ChangesSincePrevious with _$ChangesSincePrevious {
   const factory ChangesSincePrevious({
     required String? previousAssessmentId,
@@ -1070,7 +1070,7 @@ List<Map<String, dynamic>> _objectList(
 // Immutable assessment (CONTRACTS §5–§7).
 // ---------------------------------------------------------------------------
 
-@freezed
+@Freezed(fromJson: false, toJson: false)
 abstract class ResearchAssessment with _$ResearchAssessment {
   const factory ResearchAssessment({
     required String id,
@@ -1282,7 +1282,7 @@ Map<String, String> _versions(Object? value) {
 // Run lifecycle (CONTRACTS §8).
 // ---------------------------------------------------------------------------
 
-@freezed
+@Freezed(fromJson: false, toJson: false)
 abstract class ResearchRun with _$ResearchRun {
   const factory ResearchRun({
     required String id,
@@ -1443,7 +1443,7 @@ abstract class ResearchRun with _$ResearchRun {
 /// ResearchRun.fromJson cannot parse them. last_success and latest_attempt
 /// are distinct concepts and are never collapsed: an existing success is not
 /// rewritten by a later failure (research.service.js:811-812).
-@freezed
+@Freezed(fromJson: false, toJson: false)
 abstract class ResearchLatest with _$ResearchLatest {
   const factory ResearchLatest({
     required String positionId,
@@ -1480,7 +1480,7 @@ abstract class ResearchLatest with _$ResearchLatest {
 /// run_state.last_success (research.service.js:816-822): projection of the
 /// most recent SUCCESSFUL run for the position. Nullable fields mirror the
 /// backend projection, which copies whatever the run document carries.
-@freezed
+@Freezed(fromJson: false, toJson: false)
 abstract class ResearchLastSuccess with _$ResearchLastSuccess {
   const factory ResearchLastSuccess({
     required String runId,
@@ -1505,7 +1505,7 @@ abstract class ResearchLastSuccess with _$ResearchLastSuccess {
 /// most recent run of ANY status — including queued, running, failed and
 /// stalled. Distinct from ResearchLastSuccess: a later failure never
 /// overwrites the last success.
-@freezed
+@Freezed(fromJson: false, toJson: false)
 abstract class ResearchLatestAttempt with _$ResearchLatestAttempt {
   const factory ResearchLatestAttempt({
     required String runId,
@@ -1532,7 +1532,7 @@ abstract class ResearchLatestAttempt with _$ResearchLatestAttempt {
 
 /// Cursor-paginated assessment history for
 /// GET /research/positions/:id/assessments.
-@freezed
+@Freezed(fromJson: false, toJson: false)
 abstract class AssessmentPage with _$AssessmentPage {
   const factory AssessmentPage({
     required List<ResearchAssessment> assessments,

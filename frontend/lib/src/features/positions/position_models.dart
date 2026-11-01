@@ -454,7 +454,7 @@ extension PositionInstrumentX on PositionInstrument {
 
 /// Tracked position with typed nullable economics. Null economics means
 /// unknown/unavailable and must never become an invented value.
-@freezed
+@Freezed(fromJson: false, toJson: false)
 abstract class Position with _$Position {
   const factory Position({
     required String id,

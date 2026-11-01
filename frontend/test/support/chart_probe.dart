@@ -172,7 +172,7 @@ final List<ProbeMarketBar> kFixtureObservedDailyBars = const [
     adjustedClose: null,
     isFinal: true,
   ),
-]);
+];
 
 /// Synthetic intraday 5m values for 1D range layout testing — NOT observed market data.
 /// Provenance note: These 5 bars (2024-01-05 14:30 - 14:50) are explicit synthetic test

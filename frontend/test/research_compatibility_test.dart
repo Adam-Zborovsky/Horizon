@@ -67,9 +67,9 @@ BriefingItem _item(Map<String, dynamic> overrides) {
     // Deliberately prose-rich fields: a legacy client scraping these would
     // fabricate a $100.00 quote. No structured price is present unless the
     // caller overrides 'price'.
-    'explanation': 'Trading near $100.00 and up 2.5% on the session.',
-    'takeaway': 'Target price $100.00.',
-    'potential_price_action': 'Approaching $100.00, +2.5%.',
+    'explanation': 'Trading near \$100.00 and up 2.5% on the session.',
+    'takeaway': 'Target price \$100.00.',
+    'potential_price_action': 'Approaching \$100.00, +2.5%.',
   };
   map.addAll(overrides);
   return BriefingItem.fromJson(map);
@@ -284,7 +284,7 @@ void main() {
   });
 
   group('A — authoritative-price compatibility (no prose scraping)', () {
-    test('A1: prose mentioning $100 never becomes a rendered quote', () async {
+    test('A1: prose mentioning \$100 never becomes a rendered quote', () async {
       // Regression on the eliminated defect class: legacy fallbacks scraped
       // explanation/takeaway/potential_price_action/analysis for prices.
       final stocks = await _mapStocks(briefing: _briefing({
@@ -299,7 +299,7 @@ void main() {
 
       expect(stocks, hasLength(1));
       expect(stocks.single.currentPrice, 0.0,
-          reason: 'No structured price → unavailable (0.0), never the $100 '
+          reason: 'No structured price → unavailable (0.0), never the \$100 '
               'mentioned in prose');
       expect(stocks.single.changePercent, 0.0,
           reason: 'No structured change → 0.0, never the +2.5% in prose');
@@ -578,7 +578,7 @@ void main() {
     });
 
     testWidgets('C2: Wear watchlist renders unavailable quotes as "—" — '
-        'never a fabricated $0.00', (tester) async {
+        'never a fabricated \$0.00', (tester) async {
       await _pump(
         tester,
         SizedBox(
@@ -650,7 +650,7 @@ void main() {
     });
 
     testWidgets('C5: stock detail heading renders the truthful unavailable '
-        'state — never "$0.00"', (tester) async {
+        'state — never "\$0.00"', (tester) async {
       await _pumpDetail(tester, stocks: const [_unavailableStock]);
 
       expect(find.textContaining('PRICE UNAVAILABLE'), findsOneWidget);
