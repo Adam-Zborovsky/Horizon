@@ -462,7 +462,7 @@ void main() {
     );
     await _pumpScreen(tester, transport);
 
-    expect(find.text('Candidate position'), findsOneWidget);
+    expect(find.bySemanticsLabel(RegExp('^Candidate position:')), findsOneWidget);
     // The panel's own economics card reports no purchase, never zeros.
     expect(find.textContaining('No recorded purchase'), findsOneWidget);
     expect(find.bySemanticsLabel(RegExp('Recommended action:')), findsOneWidget);
@@ -507,7 +507,7 @@ void main() {
     expect((body['changes'] as Map<String, dynamic>), contains('instrument'));
 
     // Owned economics rendered, comparable P/L never fabricated (H09 N1).
-    expect(find.text('Owned position'), findsOneWidget);
+    expect(find.bySemanticsLabel('Owned position'), findsOneWidget);
     expect(find.textContaining('Comparable profit and loss is not shown'),
         findsOneWidget);
   });

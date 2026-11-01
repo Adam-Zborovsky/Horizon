@@ -111,26 +111,24 @@ Map<String, dynamic> _assessmentJson({
   String status = 'complete',
   List<Map<String, dynamic>>? outlooks,
   List<String> missingData = const [],
-  List<Map<String, dynamic>>? changesSincePrevious,
+  Map<String, dynamic>? changesSincePrevious,
 }) {
   final changes = changesSincePrevious ??
       (status == 'complete'
-          ? [
-              {
-                'previous_assessment_id': 'ass-0',
-                'previous_session_as_of': '2026-10-29',
-                'missing_report_sessions': <String>[],
-                'thesis_changes': [
-                  {
-                    'component': 'Cloud revenue growth thesis',
-                    'status': 'strengthened',
-                    'reason': 'New filing confirms guidance.',
-                    'evidence_ids': ['ev-2'],
-                  },
-                ],
-                'checkpoint_change_ids': <String>[],
-              },
-            ]
+          ? <String, dynamic>{
+              'previous_assessment_id': 'ass-0',
+              'previous_session_as_of': '2026-10-29',
+              'missing_report_sessions': <String>[],
+              'thesis_changes': [
+                {
+                  'component': 'Cloud revenue growth thesis',
+                  'status': 'strengthened',
+                  'reason': 'New filing confirms guidance.',
+                  'evidence_ids': ['ev-2'],
+                },
+              ],
+              'checkpoint_change_ids': <String>[],
+            }
           : null);
   return {
     'id': 'ass-1',
@@ -409,6 +407,8 @@ void main() {
       await tester.pump();
 
       expect(find.textContaining('snap-1'), findsOneWidget);
+      await tester.ensureVisible(find.textContaining('snap-1'));
+      await tester.pumpAndSettle();
       await tester.tap(find.textContaining('snap-1'));
       expect(openedSnapshot, 'snap-1');
     });

@@ -440,7 +440,7 @@ void main() {
       // chart dependency.
       expect(find.text('OBSERVED PRICE HISTORY UNAVAILABLE'), findsOneWidget);
       // Position section: owned badge and honest economics line.
-      expect(find.text('Owned position'), findsOneWidget);
+      expect(find.bySemanticsLabel('Owned position'), findsOneWidget);
       expect(find.text('Cost 152.25 USD · Quantity 10'), findsOneWidget);
       // Research panel: decision-first recommendation card.
       expect(find.text('Recommendation'), findsOneWidget);
@@ -459,7 +459,7 @@ void main() {
       await _pumpScreen(tester, transport);
 
       expect(
-          find.text(
+          find.bySemanticsLabel(
               'Candidate position: a watchlist idea, no executed purchase'),
           findsOneWidget);
       expect(
@@ -483,7 +483,7 @@ void main() {
         );
       await _pumpScreen(tester, transport);
 
-      expect(find.text('Owned position'), findsOneWidget);
+      expect(find.bySemanticsLabel('Owned position'), findsOneWidget);
       // Unknown economics: explicit "unknown" copy — never zero, never a
       // fabricated value.
       expect(find.textContaining('Cost unknown'), findsOneWidget);

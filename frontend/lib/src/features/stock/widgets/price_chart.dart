@@ -180,14 +180,14 @@ class _PriceChartState extends State<PriceChart> {
           icon: Icons.refresh,
           onTap: _controller.resetView,
         ),
-        const SizedBox(width: 8),
+        const SizedBox(width: 4),
         _touchable(
           key: const Key('chart_prev'),
           label: 'Prev',
           icon: Icons.chevron_left,
           onTap: _controller.stepPrev,
         ),
-        const SizedBox(width: 6),
+        const SizedBox(width: 4),
         _touchable(
           key: const Key('chart_next'),
           label: 'Next',
@@ -200,7 +200,7 @@ class _PriceChartState extends State<PriceChart> {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text('Overlay', style: TextStyle(color: widget.theme.onSurfaceMuted, fontSize: 13)),
+              Text('Overlay', style: TextStyle(color: widget.theme.onSurfaceMuted, fontSize: 12)),
               Switch(
                 key: const Key('chart_overlay_switch'),
                 value: _controller.overlayEnabled,
@@ -211,7 +211,7 @@ class _PriceChartState extends State<PriceChart> {
             ],
           ),
         ),
-        const SizedBox(width: 8),
+        const SizedBox(width: 4),
         Text(
           '${_controller.zoom.toStringAsFixed(2)}x',
           key: const Key('chart_zoom_readout'),
@@ -855,7 +855,6 @@ class _PriceChartState extends State<PriceChart> {
             }
           },
         ),
-        extraLinesData: _buildExtraLinesData(),
         rangeAnnotations: _buildRangeAnnotations(),
       ),
       transformationConfig: FlTransformationConfig(
@@ -1085,7 +1084,7 @@ class _PriceChartState extends State<PriceChart> {
             onTap: onTap,
             child: Container(
               padding:
-                  const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                  const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
               alignment: Alignment.center,
               decoration: BoxDecoration(
                 color: isSelected

@@ -72,6 +72,7 @@ class PositionStateBadge extends StatelessWidget {
         : _stateSemanticDescription(state);
 
     return Semantics(
+      excludeSemantics: true,
       label: semanticLabel,
       child: Wrap(
         spacing: 6,

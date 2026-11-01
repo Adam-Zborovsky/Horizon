@@ -13,6 +13,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../core/api/api_config.dart';
 import '../auth/auth_repository.dart';
+import '../positions/position_models.dart';
 import '../positions/position_repository.dart';
 import 'market_models.dart';
 

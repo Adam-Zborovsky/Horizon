@@ -57,6 +57,7 @@ typedef PositionConflictCallback = void Function();
 /// sheet).
 class PositionEditor extends StatefulWidget {
   const PositionEditor._({
+    super.key,
     required this.onSave,
     this.onSaved,
     this.onConflict,
@@ -71,12 +72,13 @@ class PositionEditor extends StatefulWidget {
   /// identity (CONTRACTS §1 — identity comes from a vetted provider
   /// resolution, never free-text invented here).
   const PositionEditor.create({
-    super.key,
+    Key? key,
     required PositionInstrument instrument,
     required PositionSaveCallback onSave,
     PositionSavedCallback? onSaved,
     PositionConflictCallback? onConflict,
   }) : this._(
+          key: key,
           instrument: instrument,
           onSave: onSave,
           onSaved: onSaved,
@@ -85,12 +87,13 @@ class PositionEditor extends StatefulWidget {
 
   /// Edit mode: classify a legacy record, edit an owned position, or archive.
   const PositionEditor.edit({
-    super.key,
+    Key? key,
     required Position initial,
     required PositionSaveCallback onSave,
     PositionSavedCallback? onSaved,
     PositionConflictCallback? onConflict,
   }) : this._(
+          key: key,
           initial: initial,
           onSave: onSave,
           onSaved: onSaved,
@@ -317,15 +320,11 @@ class _PositionEditorState extends State<PositionEditor> {
     });
   }
 
-  Future<void> _classify(PositionState state) async {
-    if (state == PositionState.owned) {
-      await _transitionToOwned();
-    } else {
-      setState(() {
-        _targetState = PositionState.candidate;
-        _economicsCleared = false;
-      });
-    }
+  void _classify(PositionState state) {
+    setState(() {
+      _targetState = state;
+      _economicsCleared = false;
+    });
   }
 
   Future<void> _transitionToCandidate() async {

@@ -19,17 +19,19 @@ void main() {
           scaffoldBackgroundColor: const Color(0xFF0C0C0C),
         ),
         home: Scaffold(
-          body: SizedBox(
-            width: 400,
-            height: 800,
-            child: ChartCapabilityProbe(
-              initialBars: initialBars,
-              initialProjection: initialProjection,
-              initialStyle: initialStyle,
-              initialRange: initialRange,
-              initialShowOverlay: initialShowOverlay,
-              initialSnapshotMode: initialSnapshotMode,
-              onSelectionChanged: onSelectionChanged,
+          body: SingleChildScrollView(
+            child: SizedBox(
+              width: 650,
+              height: 900,
+              child: ChartCapabilityProbe(
+                initialBars: initialBars,
+                initialProjection: initialProjection,
+                initialStyle: initialStyle,
+                initialRange: initialRange,
+                initialShowOverlay: initialShowOverlay,
+                initialSnapshotMode: initialSnapshotMode,
+                onSelectionChanged: onSelectionChanged,
+              ),
             ),
           ),
         ),
@@ -257,16 +259,20 @@ void main() {
       // EXACTLY 4 spots from observed data — no future candles manufactured!
       expect(chartWidget.data.candlestickSpots.length, 4);
 
-      // Verify that scenario lines are provided via extraLinesData
-      expect(chartWidget.data.extraLinesData.horizontalLines.length, 3);
-      expect(chartWidget.data.extraLinesData.horizontalLines[0].y, 170.0); // Upper bound
-      expect(chartWidget.data.extraLinesData.horizontalLines[1].y, 160.0); // Central target
-      expect(chartWidget.data.extraLinesData.horizontalLines[2].y, 150.0); // Lower bound
-
       // Verify range annotation for scenario corridor
       expect(chartWidget.data.rangeAnnotations.horizontalRangeAnnotations.length, 1);
       expect(chartWidget.data.rangeAnnotations.horizontalRangeAnnotations[0].y1, 150.0);
       expect(chartWidget.data.rangeAnnotations.horizontalRangeAnnotations[0].y2, 170.0);
+
+      // Verify that scenario lines are provided via extraLinesData on LineChart
+      final state = tester.state<ChartCapabilityProbeState>(find.byType(ChartCapabilityProbe));
+      state.toggleStyle(ChartStyle.line);
+      await tester.pumpAndSettle();
+      final LineChart lineWidget = tester.widget(find.byType(LineChart));
+      expect(lineWidget.data.extraLinesData.horizontalLines.length, 3);
+      expect(lineWidget.data.extraLinesData.horizontalLines[0].y, 170.0); // Upper bound
+      expect(lineWidget.data.extraLinesData.horizontalLines[1].y, 160.0); // Central target
+      expect(lineWidget.data.extraLinesData.horizontalLines[2].y, 150.0); // Lower bound
     });
 
     testWidgets('10. scenario overlay: stale projection hides overlay and shows stale notice in live view', (tester) async {

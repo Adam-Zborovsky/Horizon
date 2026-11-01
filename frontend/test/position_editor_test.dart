@@ -104,6 +104,9 @@ Future<void> _pump(
   Widget child, {
   double textScale = 1.0,
 }) async {
+  tester.view.physicalSize = const Size(800, 1400);
+  tester.view.devicePixelRatio = 1.0;
+  addTearDown(tester.view.reset);
   await tester.pumpWidget(
     MaterialApp(
       theme: AppTheme.darkTheme,
@@ -468,7 +471,6 @@ void main() {
     testWidgets('exposes state and archive status to semantics',
         (tester) async {
       final semantics = tester.ensureSemantics();
-      addTearDown(semantics.dispose);
       await _pump(
         tester,
         Column(children: [
@@ -488,6 +490,7 @@ void main() {
               'Candidate position: a watchlist idea, no executed purchase, '
               'archived'),
           findsOneWidget);
+      semantics.dispose();
     });
 
     testWidgets('unknown economics are labeled, never invented',

@@ -15,6 +15,7 @@ part 'data_polling_service.g.dart';
 @Riverpod(keepAlive: true)
 class DataPollingService extends _$DataPollingService {
   Timer? _timer;
+  Timer? _initialTimer;
   String? _lastKnownTimestamp;
 
   static const _pollInterval = Duration(minutes: 2);
@@ -30,12 +31,14 @@ class DataPollingService extends _$DataPollingService {
     // Do an initial check after a short delay to let the app settle
     _timer = Timer.periodic(_pollInterval, (_) => _checkForNewData());
     // Also run once shortly after startup
-    Future.delayed(const Duration(seconds: 10), _checkForNewData);
+    _initialTimer = Timer(const Duration(seconds: 10), _checkForNewData);
   }
 
   void _stopPolling() {
     _timer?.cancel();
     _timer = null;
+    _initialTimer?.cancel();
+    _initialTimer = null;
   }
 
   Future<void> _checkForNewData() async {

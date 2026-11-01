@@ -758,7 +758,7 @@ abstract class NumericProjection with _$NumericProjection {
           'scenarios require explicit assumptions');
     }
 
-    final calibration = _optionalObject(json, 'calibration');
+    final calibration = _optionalObject(json['calibration'], 'calibration');
     if (kind == ProjectionKind.calibratedForecast && calibration == null) {
       throw ContractFormatException('Field "calibration": calibrated forecasts '
           'require calibration evidence');
@@ -869,10 +869,12 @@ abstract class Outlook with _$Outlook {
       downsideCase: _claimList(json, 'downside_case', maxItems: 20),
       catalysts: _claimList(json, 'catalysts', maxItems: 20),
       invalidators: _claimList(json, 'invalidators', maxItems: 20),
-      numericProjection: _optionalObject(json, 'numeric_projection') == null
-          ? null
-          : NumericProjection.fromJson(
-              _optionalObject(json, 'numeric_projection')!),
+      numericProjection:
+          _optionalObject(json['numeric_projection'], 'numeric_projection') ==
+                  null
+              ? null
+              : NumericProjection.fromJson(_optionalObject(
+                  json['numeric_projection'], 'numeric_projection')!),
       dataLimitations:
           requireBoundedStringList(json, 'data_limitations', maxItems: 50),
     );
@@ -1102,11 +1104,11 @@ abstract class ResearchAssessment with _$ResearchAssessment {
     }
 
     final positionContext =
-        _optionalObject(json, 'position_context') == null
+        _optionalObject(json['position_context'], 'position_context') == null
             ? throw ContractFormatException(
                 'Field "position_context": expected an object')
             : AssessmentPositionContext.fromJson(
-                _optionalObject(json, 'position_context')!);
+                _optionalObject(json['position_context'], 'position_context')!);
 
     final outlooksJson = json['outlooks'];
     if (outlooksJson is! List) {
@@ -1238,11 +1240,12 @@ abstract class ResearchAssessment with _$ResearchAssessment {
       marketThesis: MarketThesis.fromJson(_requiredObject(json, 'market_thesis')),
       recommendation: recommendation,
       positionContext: positionContext,
-      changesSincePrevious: _optionalObject(json, 'changes_since_previous') ==
+      changesSincePrevious: _optionalObject(
+                  json['changes_since_previous'], 'changes_since_previous') ==
               null
           ? null
-          : ChangesSincePrevious.fromJson(
-              _optionalObject(json, 'changes_since_previous')!),
+          : ChangesSincePrevious.fromJson(_optionalObject(
+              json['changes_since_previous'], 'changes_since_previous')!),
       checkpoints: checkpoints,
       outlooks: outlooks,
       missingData: requireBoundedStringList(json, 'missing_data', maxItems: 100),

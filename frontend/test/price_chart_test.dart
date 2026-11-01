@@ -75,8 +75,7 @@ const List<Map<String, dynamic>> kObservedDailyBarsJson = [
 ];
 
 const String kRawBasis =
-    'raw provider OHLCV; adjusted close is intentionally omitted rather than '
-    'mixed into raw candles';
+    'raw provider OHLCV; adjusted close intentionally omitted';
 
 const String kInstrumentId = 'instrument-ibm-xnys-usd';
 
@@ -184,10 +183,12 @@ Widget harness(ChartController controller) {
   return MaterialApp(
     theme: ThemeData.dark(),
     home: Scaffold(
-      body: SizedBox(
-        width: 400,
-        height: 800,
-        child: PriceChart(controller: controller),
+      body: SingleChildScrollView(
+        child: SizedBox(
+          width: 650,
+          height: 900,
+          child: PriceChart(controller: controller),
+        ),
       ),
     ),
   );
@@ -645,6 +646,8 @@ void main() {
       );
       addTearDown(controller.dispose);
       await tester.pumpWidget(harness(controller));
+      await tester.pumpAndSettle();
+      controller.selectBar(0);
       await tester.pumpAndSettle();
 
       expect(find.text('Vol: N/A'), findsOneWidget);

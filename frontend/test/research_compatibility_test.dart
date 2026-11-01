@@ -46,6 +46,7 @@ import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:horizon/src/features/briefing/briefing_config_model.dart';
 import 'package:horizon/src/features/briefing/briefing_config_repository.dart';
 import 'package:horizon/src/features/briefing/briefing_model.dart';
 import 'package:horizon/src/features/briefing/briefing_repository.dart';
@@ -105,10 +106,10 @@ Future<List<StockData>> _mapStocks({
   final container = ProviderContainer(
     overrides: [
       briefingRepositoryProvider.overrideWith(
-        (ref) => _FixtureBriefingRepository(briefing),
+        () => _FixtureBriefingRepository(briefing),
       ),
       briefingConfigRepositoryProvider.overrideWith(
-        (ref) => _FixtureConfigRepository(config, _neverClient()),
+        () => _FixtureConfigRepository(config, _neverClient()),
       ),
     ],
   );
@@ -178,7 +179,7 @@ ProviderContainer _configContainer(_ScriptedTransport transport,
   final container = ProviderContainer(
     overrides: [
       briefingConfigRepositoryProvider.overrideWith(
-        (ref) => _FixtureConfigRepository(initial, transport.build()),
+        () => _FixtureConfigRepository(initial, transport.build()),
       ),
     ],
   );
@@ -232,6 +233,7 @@ class _StaticStocks extends StockRepository {
 Future<void> _pumpDetail(
   WidgetTester tester, {
   required List<StockData> stocks,
+  String ticker = 'TEST',
 }) async {
   final transport = MockClient((request) async {
     final path = request.url.path;
@@ -250,10 +252,10 @@ Future<void> _pumpDetail(
       home: ProviderScope(
         overrides: [
           stockRepositoryProvider.overrideWith(
-            (ref) => _StaticStocks(stocks),
+            () => _StaticStocks(stocks),
           ),
           briefingConfigRepositoryProvider.overrideWith(
-            (ref) => _FixtureConfigRepository(_emptyConfig, _neverClient()),
+            () => _FixtureConfigRepository(_emptyConfig, _neverClient()),
           ),
           positionRepositoryProvider.overrideWith(
             (ref) => PositionRepository(
@@ -268,8 +270,8 @@ Future<void> _pumpDetail(
             ),
           ),
         ],
-        child: const Scaffold(
-          body: StockDetailScreen(ticker: 'TEST'),
+        child: Scaffold(
+          body: StockDetailScreen(ticker: ticker),
         ),
       ),
     ),
@@ -509,6 +511,7 @@ void main() {
         ),
       );
 
+      await container.read(briefingConfigRepositoryProvider.future);
       final watchlist = container.read(watchlistProvider.notifier);
       await expectLater(
         watchlist.remove('MSFT'),
@@ -543,6 +546,7 @@ void main() {
         ),
       );
 
+      await container.read(briefingConfigRepositoryProvider.future);
       await container.read(watchlistProvider.notifier).add('new');
 
       final puts = transport.calls('PUT', 'config');
@@ -558,10 +562,13 @@ void main() {
         (tester) async {
       await _pump(
         tester,
-        SizedBox(
-          width: 200,
-          height: 200,
-          child: WearWatchlistScreen(stocks: const [_availableStock]),
+        MediaQuery(
+          data: const MediaQueryData(size: Size(200, 200)),
+          child: SizedBox(
+            width: 200,
+            height: 200,
+            child: WearWatchlistScreen(stocks: const [_availableStock]),
+          ),
         ),
       );
 
@@ -581,10 +588,13 @@ void main() {
         'never a fabricated \$0.00', (tester) async {
       await _pump(
         tester,
-        SizedBox(
-          width: 200,
-          height: 200,
-          child: WearWatchlistScreen(stocks: const [_unavailableStock]),
+        MediaQuery(
+          data: const MediaQueryData(size: Size(200, 200)),
+          child: SizedBox(
+            width: 200,
+            height: 200,
+            child: WearWatchlistScreen(stocks: const [_unavailableStock]),
+          ),
         ),
       );
 
@@ -611,10 +621,13 @@ void main() {
 
       await _pump(
         tester,
-        SizedBox(
-          width: 200,
-          height: 200,
-          child: WearOpportunitiesScreen(stocks: const [opportunity]),
+        MediaQuery(
+          data: const MediaQueryData(size: Size(200, 200)),
+          child: SizedBox(
+            width: 200,
+            height: 200,
+            child: WearOpportunitiesScreen(stocks: const [opportunity]),
+          ),
         ),
       );
 
@@ -651,7 +664,7 @@ void main() {
 
     testWidgets('C5: stock detail heading renders the truthful unavailable '
         'state — never "\$0.00"', (tester) async {
-      await _pumpDetail(tester, stocks: const [_unavailableStock]);
+      await _pumpDetail(tester, stocks: const [_unavailableStock], ticker: 'NOQ');
 
       expect(find.textContaining('PRICE UNAVAILABLE'), findsOneWidget);
       expect(find.textContaining('\$0.00'), findsNothing);

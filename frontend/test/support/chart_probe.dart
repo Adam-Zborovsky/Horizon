@@ -380,12 +380,8 @@ class ChartCapabilityProbeState extends State<ChartCapabilityProbe> {
       setState(() {
         _currentRange = range;
         final bars = activeBars;
-        if (_selectedIndex != null && _selectedIndex! >= bars.length) {
-          _selectedIndex = bars.isNotEmpty ? bars.length - 1 : null;
-          _selectedBar = _selectedIndex != null ? bars[_selectedIndex!] : null;
-        } else if (_selectedIndex != null && bars.isNotEmpty) {
-          _selectedBar = bars[_selectedIndex!];
-        }
+        _selectedIndex = bars.isNotEmpty ? bars.length - 1 : null;
+        _selectedBar = _selectedIndex != null ? bars[_selectedIndex!] : null;
       });
       widget.onRangeChanged?.call(_currentRange);
     }
@@ -782,7 +778,6 @@ class ChartCapabilityProbeState extends State<ChartCapabilityProbe> {
             }
           },
         ),
-        extraLinesData: _buildExtraLinesData(),
         rangeAnnotations: _buildRangeAnnotations(),
       ),
       transformationConfig: FlTransformationConfig(

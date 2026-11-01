@@ -241,7 +241,7 @@ Map<String, dynamic> assessmentFixture({
         'predictive_uncertainty':
             'High; single-session evidence with no calibrated model.',
       },
-      'position_context': {
+      'position_context': <String, dynamic>{
         'position_id': 'position-owned-0001',
         'instrument_id': 'instrument-acme-1',
         'state': state,
@@ -323,11 +323,11 @@ class RecordingClient extends http.BaseClient {
   RecordingClient(this.responder);
 
   final http.Response Function(http.BaseRequest request) responder;
-  final List<http.BaseRequest> requests = [];
+  final List<http.Request> requests = [];
 
   @override
   Future<http.StreamedResponse> send(http.BaseRequest request) async {
-    requests.add(request);
+    requests.add(request as http.Request);
     final response = responder(request);
     return http.StreamedResponse(
       Stream.value(utf8.encode(response.body)),
@@ -1014,7 +1014,7 @@ void main() {
         () async {
       for (final body in [
         <String, dynamic>{'data': [ownedPositionFixture()]},
-        <String, dynamic>[ownedPositionFixture()],
+        <Map<String, dynamic>>[ownedPositionFixture()],
       ]) {
         final client = RecordingClient((_) => jsonResponse(body));
         final repository = PositionRepository(

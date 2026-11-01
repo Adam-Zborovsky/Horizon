@@ -20,6 +20,7 @@
 // AMENDMENT-2026-10-30; widget tests live in test/research_panel_test.dart.
 import 'package:flutter/material.dart';
 
+import '../../positions/position_models.dart';
 import '../research_models.dart';
 import 'evidence_sheet.dart';
 import 'outlook_panel.dart';
