@@ -42,21 +42,31 @@
     });
     observer.observe(document.querySelector('title'), { childList: true });
 
-    // Unregister any stale Flutter PWA service workers and clear old caches
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.getRegistrations().then(function(registrations) {
-        for (var i = 0; i < registrations.length; i++) {
-          registrations[i].unregister();
-        }
-      });
-    }
-    if ('caches' in window) {
-      caches.keys().then(function(names) {
-        for (var i = 0; i < names.length; i++) {
-          caches.delete(names[i]);
-        }
-      });
-    }
+    // Unregister any stale Flutter PWA service workers, wipe CacheStorage, and reload once if controlled
+    (function() {
+      var tasks = [];
+      var hadController = ('serviceWorker' in navigator) && !!navigator.serviceWorker.controller;
+      if ('serviceWorker' in navigator) {
+        tasks.push(
+          navigator.serviceWorker.getRegistrations().then(function(registrations) {
+            return Promise.all(registrations.map(function(r) { return r.unregister(); }));
+          })
+        );
+      }
+      if ('caches' in window) {
+        tasks.push(
+          caches.keys().then(function(names) {
+            return Promise.all(names.map(function(n) { return caches.delete(n); }));
+          })
+        );
+      }
+      if (hadController && !sessionStorage.getItem('horizon_sw_purged')) {
+        sessionStorage.setItem('horizon_sw_purged', '1');
+        Promise.all(tasks).finally(function() {
+          window.location.reload();
+        });
+      }
+    })();
   </script>
 </head>
 <body>

@@ -1015,12 +1015,14 @@ class _PositionResearchSectionState
   }
 
   Future<void> _load() async {
+    if (!mounted) return;
     setState(() {
       _loading = true;
       _error = null;
     });
+    final repository = ref.read(positionRepositoryProvider);
+    final researchWire = ref.read(researchWireProvider);
     try {
-      final repository = ref.read(positionRepositoryProvider);
       final positions = await repository.getPositions();
       final ticker = widget.stock.ticker.toUpperCase();
       Position? match;
@@ -1032,8 +1034,8 @@ class _PositionResearchSectionState
         }
       }
       PositionResearchState? research;
-      if (match != null) {
-        research = await ref.read(researchWireProvider).latestState(match.id);
+      if (match != null && mounted) {
+        research = await researchWire.latestState(match.id);
       }
       if (!mounted) return;
       setState(() {
@@ -1042,7 +1044,7 @@ class _PositionResearchSectionState
         _loading = false;
       });
       _maybeAutoOpenEditor();
-    } on Exception {
+    } on Object {
       if (!mounted) return;
       setState(() {
         _error = 'Position and research state could not be loaded.';
@@ -1071,6 +1073,7 @@ class _PositionResearchSectionState
 
   Future<void> _openEditor() async {
     final position = _position;
+    final repository = ref.read(positionRepositoryProvider);
     final upperTicker = widget.stock.ticker.toUpperCase();
     final fallbackInstrument = PositionInstrument(
       instrumentId: 'legacy-ticker-$upperTicker',
@@ -1132,9 +1135,8 @@ class _PositionResearchSectionState
                             // PositionRepository; it builds {expected_revision, changes}
                             // itself from initial.revision and surfaces 409
                             // REVISION_CONFLICT internally without silent retries.
-                            onSave: (write) => ref
-                                .read(positionRepositoryProvider)
-                                .patchPosition(position.id, write),
+                            onSave: (write) =>
+                                repository.patchPosition(position.id, write),
                             onConflict: () {
                               Navigator.of(sheetContext).pop();
                               if (mounted) _load();
@@ -1148,9 +1150,7 @@ class _PositionResearchSectionState
                           )
                         : PositionEditor.create(
                             instrument: fallbackInstrument,
-                            onSave: (write) => ref
-                                .read(positionRepositoryProvider)
-                                .addPosition(write),
+                            onSave: (write) => repository.addPosition(write),
                             onSaved: (saved) {
                               Navigator.of(sheetContext).pop();
                               if (!mounted) return;
@@ -1179,10 +1179,12 @@ class _PositionResearchSectionState
     // no shared secret involved.
     final key = 'manual-${DateTime.now().toUtc().millisecondsSinceEpoch}-'
         '${_randomHex(8)}';
+    final researchWire = ref.read(researchWireProvider);
     try {
-      final run = await ref
-          .read(researchWireProvider)
-          .queueRun(position.id, idempotencyKey: key);
+      final run = await researchWire.queueRun(
+        position.id,
+        idempotencyKey: key,
+      );
       if (!mounted) return;
       setState(() {
         _queuedRun = run;
@@ -1193,6 +1195,12 @@ class _PositionResearchSectionState
       setState(() {
         _queueError =
             'Research run could not be queued (${error.code}).';
+        _queueing = false;
+      });
+    } on Object {
+      if (!mounted) return;
+      setState(() {
+        _queueError = 'Research run could not be queued.';
         _queueing = false;
       });
     }
