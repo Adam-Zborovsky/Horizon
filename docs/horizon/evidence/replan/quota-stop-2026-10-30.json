@@ -1,0 +1,8 @@
+{
+  "board": "horizon-research-2026-10",
+  "run_ids": [
+    133
+  ],
+  "controller_quota": true,
+  "automatic_resume": false
+}

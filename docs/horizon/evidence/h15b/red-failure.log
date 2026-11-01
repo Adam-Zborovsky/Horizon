@@ -1,0 +1,270 @@
+TAP version 13
+# [dotenv@17.3.1] injecting env (6) from .env -- tip: 🤖 agentic secret storage: https://dotenvx.com/as2
+# Subtest: H15B: owner-scoped positions and research routes are reachable through real application routing
+not ok 1 - H15B: owner-scoped positions and research routes are reachable through real application routing
+  ---
+  duration_ms: 103.712453
+  type: 'test'
+  location: '/home/ubuntu/apps/Horizon/backend/test/research-panel-integration.test.cjs:374:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    404 !== 200
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 200
+  actual: 404
+  operator: 'strictEqual'
+  stack: |-
+    /home/ubuntu/apps/Horizon/backend/test/research-panel-integration.test.cjs:378:12
+    process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    async withTestServer (/home/ubuntu/apps/Horizon/backend/test/research-panel-integration.test.cjs:318:5)
+    async TestContext.<anonymous> (/home/ubuntu/apps/Horizon/backend/test/research-panel-integration.test.cjs:376:3)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+  ...
+# Subtest: H15B: default factory without services leaves /positions and /research unmounted (H15A 404 contract)
+ok 2 - H15B: default factory without services leaves /positions and /research unmounted (H15A 404 contract)
+  ---
+  duration_ms: 67.918143
+  type: 'test'
+  ...
+# Subtest: H15B: candidate carries no economics; owned promotion records it; unknown economics rejected
+not ok 3 - H15B: candidate carries no economics; owned promotion records it; unknown economics rejected
+  ---
+  duration_ms: 45.192841
+  type: 'test'
+  location: '/home/ubuntu/apps/Horizon/backend/test/research-panel-integration.test.cjs:420:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    candidate create failed: "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<title>Error</title>\n</head>\n<body>\n<pre>Cannot POST /api/v1/positions</pre>\n</body>\n</html>\n"
+    
+    404 !== 201
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 201
+  actual: 404
+  operator: 'strictEqual'
+  stack: |-
+    createCandidate (/home/ubuntu/apps/Horizon/backend/test/research-panel-integration.test.cjs:348:10)
+    process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    async /home/ubuntu/apps/Horizon/backend/test/research-panel-integration.test.cjs:423:23
+    async withTestServer (/home/ubuntu/apps/Horizon/backend/test/research-panel-integration.test.cjs:318:5)
+    async TestContext.<anonymous> (/home/ubuntu/apps/Horizon/backend/test/research-panel-integration.test.cjs:422:3)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: H15B: stale expected_revision is a typed 409 conflict
+not ok 4 - H15B: stale expected_revision is a typed 409 conflict
+  ---
+  duration_ms: 58.680013
+  type: 'test'
+  location: '/home/ubuntu/apps/Horizon/backend/test/research-panel-integration.test.cjs:466:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    candidate create failed: "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<title>Error</title>\n</head>\n<body>\n<pre>Cannot POST /api/v1/positions</pre>\n</body>\n</html>\n"
+    
+    404 !== 201
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 201
+  actual: 404
+  operator: 'strictEqual'
+  stack: |-
+    createCandidate (/home/ubuntu/apps/Horizon/backend/test/research-panel-integration.test.cjs:348:10)
+    process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    async /home/ubuntu/apps/Horizon/backend/test/research-panel-integration.test.cjs:469:23
+    async withTestServer (/home/ubuntu/apps/Horizon/backend/test/research-panel-integration.test.cjs:318:5)
+    async TestContext.<anonymous> (/home/ubuntu/apps/Horizon/backend/test/research-panel-integration.test.cjs:468:3)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: H15B: owner B cannot see, change or research owner A position (indistinguishable denial)
+not ok 5 - H15B: owner B cannot see, change or research owner A position (indistinguishable denial)
+  ---
+  duration_ms: 61.491081
+  type: 'test'
+  location: '/home/ubuntu/apps/Horizon/backend/test/research-panel-integration.test.cjs:487:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    candidate create failed: "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<title>Error</title>\n</head>\n<body>\n<pre>Cannot POST /api/v1/positions</pre>\n</body>\n</html>\n"
+    
+    404 !== 201
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 201
+  actual: 404
+  operator: 'strictEqual'
+  stack: |-
+    createCandidate (/home/ubuntu/apps/Horizon/backend/test/research-panel-integration.test.cjs:348:10)
+    process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    async /home/ubuntu/apps/Horizon/backend/test/research-panel-integration.test.cjs:490:23
+    async withTestServer (/home/ubuntu/apps/Horizon/backend/test/research-panel-integration.test.cjs:318:5)
+    async TestContext.<anonymous> (/home/ubuntu/apps/Horizon/backend/test/research-panel-integration.test.cjs:489:3)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: H15B: research latest with no runs is a truthful 200 unavailable state, never an error
+not ok 6 - H15B: research latest with no runs is a truthful 200 unavailable state, never an error
+  ---
+  duration_ms: 21.285727
+  type: 'test'
+  location: '/home/ubuntu/apps/Horizon/backend/test/research-panel-integration.test.cjs:530:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    candidate create failed: "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<title>Error</title>\n</head>\n<body>\n<pre>Cannot POST /api/v1/positions</pre>\n</body>\n</html>\n"
+    
+    404 !== 201
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 201
+  actual: 404
+  operator: 'strictEqual'
+  stack: |-
+    createCandidate (/home/ubuntu/apps/Horizon/backend/test/research-panel-integration.test.cjs:348:10)
+    process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    async /home/ubuntu/apps/Horizon/backend/test/research-panel-integration.test.cjs:533:23
+    async withTestServer (/home/ubuntu/apps/Horizon/backend/test/research-panel-integration.test.cjs:318:5)
+    async TestContext.<anonymous> (/home/ubuntu/apps/Horizon/backend/test/research-panel-integration.test.cjs:532:3)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: H15B: queued run is 202, replayed by idempotency key, and the run wire reconciles with the H11 model
+not ok 7 - H15B: queued run is 202, replayed by idempotency key, and the run wire reconciles with the H11 model
+  ---
+  duration_ms: 21.778693
+  type: 'test'
+  location: '/home/ubuntu/apps/Horizon/backend/test/research-panel-integration.test.cjs:543:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    candidate create failed: "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<title>Error</title>\n</head>\n<body>\n<pre>Cannot POST /api/v1/positions</pre>\n</body>\n</html>\n"
+    
+    404 !== 201
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 201
+  actual: 404
+  operator: 'strictEqual'
+  stack: |-
+    createCandidate (/home/ubuntu/apps/Horizon/backend/test/research-panel-integration.test.cjs:348:10)
+    process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    async /home/ubuntu/apps/Horizon/backend/test/research-panel-integration.test.cjs:546:23
+    async withTestServer (/home/ubuntu/apps/Horizon/backend/test/research-panel-integration.test.cjs:318:5)
+    async TestContext.<anonymous> (/home/ubuntu/apps/Horizon/backend/test/research-panel-integration.test.cjs:545:3)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: H15B: delivered success lands in run_state.last_success and latest_assessment; latest_attempt tracks a later failure
+not ok 8 - H15B: delivered success lands in run_state.last_success and latest_assessment; latest_attempt tracks a later failure
+  ---
+  duration_ms: 37.507646
+  type: 'test'
+  location: '/home/ubuntu/apps/Horizon/backend/test/research-panel-integration.test.cjs:594:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    candidate create failed: "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<title>Error</title>\n</head>\n<body>\n<pre>Cannot POST /api/v1/positions</pre>\n</body>\n</html>\n"
+    
+    404 !== 201
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 201
+  actual: 404
+  operator: 'strictEqual'
+  stack: |-
+    createCandidate (/home/ubuntu/apps/Horizon/backend/test/research-panel-integration.test.cjs:348:10)
+    process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    async /home/ubuntu/apps/Horizon/backend/test/research-panel-integration.test.cjs:597:23
+    async withTestServer (/home/ubuntu/apps/Horizon/backend/test/research-panel-integration.test.cjs:318:5)
+    async TestContext.<anonymous> (/home/ubuntu/apps/Horizon/backend/test/research-panel-integration.test.cjs:596:3)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: H15B: a limited result counts as last_success and stays distinct from a later failed attempt
+not ok 9 - H15B: a limited result counts as last_success and stays distinct from a later failed attempt
+  ---
+  duration_ms: 18.358939
+  type: 'test'
+  location: '/home/ubuntu/apps/Horizon/backend/test/research-panel-integration.test.cjs:655:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    candidate create failed: "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<title>Error</title>\n</head>\n<body>\n<pre>Cannot POST /api/v1/positions</pre>\n</body>\n</html>\n"
+    
+    404 !== 201
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 201
+  actual: 404
+  operator: 'strictEqual'
+  stack: |-
+    createCandidate (/home/ubuntu/apps/Horizon/backend/test/research-panel-integration.test.cjs:348:10)
+    process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    async /home/ubuntu/apps/Horizon/backend/test/research-panel-integration.test.cjs:658:23
+    async withTestServer (/home/ubuntu/apps/Horizon/backend/test/research-panel-integration.test.cjs:318:5)
+    async TestContext.<anonymous> (/home/ubuntu/apps/Horizon/backend/test/research-panel-integration.test.cjs:657:3)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: H15B: prior-report changes — a new revision supersedes stale runs and never mutates prior assessments
+not ok 10 - H15B: prior-report changes — a new revision supersedes stale runs and never mutates prior assessments
+  ---
+  duration_ms: 10.613704
+  type: 'test'
+  location: '/home/ubuntu/apps/Horizon/backend/test/research-panel-integration.test.cjs:689:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    candidate create failed: "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<title>Error</title>\n</head>\n<body>\n<pre>Cannot POST /api/v1/positions</pre>\n</body>\n</html>\n"
+    
+    404 !== 201
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 201
+  actual: 404
+  operator: 'strictEqual'
+  stack: |-
+    createCandidate (/home/ubuntu/apps/Horizon/backend/test/research-panel-integration.test.cjs:348:10)
+    process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    async /home/ubuntu/apps/Horizon/backend/test/research-panel-integration.test.cjs:692:23
+    async withTestServer (/home/ubuntu/apps/Horizon/backend/test/research-panel-integration.test.cjs:318:5)
+    async TestContext.<anonymous> (/home/ubuntu/apps/Horizon/backend/test/research-panel-integration.test.cjs:691:3)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: H15B: observed market history for a resolved instrument stays isolated from research snapshots
+not ok 11 - H15B: observed market history for a resolved instrument stays isolated from research snapshots
+  ---
+  duration_ms: 1.759218
+  type: 'test'
+  location: '/home/ubuntu/apps/Horizon/backend/test/research-panel-integration.test.cjs:753:1'
+  failureType: 'testCodeFailure'
+  error: 'services is not defined'
+  code: 'ERR_TEST_FAILURE'
+  name: 'ReferenceError'
+  stack: |-
+    TestContext.<anonymous> (/home/ubuntu/apps/Horizon/backend/test/research-panel-integration.test.cjs:799:22)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+1..11
+# tests 11
+# suites 0
+# pass 1
+# fail 10
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1225.839046

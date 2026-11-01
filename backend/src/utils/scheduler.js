@@ -28,15 +28,18 @@ async function triggerAllUsers() {
 }
 
 function startScheduler() {
-  // Run at 6:00 AM every day
-  cron.schedule('0 6 * * *', () => {
-    console.log('Scheduler: Daily briefing cron fired.');
+  // Fire Mon-Fri at 16:10 America/New_York — 10 minutes after US market close
+  // (16:00 ET). Wall-clock cron in NY timezone means the UTC fire time shifts
+  // automatically with summer/winter clocks (20:10 UTC in EDT, 21:10 UTC in EST).
+  // Weekends excluded: markets closed, no fresh market data to analyze.
+  cron.schedule('10 16 * * 1-5', () => {
+    console.log('Scheduler: Market-close briefing cron fired.');
     triggerAllUsers().catch(err => {
       console.error('Scheduler: Error triggering users:', err.message);
     });
-  });
+  }, { timezone: 'America/New_York' });
 
-  console.log('✅ Briefing scheduler started (daily at 06:00).');
+  console.log('✅ Briefing scheduler started (Mon-Fri 16:10 America/New_York, DST-aware).');
 }
 
 module.exports = { startScheduler };

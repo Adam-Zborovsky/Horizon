@@ -1,0 +1,1469 @@
+TAP version 13
+# Subtest: maps every contract range to its truthful preferred resolution
+ok 1 - maps every contract range to its truthful preferred resolution
+  ---
+  duration_ms: 1.910379
+  type: 'test'
+  ...
+# Subtest: labels an unsupported requested resolution instead of silently relabeling it
+ok 2 - labels an unsupported requested resolution instead of silently relabeling it
+  ---
+  duration_ms: 4.687726
+  type: 'test'
+  ...
+# Subtest: removes invalid and duplicate provider bars, keeps ascending observed bars, and reports partial data
+ok 3 - removes invalid and duplicate provider bars, keeps ascending observed bars, and reports partial data
+  ---
+  duration_ms: 15.735755
+  type: 'test'
+  ...
+# Subtest: uses an expired immutable snapshot after a provider timeout and marks it stale
+ok 4 - uses an expired immutable snapshot after a provider timeout and marks it stale
+  ---
+  duration_ms: 1.165972
+  type: 'test'
+  ...
+# Subtest: returns an explicit unavailable result when the provider fails without cached observations
+ok 5 - returns an explicit unavailable result when the provider fails without cached observations
+  ---
+  duration_ms: 0.665567
+  type: 'test'
+  ...
+# Subtest: treats early closes and DST-bearing UTC timestamps as observed provider timestamps
+ok 6 - treats early closes and DST-bearing UTC timestamps as observed provider timestamps
+  ---
+  duration_ms: 1.491415
+  type: 'test'
+  ...
+# Subtest: parses Yahoo chart rows without manufacturing OHLC values and exposes delayed metadata
+ok 7 - parses Yahoo chart rows without manufacturing OHLC values and exposes delayed metadata
+  ---
+  duration_ms: 12.230281
+  type: 'test'
+  ...
+# Subtest: bounds a response body that ignores abort and classifies it as a provider timeout
+ok 8 - bounds a response body that ignores abort and classifies it as a provider timeout
+  ---
+  duration_ms: 25.960737
+  type: 'test'
+  ...
+# Subtest: bounds stalled header fetch and classifies it as a provider timeout
+ok 9 - bounds stalled header fetch and classifies it as a provider timeout
+  ---
+  duration_ms: 27.145709
+  type: 'test'
+  ...
+# Subtest: keeps the timeout through delayed body parsing and clears it after success
+ok 10 - keeps the timeout through delayed body parsing and clears it after success
+  ---
+  duration_ms: 63.165745
+  type: 'test'
+  ...
+# Subtest: classifies network failure as unavailable and body parse rejection as invalid response
+ok 11 - classifies network failure as unavailable and body parse rejection as invalid response
+  ---
+  duration_ms: 41.46237
+  type: 'test'
+  ...
+# Subtest: route factory applies injected authentication and only passes server-derived user context
+ok 12 - route factory applies injected authentication and only passes server-derived user context
+  ---
+  duration_ms: 3.092631
+  type: 'test'
+  ...
+# Subtest: model: accepts a valid owned position document
+ok 13 - model: accepts a valid owned position document
+  ---
+  duration_ms: 14.750586
+  type: 'test'
+  ...
+# Subtest: model: candidate documents reject cost/quantity/open date
+ok 14 - model: candidate documents reject cost/quantity/open date
+  ---
+  duration_ms: 3.875439
+  type: 'test'
+  ...
+# Subtest: model: legacy_unclassified documents reject any economics
+ok 15 - model: legacy_unclassified documents reject any economics
+  ---
+  duration_ms: 1.774258
+  type: 'test'
+  ...
+# Subtest: model: unknown top-level fields are rejected (strict throw)
+ok 16 - model: unknown top-level fields are rejected (strict throw)
+  ---
+  duration_ms: 1.385174
+  type: 'test'
+  ...
+# Subtest: model: rejects non-ISO currency, non-positive amounts and malformed decimals
+ok 17 - model: rejects non-ISO currency, non-positive amounts and malformed decimals
+  ---
+  duration_ms: 7.849037
+  type: 'test'
+  ...
+# Subtest: model: rejects malformed opened_on calendar dates
+ok 18 - model: rejects malformed opened_on calendar dates
+  ---
+  duration_ms: 5.221532
+  type: 'test'
+  ...
+# Subtest: service: decimal validation matrix
+ok 19 - service: decimal validation matrix
+  ---
+  duration_ms: 5.443854
+  type: 'test'
+  ...
+# Subtest: service: candidate creation with economics is rejected — desired entry belongs in review_conditions
+ok 20 - service: candidate creation with economics is rejected — desired entry belongs in review_conditions
+  ---
+  duration_ms: 0.442884
+  type: 'test'
+  ...
+# Subtest: service: legacy_unclassified positions carry null economics — no cost inferred from tickers or prose
+ok 21 - service: legacy_unclassified positions carry null economics — no cost inferred from tickers or prose
+  ---
+  duration_ms: 1.192771
+  type: 'test'
+  ...
+# Subtest: service: create without original_thesis serializes null, never empty string
+ok 22 - service: create without original_thesis serializes null, never empty string
+  ---
+  duration_ms: 2.264863
+  type: 'test'
+  ...
+# Subtest: service: unknown fields in create and update payloads are rejected
+ok 23 - service: unknown fields in create and update payloads are rejected
+  ---
+  duration_ms: 1.085291
+  type: 'test'
+  ...
+# Subtest: service: another owner gets an indistinguishable NOT_FOUND, never a leak
+ok 24 - service: another owner gets an indistinguishable NOT_FOUND, never a leak
+  ---
+  duration_ms: 0.722488
+  type: 'test'
+  ...
+# Subtest: service: owner fields are not writable by clients (server-derived owner)
+ok 25 - service: owner fields are not writable by clients (server-derived owner)
+  ---
+  duration_ms: 0.469285
+  type: 'test'
+  ...
+# Subtest: service: list is scoped to the authenticated owner
+ok 26 - service: list is scoped to the authenticated owner
+  ---
+  duration_ms: 0.400484
+  type: 'test'
+  ...
+# Subtest: service: serialized positions never expose owner_id
+ok 27 - service: serialized positions never expose owner_id
+  ---
+  duration_ms: 0.386204
+  type: 'test'
+  ...
+# Subtest: service: duplicate active identity for the same owner returns 409-class error
+ok 28 - service: duplicate active identity for the same owner returns 409-class error
+  ---
+  duration_ms: 0.401124
+  type: 'test'
+  ...
+# Subtest: service: same instrument for different owners is allowed
+ok 29 - service: same instrument for different owners is allowed
+  ---
+  duration_ms: 0.387204
+  type: 'test'
+  ...
+# Subtest: service: archived positions free the identity; unarchive conflicts with a newer active position
+ok 30 - service: archived positions free the identity; unarchive conflicts with a newer active position
+  ---
+  duration_ms: 2.425984
+  type: 'test'
+  ...
+# Subtest: service: candidate -> owned is an explicit action with validated economics
+ok 31 - service: candidate -> owned is an explicit action with validated economics
+  ---
+  duration_ms: 0.597286
+  type: 'test'
+  ...
+# Subtest: service: owned -> candidate clears active economics and preserves the audit trail via revision
+ok 32 - service: owned -> candidate clears active economics and preserves the audit trail via revision
+  ---
+  duration_ms: 0.381004
+  type: 'test'
+  ...
+# Subtest: service: invalid transitions are rejected
+ok 33 - service: invalid transitions are rejected
+  ---
+  duration_ms: 13.647935
+  type: 'test'
+  ...
+# Subtest: service: transition to owned with malformed economics fails and leaves the position untouched
+ok 34 - service: transition to owned with malformed economics fails and leaves the position untouched
+  ---
+  duration_ms: 0.957529
+  type: 'test'
+  ...
+# Subtest: service: missing or stale expected_revision is rejected; correct revision increments
+ok 35 - service: missing or stale expected_revision is rejected; correct revision increments
+  ---
+  duration_ms: 0.786768
+  type: 'test'
+  ...
+# Subtest: pl: unknown cost stays null and P/L is unavailable with unknown_cost
+ok 36 - pl: unknown cost stays null and P/L is unavailable with unknown_cost
+  ---
+  duration_ms: 0.585765
+  type: 'test'
+  ...
+# Subtest: pl: currency mismatch blocks comparable P/L without silent FX approximation
+ok 37 - pl: currency mismatch blocks comparable P/L without silent FX approximation
+  ---
+  duration_ms: 0.392764
+  type: 'test'
+  ...
+# Subtest: pl: unreconciled split basis blocks comparable P/L with explanation
+ok 38 - pl: unreconciled split basis blocks comparable P/L with explanation
+  ---
+  duration_ms: 0.337323
+  type: 'test'
+  ...
+# Subtest: pl: matching basis yields decimal percent; absolute requires quantity; fees/dividends labeled excluded
+ok 39 - pl: matching basis yields decimal percent; absolute requires quantity; fees/dividends labeled excluded
+  ---
+  duration_ms: 0.878888
+  type: 'test'
+  ...
+# Subtest: pl: candidate and legacy_unclassified positions have no owned economics
+ok 40 - pl: candidate and legacy_unclassified positions have no owned economics
+  ---
+  duration_ms: 0.279643
+  type: 'test'
+  ...
+# Subtest: routes: auth is enforced, owner is server-derived, full CRUD behaves per contract
+ok 41 - routes: auth is enforced, owner is server-derived, full CRUD behaves per contract
+  ---
+  duration_ms: 159.950222
+  type: 'test'
+  ...
+# Subtest: migration: legacy tickers import as legacy_unclassified with null economics and exact counts
+ok 42 - migration: legacy tickers import as legacy_unclassified with null economics and exact counts
+  ---
+  duration_ms: 0.703327
+  type: 'test'
+  ...
+# Subtest: migration: second run is idempotent — zero new changes for existing active positions
+ok 43 - migration: second run is idempotent — zero new changes for existing active positions
+  ---
+  duration_ms: 0.366564
+  type: 'test'
+  ...
+# Subtest: migration: archived duplicates do not block re-import, but active ones do
+ok 44 - migration: archived duplicates do not block re-import, but active ones do
+  ---
+  duration_ms: 0.438725
+  type: 'test'
+  ...
+# Subtest: migration: manifest is reversible — every insert has a matching rollback step
+ok 45 - migration: manifest is reversible — every insert has a matching rollback step
+  ---
+  duration_ms: 0.264043
+  type: 'test'
+  ...
+# Subtest: migration: no cost/ownership facts are inferred from tickers or user prose
+ok 46 - migration: no cost/ownership facts are inferred from tickers or user prose
+  ---
+  duration_ms: 0.267043
+  type: 'test'
+  ...
+# Subtest: ticker policy: tickers-only PUT that would orphan active positions is blocked explicitly, not destructive
+ok 47 - ticker policy: tickers-only PUT that would orphan active positions is blocked explicitly, not destructive
+  ---
+  duration_ms: 0.413604
+  type: 'test'
+  ...
+# Subtest: ticker policy: removals without active positions and additions pass through
+ok 48 - ticker policy: removals without active positions and additions pass through
+  ---
+  duration_ms: 2.182022
+  type: 'test'
+  ...
+# Subtest: ticker policy: case-insensitive ticker matching and owner scoping
+ok 49 - ticker policy: case-insensitive ticker matching and owner scoping
+  ---
+  duration_ms: 0.354124
+  type: 'test'
+  ...
+# Subtest: model: _id is an opaque String schema path — pos-<uuid> ids validate (Finding 1)
+ok 50 - model: _id is an opaque String schema path — pos-<uuid> ids validate (Finding 1)
+  ---
+  duration_ms: 2.372544
+  type: 'test'
+  ...
+# Subtest: model: legacy-mig-* deterministic ids validate on the real schema (Finding 1 + 2)
+ok 51 - model: legacy-mig-* deterministic ids validate on the real schema (Finding 1 + 2)
+  ---
+  duration_ms: 0.689047
+  type: 'test'
+  ...
+# Subtest: migration: apply-path document persists the deterministic legacy-mig-* _id (Finding 2)
+ok 52 - migration: apply-path document persists the deterministic legacy-mig-* _id (Finding 2)
+  ---
+  duration_ms: 2.632946
+  type: 'test'
+  ...
+# Subtest: model: decimal validator matches the service bound — <=18 total / <=12 fraction digits (Note B)
+ok 53 - model: decimal validator matches the service bound — <=18 total / <=12 fraction digits (Note B)
+  ---
+  duration_ms: 4.596645
+  type: 'test'
+  ...
+# Subtest: PIPELINE_BUDGETS are named frozen code constants
+ok 54 - PIPELINE_BUDGETS are named frozen code constants
+  ---
+  duration_ms: 1.717537
+  type: 'test'
+  ...
+# Subtest: valid mock synthesis composes a schema-valid assessment in one model call
+ok 55 - valid mock synthesis composes a schema-valid assessment in one model call
+  ---
+  duration_ms: 20.752685
+  type: 'test'
+  ...
+# Subtest: assessment binds the exact run identity and revision
+ok 56 - assessment binds the exact run identity and revision
+  ---
+  duration_ms: 3.106351
+  type: 'test'
+  ...
+# Subtest: deterministic server composition attaches exact owner-bound P/L
+ok 57 - deterministic server composition attaches exact owner-bound P/L
+  ---
+  duration_ms: 3.159591
+  type: 'test'
+  ...
+# Subtest: position_context.economics_status keeps H01 inputs-present semantics with no dead economics parameter
+ok 58 - position_context.economics_status keeps H01 inputs-present semantics with no dead economics parameter
+  ---
+  duration_ms: 4.099881
+  type: 'test'
+  ...
+# Subtest: changing cost alone cannot change the market thesis
+ok 59 - changing cost alone cannot change the market thesis
+  ---
+  duration_ms: 7.334953
+  type: 'test'
+  ...
+# Subtest: market synthesis context contains no purchase cost or quantity
+ok 60 - market synthesis context contains no purchase cost or quantity
+  ---
+  duration_ms: 2.450064
+  type: 'test'
+  ...
+# Subtest: source context is frozen before model invocation and digest-stamped
+ok 61 - source context is frozen before model invocation and digest-stamped
+  ---
+  duration_ms: 2.0785
+  type: 'test'
+  ...
+# Subtest: bounded context truncates evidence to the named budget with a gap note
+ok 62 - bounded context truncates evidence to the named budget with a gap note
+  ---
+  duration_ms: 3.941679
+  type: 'test'
+  ...
+# Subtest: invalid first attempt gets exactly one bounded repair attempt
+ok 63 - invalid first attempt gets exactly one bounded repair attempt
+  ---
+  duration_ms: 3.197471
+  type: 'test'
+  ...
+# Subtest: two failed attempts produce a real failed status with the validation issues
+ok 64 - two failed attempts produce a real failed status with the validation issues
+  ---
+  duration_ms: 1.00749
+  type: 'test'
+  ...
+# Subtest: an expired deadline fails closed before any model call
+ok 65 - an expired deadline fails closed before any model call
+  ---
+  duration_ms: 0.252082
+  type: 'test'
+  ...
+# Subtest: a deadline crossed mid-pipeline stops the run with a real failure status
+ok 66 - a deadline crossed mid-pipeline stops the run with a real failure status
+  ---
+  duration_ms: 0.442565
+  type: 'test'
+  ...
+# Subtest: a position revision mismatch fails closed as REVISION_CONFLICT with no model call
+ok 67 - a position revision mismatch fails closed as REVISION_CONFLICT with no model call
+  ---
+  duration_ms: 0.744647
+  type: 'test'
+  ...
+# Subtest: unavailable coverage fails closed without a model call
+ok 68 - unavailable coverage fails closed without a model call
+  ---
+  duration_ms: 0.233242
+  type: 'test'
+  ...
+# Subtest: partial coverage produces an honest limited status with explicit missing data
+ok 69 - partial coverage produces an honest limited status with explicit missing data
+  ---
+  duration_ms: 3.258873
+  type: 'test'
+  ...
+# Subtest: prior-report and checkpoint continuity is carried into the assessment
+ok 70 - prior-report and checkpoint continuity is carried into the assessment
+  ---
+  duration_ms: 1.299813
+  type: 'test'
+  ...
+# Subtest: without a prior assessment changes_since_previous is null
+ok 71 - without a prior assessment changes_since_previous is null
+  ---
+  duration_ms: 3.483235
+  type: 'test'
+  ...
+# Subtest: synthesized checkpoints are stamped server-side and schema-validated
+ok 72 - synthesized checkpoints are stamped server-side and schema-validated
+  ---
+  duration_ms: 1.130491
+  type: 'test'
+  ...
+# Subtest: a synthesized rolling checkpoint referencing a fabricated metric fails closed
+ok 73 - a synthesized rolling checkpoint referencing a fabricated metric fails closed
+  ---
+  duration_ms: 0.758327
+  type: 'test'
+  ...
+# Subtest: model client receives bounded deadline and frozen context, never credentials surface
+ok 74 - model client receives bounded deadline and frozen context, never credentials surface
+  ---
+  duration_ms: 1.117251
+  type: 'test'
+  ...
+# Subtest: automation middleware fails closed when release configuration is absent
+ok 75 - automation middleware fails closed when release configuration is absent
+  ---
+  duration_ms: 1.385574
+  type: 'test'
+  ...
+# Subtest: legacy ingestion denies anonymous, invalid, expired, and insufficiently scoped automation requests
+ok 76 - legacy ingestion denies anonymous, invalid, expired, and insufficiently scoped automation requests
+  ---
+  duration_ms: 104.929518
+  type: 'test'
+  ...
+# Subtest: legacy ingestion cannot use a client userId to target another owner
+ok 77 - legacy ingestion cannot use a client userId to target another owner
+  ---
+  duration_ms: 16.861807
+  type: 'test'
+  ...
+# Subtest: automation route rejects bodies beyond its bounded callback payload limit
+ok 78 - automation route rejects bodies beyond its bounded callback payload limit
+  ---
+  duration_ms: 12.068079
+  type: 'test'
+  ...
+# Subtest: run callback authorization requires a current nonce and rejects conflicting replay deliveries
+ok 79 - run callback authorization requires a current nonce and rejects conflicting replay deliveries
+  ---
+  duration_ms: 1.604856
+  type: 'test'
+  ...
+# Subtest: legacy controller persists only the automation-bound owner and removes client userId
+ok 80 - legacy controller persists only the automation-bound owner and removes client userId
+  ---
+  duration_ms: 0.884049
+  type: 'test'
+  ...
+# Subtest: publishes one versioned, source-specific offline observed-bar recording
+ok 81 - publishes one versioned, source-specific offline observed-bar recording
+  ---
+  duration_ms: 5.09149
+  type: 'test'
+  ...
+# Subtest: accepts a named positive sample for every canonical schema
+ok 82 - accepts a named positive sample for every canonical schema
+  ---
+  duration_ms: 17.249531
+  type: 'test'
+  ...
+# Subtest: rejects a named negative sample for every canonical schema
+ok 83 - rejects a named negative sample for every canonical schema
+  ---
+  duration_ms: 5.214012
+  type: 'test'
+  ...
+# Subtest: rejects invalid calendar instants and bounded decimal overflow without number coercion
+ok 84 - rejects invalid calendar instants and bounded decimal overflow without number coercion
+  ---
+  duration_ms: 1.490694
+  type: 'test'
+  ...
+# Subtest: enforces bounded assessment nesting, identity references, and month-clamped horizons
+ok 85 - enforces bounded assessment nesting, identity references, and month-clamped horizons
+  ---
+  duration_ms: 3.932559
+  type: 'test'
+  ...
+# Subtest: enforces research run lifecycle states and history ordering
+ok 86 - enforces research run lifecycle states and history ordering
+  ---
+  duration_ms: 1.360133
+  type: 'test'
+  ...
+# Subtest: accepts queued lifecycle state only without active or terminal fields
+ok 87 - accepts queued lifecycle state only without active or terminal fields
+  ---
+  duration_ms: 0.531845
+  type: 'test'
+  ...
+# Subtest: accepts running lifecycle state with a bounded in-progress heartbeat
+ok 88 - accepts running lifecycle state with a bounded in-progress heartbeat
+  ---
+  duration_ms: 0.394044
+  type: 'test'
+  ...
+# Subtest: accepts a resumed running lifecycle state with its persisted evidence snapshot
+ok 89 - accepts a resumed running lifecycle state with its persisted evidence snapshot
+  ---
+  duration_ms: 1.02721
+  type: 'test'
+  ...
+# Subtest: accepts successful lifecycle state with matching snapshot and result
+ok 90 - accepts successful lifecycle state with matching snapshot and result
+  ---
+  duration_ms: 1.465375
+  type: 'test'
+  ...
+# Subtest: accepts failed lifecycle state with a terminal error and no assessment
+ok 91 - accepts failed lifecycle state with a terminal error and no assessment
+  ---
+  duration_ms: 0.716167
+  type: 'test'
+  ...
+# Subtest: accepts stalled lifecycle state only after deadline
+ok 92 - accepts stalled lifecycle state only after deadline
+  ---
+  duration_ms: 0.370924
+  type: 'test'
+  ...
+# Subtest: accepts superseded lifecycle state without a published result
+ok 93 - accepts superseded lifecycle state without a published result
+  ---
+  duration_ms: 0.266003
+  type: 'test'
+  ...
+# Subtest: enforces semantic assessment boundaries, calendar range, and additive response policy
+ok 94 - enforces semantic assessment boundaries, calendar range, and additive response policy
+  ---
+  duration_ms: 11.213871
+  type: 'test'
+  ...
+# Subtest: EvidenceService constructor validates required dependencies
+ok 95 - EvidenceService constructor validates required dependencies
+  ---
+  duration_ms: 1.806778
+  type: 'test'
+  ...
+# Subtest: SEC adapter: enforces official SEC URL allowlist and rejects arbitrary or untrusted URLs
+ok 96 - SEC adapter: enforces official SEC URL allowlist and rejects arbitrary or untrusted URLs
+  ---
+  duration_ms: 1.176651
+  type: 'test'
+  ...
+# Subtest: SEC adapter: enforces fair-access User-Agent header and handles timeouts safely
+ok 97 - SEC adapter: enforces fair-access User-Agent header and handles timeouts safely
+  ---
+  duration_ms: 31.940596
+  type: 'test'
+  ...
+# Subtest: SEC adapter: parses filings, source locators, reporting periods, and financial facts
+ok 98 - SEC adapter: parses filings, source locators, reporting periods, and financial facts
+  ---
+  duration_ms: 6.404023
+  type: 'test'
+  ...
+# Subtest: SEC adapter: respects point-in-time cutoff and separates amendments from original filings
+ok 99 - SEC adapter: respects point-in-time cutoff and separates amendments from original filings
+  ---
+  duration_ms: 2.912709
+  type: 'test'
+  ...
+# Subtest: Company News adapter: enforces news URL allowlist and rejects SSRF/arbitrary destinations
+ok 100 - Company News adapter: enforces news URL allowlist and rejects SSRF/arbitrary destinations
+  ---
+  duration_ms: 1.295573
+  type: 'test'
+  ...
+# Subtest: Company News adapter: deduplicates repeated stories and marks headline-only status
+ok 101 - Company News adapter: deduplicates repeated stories and marks headline-only status
+  ---
+  duration_ms: 2.815388
+  type: 'test'
+  ...
+# Subtest: Company News adapter: sanitizes untrusted content and prevents tool/prompt injection payloads
+ok 102 - Company News adapter: sanitizes untrusted content and prevents tool/prompt injection payloads
+  ---
+  duration_ms: 1.547936
+  type: 'test'
+  ...
+# Subtest: EvidenceService: creates immutable snapshot, enforces point-in-time cutoff, and generates content_digest
+ok 103 - EvidenceService: creates immutable snapshot, enforces point-in-time cutoff, and generates content_digest
+  ---
+  duration_ms: 15.015388
+  type: 'test'
+  ...
+# Subtest: EvidenceService: explicitly documents lean-source gaps and does not invent transcripts or consensus
+ok 104 - EvidenceService: explicitly documents lean-source gaps and does not invent transcripts or consensus
+  ---
+  duration_ms: 1.531895
+  type: 'test'
+  ...
+# Subtest: EvidenceService: analyst tools retrieve bounded excerpts and reject arbitrary URLs or unknown IDs
+ok 105 - EvidenceService: analyst tools retrieve bounded excerpts and reject arbitrary URLs or unknown IDs
+  ---
+  duration_ms: 1.240812
+  type: 'test'
+  ...
+# Subtest: Every produced EvidenceItem adheres strictly to contracts.evidenceItemSchema
+ok 106 - Every produced EvidenceItem adheres strictly to contracts.evidenceItemSchema
+  ---
+  duration_ms: 0.478564
+  type: 'test'
+  ...
+# Subtest: Company News adapter: no-sourceUrl path fetches a real allowlisted per-instrument URL (regression: never fetch(instrument))
+ok 107 - Company News adapter: no-sourceUrl path fetches a real allowlisted per-instrument URL (regression: never fetch(instrument))
+  ---
+  duration_ms: 3.777557
+  type: 'test'
+  ...
+# Subtest: Company News adapter: accepts an explicit instrument IR/news feed URL and still validates it against the allowlist
+ok 108 - Company News adapter: accepts an explicit instrument IR/news feed URL and still validates it against the allowlist
+  ---
+  duration_ms: 2.134501
+  type: 'test'
+  ...
+# Subtest: Company News adapter: dead api.company-news.local allowlist entry is removed
+ok 109 - Company News adapter: dead api.company-news.local allowlist entry is removed
+  ---
+  duration_ms: 0.413764
+  type: 'test'
+  ...
+# Subtest: News and SEC adapters: extended internal-IP deny list (172.16/12, 0.0.0.0, 127/8 remainder, ::1, fe80::/10)
+ok 110 - News and SEC adapters: extended internal-IP deny list (172.16/12, 0.0.0.0, 127/8 remainder, ::1, fe80::/10)
+  ---
+  duration_ms: 1.324173
+  type: 'test'
+  ...
+# Subtest: SEC adapter: missing CIK is explicit SEC unavailability, never a fabricated zero-CIK query
+ok 111 - SEC adapter: missing CIK is explicit SEC unavailability, never a fabricated zero-CIK query
+  ---
+  duration_ms: 0.393564
+  type: 'test'
+  ...
+# Subtest: EvidenceService: normalizes cutoffAt to an ISO string and rejects non-temporal input
+ok 112 - EvidenceService: normalizes cutoffAt to an ISO string and rejects non-temporal input
+  ---
+  duration_ms: 0.533726
+  type: 'test'
+  ...
+# Subtest: EvidenceService: real provider wiring produces SEC filings and company news end-to-end (production call path)
+ok 113 - EvidenceService: real provider wiring produces SEC filings and company news end-to-end (production call path)
+  ---
+  duration_ms: 2.092461
+  type: 'test'
+  ...
+# [dotenv@17.3.1] injecting env (6) from .env -- tip: ⚙️  override existing env vars with { override: true }
+# Subtest: H15A integration: protected history route is reachable through actual application routing
+ok 114 - H15A integration: protected history route is reachable through actual application routing
+  ---
+  duration_ms: 74.053332
+  type: 'test'
+  ...
+# Subtest: H15A integration: anonymous denial rejects requests missing authorization header with 401
+ok 115 - H15A integration: anonymous denial rejects requests missing authorization header with 401
+  ---
+  duration_ms: 14.331501
+  type: 'test'
+  ...
+# Subtest: H15A integration: invalid token denial rejects invalid bearer token with 401
+ok 116 - H15A integration: invalid token denial rejects invalid bearer token with 401
+  ---
+  duration_ms: 7.902358
+  type: 'test'
+  ...
+# Subtest: H15A integration: truthful unavailable response on provider failure without cache
+ok 117 - H15A integration: truthful unavailable response on provider failure without cache
+  ---
+  duration_ms: 16.570964
+  type: 'test'
+  ...
+# Subtest: H15A integration: truthful stale-cache response on provider failure with expired cache
+ok 118 - H15A integration: truthful stale-cache response on provider failure with expired cache
+  ---
+  duration_ms: 11.384833
+  type: 'test'
+  ...
+# Subtest: H15A integration: labels unsupported requested resolution as unavailable
+ok 119 - H15A integration: labels unsupported requested resolution as unavailable
+  ---
+  duration_ms: 8.903849
+  type: 'test'
+  ...
+# ❌ Error: Error: INVALID_RANGE
+#     at requestError (/home/ubuntu/apps/Horizon/backend/src/features/market/market.service.js:24:17)
+#     at MarketHistoryService.getHistory (/home/ubuntu/apps/Horizon/backend/src/features/market/market.service.js:105:24)
+#     at /home/ubuntu/apps/Horizon/backend/src/features/market/market.routes.js:13:44
+#     at Layer.handleRequest (/home/ubuntu/apps/Horizon/backend/node_modules/router/lib/layer.js:152:17)
+#     at next (/home/ubuntu/apps/Horizon/backend/node_modules/router/lib/route.js:157:13)
+#     at Route.dispatch (/home/ubuntu/apps/Horizon/backend/node_modules/router/lib/route.js:117:3)
+#     at handle (/home/ubuntu/apps/Horizon/backend/node_modules/router/index.js:435:11)
+#     at Layer.handleRequest (/home/ubuntu/apps/Horizon/backend/node_modules/router/lib/layer.js:152:17)
+#     at /home/ubuntu/apps/Horizon/backend/node_modules/router/index.js:295:15
+#     at param (/home/ubuntu/apps/Horizon/backend/node_modules/router/index.js:600:14) {
+#   status: 400,
+#   code: 'INVALID_RANGE'
+# }
+# Subtest: H15A integration: error shape returns 400 INVALID_RANGE for unknown range
+ok 120 - H15A integration: error shape returns 400 INVALID_RANGE for unknown range
+  ---
+  duration_ms: 13.332572
+  type: 'test'
+  ...
+# ❌ Error: Error: INSTRUMENT_NOT_FOUND
+#     at requestError (/home/ubuntu/apps/Horizon/backend/src/features/market/market.service.js:24:17)
+#     at MarketHistoryService.getHistory (/home/ubuntu/apps/Horizon/backend/src/features/market/market.service.js:108:28)
+#     at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+#     at async /home/ubuntu/apps/Horizon/backend/src/features/market/market.routes.js:13:24 {
+#   status: 404,
+#   code: 'INSTRUMENT_NOT_FOUND'
+# }
+# Subtest: H15A integration: error shape returns 404 INSTRUMENT_NOT_FOUND for unknown instrument
+ok 121 - H15A integration: error shape returns 404 INSTRUMENT_NOT_FOUND for unknown instrument
+  ---
+  duration_ms: 17.133849
+  type: 'test'
+  ...
+# ❌ Error: Error: SNAPSHOT_NOT_FOUND
+#     at requestError (/home/ubuntu/apps/Horizon/backend/src/features/market/market.service.js:24:17)
+#     at MarketHistoryService.getSnapshot (/home/ubuntu/apps/Horizon/backend/src/features/market/market.service.js:131:13)
+#     at process.processTicksAndRejections (node:internal/process/task_queues:103:5) {
+#   status: 404,
+#   code: 'SNAPSHOT_NOT_FOUND'
+# }
+# Subtest: H15A integration: error shape returns 404 SNAPSHOT_NOT_FOUND for nonexistent snapshot
+ok 122 - H15A integration: error shape returns 404 SNAPSHOT_NOT_FOUND for nonexistent snapshot
+  ---
+  duration_ms: 20.789086
+  type: 'test'
+  ...
+# ❌ Error: PayloadTooLargeError: request entity too large
+#     at readStream (/home/ubuntu/apps/Horizon/backend/node_modules/raw-body/index.js:163:17)
+#     at getRawBody (/home/ubuntu/apps/Horizon/backend/node_modules/raw-body/index.js:116:12)
+#     at read (/home/ubuntu/apps/Horizon/backend/node_modules/body-parser/lib/read.js:113:3)
+#     at jsonParser (/home/ubuntu/apps/Horizon/backend/node_modules/body-parser/lib/types/json.js:88:5)
+#     at Layer.handleRequest (/home/ubuntu/apps/Horizon/backend/node_modules/router/lib/layer.js:152:17)
+#     at trimPrefix (/home/ubuntu/apps/Horizon/backend/node_modules/router/index.js:342:13)
+#     at /home/ubuntu/apps/Horizon/backend/node_modules/router/index.js:297:9
+#     at processParams (/home/ubuntu/apps/Horizon/backend/node_modules/router/index.js:582:12)
+#     at next (/home/ubuntu/apps/Horizon/backend/node_modules/router/index.js:291:5)
+#     at cors (/home/ubuntu/apps/Horizon/backend/node_modules/cors/lib/index.js:188:7) {
+#   expected: 71694,
+#   length: 71694,
+#   limit: 65536,
+#   type: 'entity.too.large'
+# }
+# Subtest: H15A integration: transport-level parser DoS protection rejects oversized payload with 413
+ok 123 - H15A integration: transport-level parser DoS protection rejects oversized payload with 413
+  ---
+  duration_ms: 18.271981
+  type: 'test'
+  ...
+# Subtest: H15A integration: isolated app import and no premature position/research/automation mounts
+ok 124 - H15A integration: isolated app import and no premature position/research/automation mounts
+  ---
+  duration_ms: 22.415662
+  type: 'test'
+  ...
+# Subtest: metric fixtures are declared, versioned and non-empty
+ok 125 - metric fixtures are declared, versioned and non-empty
+  ---
+  duration_ms: 1.661777
+  type: 'test'
+  ...
+# Subtest: simple returns match the independently checked fixture series
+ok 126 - simple returns match the independently checked fixture series
+  ---
+  duration_ms: 0.559605
+  type: 'test'
+  ...
+# Subtest: mean return matches the independently checked fixture series
+ok 127 - mean return matches the independently checked fixture series
+  ---
+  duration_ms: 0.517885
+  type: 'test'
+  ...
+# Subtest: cumulative return matches the independently checked fixture series
+ok 128 - cumulative return matches the independently checked fixture series
+  ---
+  duration_ms: 0.229363
+  type: 'test'
+  ...
+# Subtest: sample variance and stddev match the independently checked fixture series
+ok 129 - sample variance and stddev match the independently checked fixture series
+  ---
+  duration_ms: 0.515846
+  type: 'test'
+  ...
+# Subtest: annualized volatility matches the independently checked fixture series
+ok 130 - annualized volatility matches the independently checked fixture series
+  ---
+  duration_ms: 0.418644
+  type: 'test'
+  ...
+# Subtest: max drawdown matches the independently checked fixture series
+ok 131 - max drawdown matches the independently checked fixture series
+  ---
+  duration_ms: 0.313363
+  type: 'test'
+  ...
+# Subtest: relative returns match the independently checked fixture
+ok 132 - relative returns match the independently checked fixture
+  ---
+  duration_ms: 0.253722
+  type: 'test'
+  ...
+# Subtest: metric computations reject invalid inputs instead of propagating NaN
+ok 133 - metric computations reject invalid inputs instead of propagating NaN
+  ---
+  duration_ms: 1.800618
+  type: 'test'
+  ...
+# Subtest: P&L matches the independently checked available fixture cases
+ok 134 - P&L matches the independently checked available fixture cases
+  ---
+  duration_ms: 2.00734
+  type: 'test'
+  ...
+# Subtest: P&L is deterministic for repeated identical calls
+ok 135 - P&L is deterministic for repeated identical calls
+  ---
+  duration_ms: 0.571285
+  type: 'test'
+  ...
+# Subtest: P&L returns explicit unavailability instead of guessing across currencies or bases
+ok 136 - P&L returns explicit unavailability instead of guessing across currencies or bases
+  ---
+  duration_ms: 0.257202
+  type: 'test'
+  ...
+# Subtest: P&L rejects malformed economics instead of inventing values
+ok 137 - P&L rejects malformed economics instead of inventing values
+  ---
+  duration_ms: 0.548165
+  type: 'test'
+  ...
+# Subtest: createMetric produces an immutable contract-shaped record with method/input/source IDs
+ok 138 - createMetric produces an immutable contract-shaped record with method/input/source IDs
+  ---
+  duration_ms: 0.571485
+  type: 'test'
+  ...
+# Subtest: createMetric guards finite values, basis, method, dates and unique input IDs
+ok 139 - createMetric guards finite values, basis, method, dates and unique input IDs
+  ---
+  duration_ms: 0.684846
+  type: 'test'
+  ...
+# Subtest: metric registry registers, resolves, lists sorted and rejects duplicates
+ok 140 - metric registry registers, resolves, lists sorted and rejects duplicates
+  ---
+  duration_ms: 1.396694
+  type: 'test'
+  ...
+# Subtest: metric registry stores and returns the frozen validated record, never the caller mutable original
+ok 141 - metric registry stores and returns the frozen validated record, never the caller mutable original
+  ---
+  duration_ms: 0.261923
+  type: 'test'
+  ...
+# Subtest: outlook horizons reproduce the independently checked calendar fixture cases
+ok 142 - outlook horizons reproduce the independently checked calendar fixture cases
+  ---
+  duration_ms: 2.282822
+  type: 'test'
+  ...
+# Subtest: outlook horizons cover exactly horizons 1, 2 and 3 in order
+ok 143 - outlook horizons cover exactly horizons 1, 2 and 3 in order
+  ---
+  duration_ms: 0.332283
+  type: 'test'
+  ...
+# Subtest: outlook horizons reject invalid horizons, dates and predicates
+ok 144 - outlook horizons reject invalid horizons, dates and predicates
+  ---
+  duration_ms: 0.396284
+  type: 'test'
+  ...
+# Subtest: numeric projection stays null with the explicit H07A limitation
+ok 145 - numeric projection stays null with the explicit H07A limitation
+  ---
+  duration_ms: 0.353403
+  type: 'test'
+  ...
+# Subtest: metric computations are deterministic across repeated calls
+ok 146 - metric computations are deterministic across repeated calls
+  ---
+  duration_ms: 0.957649
+  type: 'test'
+  ...
+# Subtest: metric module contains no nondeterministic clock or randomness sources
+ok 147 - metric module contains no nondeterministic clock or randomness sources
+  ---
+  duration_ms: 0.372844
+  type: 'test'
+  ...
+# Subtest: volatility output is labeled as a statistical reference, never an expected direction
+ok 148 - volatility output is labeled as a statistical reference, never an expected direction
+  ---
+  duration_ms: 0.441605
+  type: 'test'
+  ...
+# [dotenv@17.3.1] injecting env (6) from .env -- tip: ⚙️  suppress all logs with { quiet: true }
+# ❌ Error: Error: INSTRUMENT_NOT_FOUND
+#     at requestError (/home/ubuntu/apps/Horizon/backend/src/features/market/market.service.js:24:17)
+#     at MarketHistoryService.getHistory (/home/ubuntu/apps/Horizon/backend/src/features/market/market.service.js:108:28)
+#     at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+#     at async /home/ubuntu/apps/Horizon/backend/src/features/market/market.routes.js:13:24 {
+#   status: 404,
+#   code: 'INSTRUMENT_NOT_FOUND'
+# }
+# Subtest: H15B: owner-scoped positions and research routes are reachable through real application routing
+ok 149 - H15B: owner-scoped positions and research routes are reachable through real application routing
+  ---
+  duration_ms: 102.952178
+  type: 'test'
+  ...
+# Subtest: H15B: default factory without services leaves /positions and /research unmounted (H15A 404 contract)
+ok 150 - H15B: default factory without services leaves /positions and /research unmounted (H15A 404 contract)
+  ---
+  duration_ms: 17.531053
+  type: 'test'
+  ...
+# Subtest: H15B: candidate carries no economics; owned promotion records it; unknown economics rejected
+ok 151 - H15B: candidate carries no economics; owned promotion records it; unknown economics rejected
+  ---
+  duration_ms: 36.472601
+  type: 'test'
+  ...
+# Subtest: H15B: stale expected_revision is a typed 409 conflict
+ok 152 - H15B: stale expected_revision is a typed 409 conflict
+  ---
+  duration_ms: 36.623282
+  type: 'test'
+  ...
+# Subtest: H15B: owner B cannot see, change or research owner A position (indistinguishable denial)
+ok 153 - H15B: owner B cannot see, change or research owner A position (indistinguishable denial)
+  ---
+  duration_ms: 32.069957
+  type: 'test'
+  ...
+# Subtest: H15B: research latest with no runs is a truthful 200 unavailable state, never an error
+ok 154 - H15B: research latest with no runs is a truthful 200 unavailable state, never an error
+  ---
+  duration_ms: 9.888978
+  type: 'test'
+  ...
+# Subtest: H15B: queued run is 202, replayed by idempotency key, and the run wire reconciles with the H11 model
+ok 155 - H15B: queued run is 202, replayed by idempotency key, and the run wire reconciles with the H11 model
+  ---
+  duration_ms: 25.861456
+  type: 'test'
+  ...
+# Subtest: H15B: delivered success lands in run_state.last_success and latest_assessment; latest_attempt tracks a later failure
+ok 156 - H15B: delivered success lands in run_state.last_success and latest_assessment; latest_attempt tracks a later failure
+  ---
+  duration_ms: 30.458781
+  type: 'test'
+  ...
+# Subtest: H15B: a limited result counts as last_success and stays distinct from a later failed attempt
+ok 157 - H15B: a limited result counts as last_success and stays distinct from a later failed attempt
+  ---
+  duration_ms: 14.745426
+  type: 'test'
+  ...
+# Subtest: H15B: prior-report changes — a new revision supersedes stale runs and never mutates prior assessments
+ok 158 - H15B: prior-report changes — a new revision supersedes stale runs and never mutates prior assessments
+  ---
+  duration_ms: 36.183598
+  type: 'test'
+  ...
+# Subtest: H15B: observed market history for a resolved instrument stays isolated from research snapshots
+ok 159 - H15B: observed market history for a resolved instrument stays isolated from research snapshots
+  ---
+  duration_ms: 19.821916
+  type: 'test'
+  ...
+# Subtest: identical owner+position+idempotency-key replays the persisted run across service restarts
+ok 160 - identical owner+position+idempotency-key replays the persisted run across service restarts
+  ---
+  duration_ms: 8.289962
+  type: 'test'
+  ...
+# Subtest: same idempotency key with a different payload is a 409 conflict, never a silent reuse
+ok 161 - same idempotency key with a different payload is a 409 conflict, never a silent reuse
+  ---
+  duration_ms: 1.478495
+  type: 'test'
+  ...
+# Subtest: queued runs validate against the canonical researchRun contract schema
+ok 162 - queued runs validate against the canonical researchRun contract schema
+  ---
+  duration_ms: 1.06461
+  type: 'test'
+  ...
+# Subtest: queueRun rejects a run without a non-empty instrument_id as INVALID_INPUT (review F1)
+ok 163 - queueRun rejects a run without a non-empty instrument_id as INVALID_INPUT (review F1)
+  ---
+  duration_ms: 0.555885
+  type: 'test'
+  ...
+# Subtest: at most one active run per position revision and request class
+ok 164 - at most one active run per position revision and request class
+  ---
+  duration_ms: 2.739067
+  type: 'test'
+  ...
+# Subtest: claiming is atomic: exactly one worker wins and lease fields are materialized
+ok 165 - claiming is atomic: exactly one worker wins and lease fields are materialized
+  ---
+  duration_ms: 9.884057
+  type: 'test'
+  ...
+# Subtest: heartbeat updates stage and heartbeat_at on a running run only
+ok 166 - heartbeat updates stage and heartbeat_at on a running run only
+  ---
+  duration_ms: 1.484015
+  type: 'test'
+  ...
+# Subtest: completion enforces outcome invariants and the run deadline
+ok 167 - completion enforces outcome invariants and the run deadline
+  ---
+  duration_ms: 2.648307
+  type: 'test'
+  ...
+# Subtest: successful completion records immutable result references and terminal state
+ok 168 - successful completion records immutable result references and terminal state
+  ---
+  duration_ms: 2.0531
+  type: 'test'
+  ...
+# Subtest: concurrent result callbacks cannot create duplicate assessments
+ok 169 - concurrent result callbacks cannot create duplicate assessments
+  ---
+  duration_ms: 2.695907
+  type: 'test'
+  ...
+# Subtest: duplicate delivery of the same delivery id is idempotent and never re-executes
+ok 170 - duplicate delivery of the same delivery id is idempotent and never re-executes
+  ---
+  duration_ms: 1.143011
+  type: 'test'
+  ...
+# Subtest: callback with conflicting revision or snapshot is rejected with a conflict
+ok 171 - callback with conflicting revision or snapshot is rejected with a conflict
+  ---
+  duration_ms: 1.332454
+  type: 'test'
+  ...
+# Subtest: recordRunResult rejects an absent or non-string session_as_of as INVALID_INPUT (review O2)
+ok 172 - recordRunResult rejects an absent or non-string session_as_of as INVALID_INPUT (review O2)
+  ---
+  duration_ms: 2.825228
+  type: 'test'
+  ...
+# Subtest: cross-owner callbacks are denied and never write
+ok 173 - cross-owner callbacks are denied and never write
+  ---
+  duration_ms: 0.781328
+  type: 'test'
+  ...
+# Subtest: runs, assessments and thesis checkpoints are scoped to the owner
+ok 174 - runs, assessments and thesis checkpoints are scoped to the owner
+  ---
+  duration_ms: 2.393864
+  type: 'test'
+  ...
+# Subtest: queueing a newer revision explicitly supersedes the older incomplete run
+ok 175 - queueing a newer revision explicitly supersedes the older incomplete run
+  ---
+  duration_ms: 0.96265
+  type: 'test'
+  ...
+# Subtest: expired runs become stalled or superseded — never forever running
+ok 176 - expired runs become stalled or superseded — never forever running
+  ---
+  duration_ms: 1.499895
+  type: 'test'
+  ...
+# Subtest: restart recovery on a fresh service instance supersedes incomplete runs explicitly
+ok 177 - restart recovery on a fresh service instance supersedes incomplete runs explicitly
+  ---
+  duration_ms: 1.713497
+  type: 'test'
+  ...
+# Subtest: last successful report and latest attempt are tracked separately
+ok 178 - last successful report and latest attempt are tracked separately
+  ---
+  duration_ms: 14.15526
+  type: 'test'
+  ...
+# Subtest: checkpoint kinds reject masquerading representations
+ok 179 - checkpoint kinds reject masquerading representations
+  ---
+  duration_ms: 0.633487
+  type: 'test'
+  ...
+# Subtest: triggered, retired and replaced checkpoints retain full change history
+ok 180 - triggered, retired and replaced checkpoints retain full change history
+  ---
+  duration_ms: 1.561335
+  type: 'test'
+  ...
+# Subtest: prior assessments are identified as judgments, never as source evidence
+ok 181 - prior assessments are identified as judgments, never as source evidence
+  ---
+  duration_ms: 1.751217
+  type: 'test'
+  ...
+# Subtest: queueing persists an immutable research snapshot bound to the run input
+ok 182 - queueing persists an immutable research snapshot bound to the run input
+  ---
+  duration_ms: 0.719288
+  type: 'test'
+  ...
+# Subtest: mongoose run schema enforces the canonical shape and string opaque ids
+ok 183 - mongoose run schema enforces the canonical shape and string opaque ids
+  ---
+  duration_ms: 14.053699
+  type: 'test'
+  ...
+# Subtest: mongoose assessment, snapshot and checkpoint schemas are immutable by construction
+ok 184 - mongoose assessment, snapshot and checkpoint schemas are immutable by construction
+  ---
+  duration_ms: 10.697826
+  type: 'test'
+  ...
+# Subtest: research router exposes owner-scoped read/run endpoints as an isolated router
+ok 185 - research router exposes owner-scoped read/run endpoints as an isolated router
+  ---
+  duration_ms: 189.979959
+  type: 'test'
+  ...
+# Subtest: frozen evaluation protocol declares its planted defect fixtures
+ok 186 - frozen evaluation protocol declares its planted defect fixtures
+  ---
+  duration_ms: 2.343903
+  type: 'test'
+  ...
+# Subtest: a valid fixture synthesis passes with zero issues
+ok 187 - a valid fixture synthesis passes with zero issues
+  ---
+  duration_ms: 4.721367
+  type: 'test'
+  ...
+# Subtest: planted fabricated source id fails closed
+ok 188 - planted fabricated source id fails closed
+  ---
+  duration_ms: 1.188372
+  type: 'test'
+  ...
+# Subtest: planted fabricated metric id fails closed
+ok 189 - planted fabricated metric id fails closed
+  ---
+  duration_ms: 1.320373
+  type: 'test'
+  ...
+# Subtest: planted unsupported observed claim (no references) fails closed
+ok 190 - planted unsupported observed claim (no references) fails closed
+  ---
+  duration_ms: 0.818728
+  type: 'test'
+  ...
+# Subtest: planted unregistered numeral in an observed claim fails closed
+ok 191 - planted unregistered numeral in an observed claim fails closed
+  ---
+  duration_ms: 1.081011
+  type: 'test'
+  ...
+# Subtest: registered numeral referenced to a metric id passes
+ok 192 - registered numeral referenced to a metric id passes
+  ---
+  duration_ms: 2.321583
+  type: 'test'
+  ...
+# Subtest: dates, quarter labels and horizon labels are not misread as prices
+ok 193 - dates, quarter labels and horizon labels are not misread as prices
+  ---
+  duration_ms: 0.711807
+  type: 'test'
+  ...
+# Subtest: planted post-cutoff evidence reference fails closed (defense in depth)
+ok 194 - planted post-cutoff evidence reference fails closed (defense in depth)
+  ---
+  duration_ms: 1.247252
+  type: 'test'
+  ...
+# Subtest: context builder drops post-cutoff items and records the gap
+ok 195 - context builder drops post-cutoff items and records the gap
+  ---
+  duration_ms: 1.496254
+  type: 'test'
+  ...
+# Subtest: planted state-incompatible action fails closed for each state
+ok 196 - planted state-incompatible action fails closed for each state
+  ---
+  duration_ms: 1.386734
+  type: 'test'
+  ...
+# Subtest: outlook horizon dates must equal the server-computed contract dates
+ok 197 - outlook horizon dates must equal the server-computed contract dates
+  ---
+  duration_ms: 0.525005
+  type: 'test'
+  ...
+# Subtest: planted identical copy across horizons fails closed
+ok 198 - planted identical copy across horizons fails closed
+  ---
+  duration_ms: 0.475645
+  type: 'test'
+  ...
+# Subtest: exactly one 1/2/3-month outlook set is required
+ok 199 - exactly one 1/2/3-month outlook set is required
+  ---
+  duration_ms: 0.403164
+  type: 'test'
+  ...
+# Subtest: missing changes_since_previous with a prior assessment fails closed
+ok 200 - missing changes_since_previous with a prior assessment fails closed
+  ---
+  duration_ms: 0.464085
+  type: 'test'
+  ...
+# Subtest: wrong previous assessment id fails closed
+ok 201 - wrong previous assessment id fails closed
+  ---
+  duration_ms: 0.453285
+  type: 'test'
+  ...
+# Subtest: changes_since_previous must be null when no prior exists
+ok 202 - changes_since_previous must be null when no prior exists
+  ---
+  duration_ms: 0.541126
+  type: 'test'
+  ...
+# Subtest: fabricated checkpoint change reference fails closed
+ok 203 - fabricated checkpoint change reference fails closed
+  ---
+  duration_ms: 0.436724
+  type: 'test'
+  ...
+# Subtest: missing counterevidence fails closed
+ok 204 - missing counterevidence fails closed
+  ---
+  duration_ms: 0.456844
+  type: 'test'
+  ...
+# Subtest: limited status without missing_data fails closed
+ok 205 - limited status without missing_data fails closed
+  ---
+  duration_ms: 0.568645
+  type: 'test'
+  ...
+# Subtest: a non-null numeric projection from the model is rejected (H07A held)
+ok 206 - a non-null numeric projection from the model is rejected (H07A held)
+  ---
+  duration_ms: 0.492044
+  type: 'test'
+  ...
+# Subtest: a fully assembled assessment passes the delivery boundary
+ok 207 - a fully assembled assessment passes the delivery boundary
+  ---
+  duration_ms: 9.14121
+  type: 'test'
+  ...
+# Subtest: delivery boundary fails closed on revision, run, instrument and snapshot mismatch
+ok 208 - delivery boundary fails closed on revision, run, instrument and snapshot mismatch
+  ---
+  duration_ms: 7.271712
+  type: 'test'
+  ...
+# Subtest: delivery boundary fails closed on schema-invalid sessions and candidate economics
+ok 209 - delivery boundary fails closed on schema-invalid sessions and candidate economics
+  ---
+  duration_ms: 2.391984
+  type: 'test'
+  ...
+# Subtest: duplicate daily schedules queue one run per position per day (persisted idempotency)
+ok 210 - duplicate daily schedules queue one run per position per day (persisted idempotency)
+  ---
+  duration_ms: 34.522582
+  type: 'test'
+  ...
+# Subtest: one invalid position does not block the daily batch; failures are reported per position
+ok 211 - one invalid position does not block the daily batch; failures are reported per position
+  ---
+  duration_ms: 1.467574
+  type: 'test'
+  ...
+# Subtest: concurrent execute of the same run performs the pipeline exactly once
+ok 212 - concurrent execute of the same run performs the pipeline exactly once
+  ---
+  duration_ms: 9.817697
+  type: 'test'
+  ...
+# Subtest: execute replay after terminal completion returns persisted status without re-execution
+ok 213 - execute replay after terminal completion returns persisted status without re-execution
+  ---
+  duration_ms: 4.858368
+  type: 'test'
+  ...
+# Subtest: restart with a fresh worker while a run is claimed replays instead of double-claiming
+ok 214 - restart with a fresh worker while a run is claimed replays instead of double-claiming
+  ---
+  duration_ms: 4.354563
+  type: 'test'
+  ...
+# Subtest: execute accepts (202) with a run-bound lease nonce, poll exposes the terminal result bound
+ok 215 - execute accepts (202) with a run-bound lease nonce, poll exposes the terminal result bound
+  ---
+  duration_ms: 119.504582
+  type: 'test'
+  ...
+# Subtest: execute replay over HTTP returns recorded status/result with 200 and no duplicate model execution
+ok 216 - execute replay over HTTP returns recorded status/result with 200 and no duplicate model execution
+  ---
+  duration_ms: 61.191885
+  type: 'test'
+  ...
+# Subtest: queued runs endpoint returns only claimable queued runs of the automation owner, bounded
+ok 217 - queued runs endpoint returns only claimable queued runs of the automation owner, bounded
+  ---
+  duration_ms: 29.624133
+  type: 'test'
+  ...
+# Subtest: result delivery binds owner server-side; body userId is ignored, duplicates idempotent, conflicts 409
+ok 218 - result delivery binds owner server-side; body userId is ignored, duplicates idempotent, conflicts 409
+  ---
+  duration_ms: 28.914686
+  type: 'test'
+  ...
+# Subtest: result delivery with a wrong or expired lease nonce fails closed
+ok 219 - result delivery with a wrong or expired lease nonce fails closed
+  ---
+  duration_ms: 18.971868
+  type: 'test'
+  ...
+# Subtest: invalid researched result is a 422 with a bounded, honest terminal state — never an unbounded loop
+ok 220 - invalid researched result is a 422 with a bounded, honest terminal state — never an unbounded loop
+  ---
+  duration_ms: 17.867297
+  type: 'test'
+  ...
+# Subtest: automation routes require the bearer token and exact scopes
+ok 221 - automation routes require the bearer token and exact scopes
+  ---
+  duration_ms: 19.854797
+  type: 'test'
+  ...
+# Subtest: cross-owner runs are indistinguishable 404s on the automation surface
+ok 222 - cross-owner runs are indistinguishable 404s on the automation surface
+  ---
+  duration_ms: 15.412193
+  type: 'test'
+  ...
+# Subtest: input endpoint returns the bound run input only — no lease nonce, no position economics
+ok 223 - input endpoint returns the bound run input only — no lease nonce, no position economics
+  ---
+  duration_ms: 8.933609
+  type: 'test'
+  ...
+# Subtest: queued run already past its deadline is superseded by recovery, not executed
+ok 224 - queued run already past its deadline is superseded by recovery, not executed
+  ---
+  duration_ms: 1.382974
+  type: 'test'
+  ...
+# Subtest: running run past its deadline is stalled honestly (never faked complete)
+ok 225 - running run past its deadline is stalled honestly (never faked complete)
+  ---
+  duration_ms: 2.452104
+  type: 'test'
+  ...
+# Subtest: pipeline completion after deadline expiry cannot fake success — run stalls
+ok 226 - pipeline completion after deadline expiry cannot fake success — run stalls
+  ---
+  duration_ms: 2.950429
+  type: 'test'
+  ...
+# Subtest: status keeps last success separate from later failure (no success rewriting)
+ok 227 - status keeps last success separate from later failure (no success rewriting)
+  ---
+  duration_ms: 5.537254
+  type: 'test'
+  ...
+# Subtest: input provider failure fails the run honestly without model execution
+ok 228 - input provider failure fails the run honestly without model execution
+  ---
+  duration_ms: 0.911289
+  type: 'test'
+  ...
+# Subtest: synthesis validation failures are bounded to the H09 budget and end in a failed run
+ok 229 - synthesis validation failures are bounded to the H09 budget and end in a failed run
+  ---
+  duration_ms: 1.360694
+  type: 'test'
+  ...
+# Subtest: status view never carries the lease nonce or owner internals
+ok 230 - status view never carries the lease nonce or owner internals
+  ---
+  duration_ms: 0.249883
+  type: 'test'
+  ...
+# Subtest: workflow export compiles all Code nodes as n8n async bodies and contains no analyst loop
+ok 231 - workflow export compiles all Code nodes as n8n async bodies and contains no analyst loop
+  ---
+  duration_ms: 0.947489
+  type: 'test'
+  ...
+# Subtest: workflow poll loop is bounded and honest (Wait node + counter, no self-loop)
+ok 232 - workflow poll loop is bounded and honest (Wait node + counter, no self-loop)
+  ---
+  duration_ms: 1.645656
+  type: 'test'
+  ...
+# Subtest: workflow export contains no literal credentials and no client-supplied userId forwarding
+ok 233 - workflow export contains no literal credentials and no client-supplied userId forwarding
+  ---
+  duration_ms: 0.760207
+  type: 'test'
+  ...
+# Subtest: createMongooseQueuedRunSource requires a run model and builds a bounded owner-scoped query
+ok 234 - createMongooseQueuedRunSource requires a run model and builds a bounded owner-scoped query
+  ---
+  duration_ms: 0.486084
+  type: 'test'
+  ...
+1..234
+# tests 234
+# suites 0
+# pass 234
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 7140.557701

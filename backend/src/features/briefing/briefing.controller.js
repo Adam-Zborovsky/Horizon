@@ -24,12 +24,16 @@ class BriefingController {
   async save(req, res, next) {
     try {
       const { userId, ...data } = req.body;
-      
-      if (!userId) {
-        return res.status(400).json({ message: 'userId is required for saving briefings' });
+      const ownerId = req.automation && req.automation.ownerId;
+
+      if (!ownerId) {
+        return res.status(401).json({ code: 'automation_auth_required', message: 'Automation request denied.' });
+      }
+      if (userId && userId !== ownerId) {
+        return res.status(403).json({ code: 'automation_owner_denied', message: 'Automation request denied.' });
       }
 
-      const saved = await briefingService.save(userId, data);
+      const saved = await briefingService.save(ownerId, data);
       res.status(201).json(saved);
     } catch (err) {
       next(err);
@@ -54,12 +58,16 @@ class BriefingController {
   async getConfigForSystem(req, res, next) {
     try {
       const { userId } = req.query;
-      if (!userId) {
-        return res.status(400).json({ message: 'userId query param is required' });
+      const ownerId = req.automation && req.automation.ownerId;
+      if (!ownerId) {
+        return res.status(401).json({ code: 'automation_auth_required', message: 'Automation request denied.' });
       }
-      const config = await briefingService.getConfig(userId);
+      if (userId && userId !== ownerId) {
+        return res.status(403).json({ code: 'automation_owner_denied', message: 'Automation request denied.' });
+      }
+      const config = await briefingService.getConfig(ownerId);
       res.status(200).json({
-        userId,
+        userId: ownerId,
         topics: config.topics,
         tickers: config.tickers,
       });

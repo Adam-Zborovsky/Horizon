@@ -1,0 +1,12 @@
+{
+  "marker": {
+    "board": "horizon-research-2026-10",
+    "run_ids": [
+      177
+    ],
+    "controller_quota": false,
+    "automatic_resume": false
+  },
+  "resolution": "Adam explicitly swapped worker profile from gemini/gemini-3.8-flash to zai/glm-5.3-flash; wall no longer blocks the worker lane. Reviewer deepseek and orchestrator zai were never affected.",
+  "archived": "2026-10-31 parent-controller"
+}

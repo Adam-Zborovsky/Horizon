@@ -1,0 +1,63 @@
+# H07 verification battery — 2026-10-31T21:11:40Z, node v22.22.2
+
+== node --test backend/test/research-metrics.test.cjs ==
+# tests 23
+# suites 0
+# pass 23
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 265.592084
+
+== node --test backend/test/research-contracts.test.cjs ==
+# pass 14
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 334.499498
+
+== node --test backend/test/market-history.test.cjs ==
+# pass 12
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1348.846495
+
+== node --test backend/test/research-evidence.test.cjs ==
+# pass 19
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 510.959214
+
+== node --test backend/test/research-auth.test.cjs ==
+# pass 6
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 647.637353
+
+== node --test backend/test/research-history-integration.test.cjs ==
+# pass 11
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 832.973234
+
+== git diff --check ==
+clean
+
+== secret scan ==
+no matches
+
+== sha256 ==
+afbe204983180bf1dbe442e57a7ef8f36fedb7444cef1512e9c6f4e808b3710d  backend/src/features/research/metrics.js
+1b7ff4b3a3823d7127ba7e164c4ec578fdf1bd97ee22fcbd2e4fce1ee7c49349  backend/test/research-metrics.test.cjs
+9206f594052a0326d0ae20295d334f7fac70aade3550d92b05b259ca1eb7127e  backend/test/fixtures/research/metrics-fixtures.json
+author-doc hash + final suite state recorded

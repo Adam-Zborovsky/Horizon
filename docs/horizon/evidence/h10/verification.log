@@ -1,0 +1,39 @@
+# H10 verification log — 2026-11-01T08:09:28Z — node v22.22.2
+
+## research-workflow suite
+$ node --test test/research-workflow.test.cjs
+exit=0
+# tests 25
+# pass 25
+# fail 0
+# cancelled 0
+
+## complete backend aggregate (all 11 suites)
+$ MONGODB_URI=<hermetic-placeholder> JWT_SECRET=<hermetic-placeholder> node --test "test/*.test.cjs"
+exit=0
+# tests 223
+# suites 0
+# pass 223
+# fail 0
+# cancelled 0
+# skipped 0
+
+## per-suite breakdown (individual invocations, no placeholder env)
+test/market-history.test.cjs => rc=0 # pass 12 # fail 0 
+test/positions.test.cjs => rc=0 # pass 41 # fail 0 
+test/research-agent.test.cjs => rc=0 # pass 21 # fail 0 
+test/research-auth.test.cjs => rc=0 # pass 6 # fail 0 
+test/research-contracts.test.cjs => rc=0 # pass 14 # fail 0 
+test/research-evidence.test.cjs => rc=0 # pass 19 # fail 0 
+test/research-history-integration.test.cjs => rc=1 # pass 0 # fail 1 
+test/research-metrics.test.cjs => rc=0 # pass 24 # fail 0 
+test/research-state.test.cjs => rc=0 # pass 26 # fail 0 
+test/research-validation.test.cjs => rc=0 # pass 24 # fail 0 
+test/research-workflow.test.cjs => rc=0 # pass 25 # fail 0 
+
+## history-integration env gate note
+research-history-integration.test.cjs loads src/app whose zod env validation requires MONGODB_URI/JWT_SECRET at module load. The suite itself is hermetic (createApp with injected fakes; no Mongo connection): with throwaway placeholder env values set on the command line it passes 11/11 (rc=0). No .env was read and no real credential provisioned.
+history-integration with placeholders: exit=0
+# tests 11
+# pass 11
+# fail 0

@@ -1,0 +1,122 @@
+TAP version 13
+# [dotenv@17.3.1] injecting env (6) from .env -- tip: 🤖 agentic secret storage: https://dotenvx.com/as2
+# Subtest: H15A integration: protected history route is reachable through actual application routing
+ok 1 - H15A integration: protected history route is reachable through actual application routing
+  ---
+  duration_ms: 78.933831
+  type: 'test'
+  ...
+# Subtest: H15A integration: anonymous denial rejects requests missing authorization header with 401
+ok 2 - H15A integration: anonymous denial rejects requests missing authorization header with 401
+  ---
+  duration_ms: 14.775901
+  type: 'test'
+  ...
+# Subtest: H15A integration: invalid token denial rejects invalid bearer token with 401
+ok 3 - H15A integration: invalid token denial rejects invalid bearer token with 401
+  ---
+  duration_ms: 14.71342
+  type: 'test'
+  ...
+# Subtest: H15A integration: truthful unavailable response on provider failure without cache
+ok 4 - H15A integration: truthful unavailable response on provider failure without cache
+  ---
+  duration_ms: 8.639042
+  type: 'test'
+  ...
+# Subtest: H15A integration: truthful stale-cache response on provider failure with expired cache
+ok 5 - H15A integration: truthful stale-cache response on provider failure with expired cache
+  ---
+  duration_ms: 10.200937
+  type: 'test'
+  ...
+# Subtest: H15A integration: labels unsupported requested resolution as unavailable
+ok 6 - H15A integration: labels unsupported requested resolution as unavailable
+  ---
+  duration_ms: 17.86901
+  type: 'test'
+  ...
+# ❌ Error: Error: INVALID_RANGE
+#     at requestError (/home/ubuntu/apps/Horizon/backend/src/features/market/market.service.js:24:17)
+#     at MarketHistoryService.getHistory (/home/ubuntu/apps/Horizon/backend/src/features/market/market.service.js:105:24)
+#     at /home/ubuntu/apps/Horizon/backend/src/features/market/market.routes.js:13:44
+#     at Layer.handleRequest (/home/ubuntu/apps/Horizon/backend/node_modules/router/lib/layer.js:152:17)
+#     at next (/home/ubuntu/apps/Horizon/backend/node_modules/router/lib/route.js:157:13)
+#     at Route.dispatch (/home/ubuntu/apps/Horizon/backend/node_modules/router/lib/route.js:117:3)
+#     at handle (/home/ubuntu/apps/Horizon/backend/node_modules/router/index.js:435:11)
+#     at Layer.handleRequest (/home/ubuntu/apps/Horizon/backend/node_modules/router/lib/layer.js:152:17)
+#     at /home/ubuntu/apps/Horizon/backend/node_modules/router/index.js:295:15
+#     at param (/home/ubuntu/apps/Horizon/backend/node_modules/router/index.js:600:14) {
+#   status: 400,
+#   code: 'INVALID_RANGE'
+# }
+# ❌ Error: Error: INSTRUMENT_NOT_FOUND
+#     at requestError (/home/ubuntu/apps/Horizon/backend/src/features/market/market.service.js:24:17)
+#     at MarketHistoryService.getHistory (/home/ubuntu/apps/Horizon/backend/src/features/market/market.service.js:108:28)
+#     at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+#     at async /home/ubuntu/apps/Horizon/backend/src/features/market/market.routes.js:13:24 {
+#   status: 404,
+#   code: 'INSTRUMENT_NOT_FOUND'
+# }
+# Subtest: H15A integration: error shape returns 400 INVALID_RANGE for unknown range
+ok 7 - H15A integration: error shape returns 400 INVALID_RANGE for unknown range
+  ---
+  duration_ms: 18.369095
+  type: 'test'
+  ...
+# Subtest: H15A integration: error shape returns 404 INSTRUMENT_NOT_FOUND for unknown instrument
+ok 8 - H15A integration: error shape returns 404 INSTRUMENT_NOT_FOUND for unknown instrument
+  ---
+  duration_ms: 10.051376
+  type: 'test'
+  ...
+# ❌ Error: Error: SNAPSHOT_NOT_FOUND
+#     at requestError (/home/ubuntu/apps/Horizon/backend/src/features/market/market.service.js:24:17)
+#     at MarketHistoryService.getSnapshot (/home/ubuntu/apps/Horizon/backend/src/features/market/market.service.js:131:13)
+#     at process.processTicksAndRejections (node:internal/process/task_queues:103:5) {
+#   status: 404,
+#   code: 'SNAPSHOT_NOT_FOUND'
+# }
+# Subtest: H15A integration: error shape returns 404 SNAPSHOT_NOT_FOUND for nonexistent snapshot
+ok 9 - H15A integration: error shape returns 404 SNAPSHOT_NOT_FOUND for nonexistent snapshot
+  ---
+  duration_ms: 18.580817
+  type: 'test'
+  ...
+# ❌ Error: PayloadTooLargeError: request entity too large
+#     at readStream (/home/ubuntu/apps/Horizon/backend/node_modules/raw-body/index.js:163:17)
+#     at getRawBody (/home/ubuntu/apps/Horizon/backend/node_modules/raw-body/index.js:116:12)
+#     at read (/home/ubuntu/apps/Horizon/backend/node_modules/body-parser/lib/read.js:113:3)
+#     at jsonParser (/home/ubuntu/apps/Horizon/backend/node_modules/body-parser/lib/types/json.js:88:5)
+#     at Layer.handleRequest (/home/ubuntu/apps/Horizon/backend/node_modules/router/lib/layer.js:152:17)
+#     at trimPrefix (/home/ubuntu/apps/Horizon/backend/node_modules/router/index.js:342:13)
+#     at /home/ubuntu/apps/Horizon/backend/node_modules/router/index.js:297:9
+#     at processParams (/home/ubuntu/apps/Horizon/backend/node_modules/router/index.js:582:12)
+#     at next (/home/ubuntu/apps/Horizon/backend/node_modules/router/index.js:291:5)
+#     at cors (/home/ubuntu/apps/Horizon/backend/node_modules/cors/lib/index.js:188:7) {
+#   expected: 71694,
+#   length: 71694,
+#   limit: 65536,
+#   type: 'entity.too.large'
+# }
+# Subtest: H15A integration: transport-level parser DoS protection rejects oversized payload with 413
+ok 10 - H15A integration: transport-level parser DoS protection rejects oversized payload with 413
+  ---
+  duration_ms: 24.357432
+  type: 'test'
+  ...
+# Subtest: H15A integration: isolated app import and no premature position/research/automation mounts
+ok 11 - H15A integration: isolated app import and no premature position/research/automation mounts
+  ---
+  duration_ms: 12.871843
+  type: 'test'
+  ...
+1..11
+# tests 11
+# suites 0
+# pass 11
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 826.913433

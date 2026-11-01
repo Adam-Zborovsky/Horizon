@@ -1,0 +1,27 @@
+{
+  "evidence_kind": "sanitized_public_observed_bar_recording",
+  "purpose": "Offline H01 fixture provenance only; not current market data, a user position, or a forecast.",
+  "source": {
+    "name": "Yahoo Finance public chart response",
+    "capture_url": "https://query1.finance.yahoo.com/v8/finance/chart/IBM?period1=1704067200&period2=1704499200&interval=1d",
+    "retrieved_at": "2026-10-30T15:26:01Z",
+    "access": "public read-only endpoint; no account, credential, query key, or live write used",
+    "raw_response_retention": "The source response was read through the permitted public extractor. This sanitized artifact retains only the fields used by the fixture; it does not claim a provider byte-for-byte response digest."
+  },
+  "instrument": {
+    "symbol": "IBM",
+    "exchange": "NYSE",
+    "currency": "USD",
+    "exchange_timezone": "America/New_York"
+  },
+  "provider_daily_records": [
+    { "session_date": "2024-01-02", "time": "2024-01-02T14:30:00.000Z", "open": 162.8300018310547, "high": 163.2899932861328, "low": 160.4600067138672, "close": 161.5, "volume": 3825000 },
+    { "session_date": "2024-01-03", "time": "2024-01-03T14:30:00.000Z", "open": 161, "high": 161.72999572753906, "low": 160.0800018310547, "close": 160.10000610351562, "volume": 4086100 },
+    { "session_date": "2024-01-04", "time": "2024-01-04T14:30:00.000Z", "open": 160.22000122070312, "high": 161.80999755859375, "low": 160.1699981689453, "close": 160.86000061035156, "volume": 3212000 },
+    { "session_date": "2024-01-05", "time": "2024-01-05T14:30:00.000Z", "open": 159.91000366210938, "high": 160.5500030517578, "low": 158.6699981689453, "close": 159.16000366210938, "volume": 4199400 }
+  ],
+  "normalization": {
+    "daily_timestamp": "The provider daily response timestamp is preserved as the UTC start instant; session_date remains the daily identity.",
+    "adjustment_basis": "raw provider OHLCV. The provider adjusted-close field is intentionally not copied into this raw OHLC fixture, preventing an adjusted-close-only candle presentation."
+  }
+}

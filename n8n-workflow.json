@@ -1,0 +1,429 @@
+{
+  "name": "Horizon Research Run Worker",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "20 16 * * 1-5"
+            }
+          ]
+        }
+      },
+      "timezone": "America/New_York",
+      "id": "research-run-schedule",
+      "name": "Research Run Schedule",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [0, 0]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "https://horizon.adamzborovsky.com/api/v1/automation/research/runs/queued?limit=25",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "fetch-queued-runs",
+      "name": "Fetch Queued Runs",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [220, 0],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "HORIZON_AUTOMATION_CREDENTIAL",
+          "name": "Horizon Automation Service"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Thin trigger: bounded, deduplicated batch of claimable run ids.\n// Duplicate schedules and restarts are already suppressed server-side via\n// persisted idempotency; this guard only prevents re-sending the same id.\nconst payload = $input.first().json || {};\nconst runs = Array.isArray(payload.runs) ? payload.runs : [];\nconst seen = new Set();\nconst prepared = [];\nfor (const run of runs) {\n  if (!run || typeof run.run_id !== 'string' || run.run_id.length === 0 || run.run_id.length > 160) continue;\n  if (seen.has(run.run_id)) continue;\n  seen.add(run.run_id);\n  prepared.push({ run_id: run.run_id, poll_count: 0 });\n  if (prepared.length >= 25) break; // bounded batch\n}\nreturn prepared.map((json) => ({ json }));"
+      },
+      "id": "prepare-runs",
+      "name": "Prepare Runs",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [440, 0]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://horizon.adamzborovsky.com/api/v1/automation/research/runs/{{ $json.run_id }}/execute",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({}) }}",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "id": "execute-research-run",
+      "name": "Execute Research Run",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [660, 0],
+      "onError": "continueRegularOutput",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "HORIZON_AUTOMATION_CREDENTIAL",
+          "name": "Horizon Automation Service"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// 202 accepted -> poll; 200 replay with a terminal run -> deliver;\n// anything else (transport error, unexpected shape) -> honest failure.\nconst TERMINAL = ['succeeded', 'limited', 'failed', 'stalled', 'superseded'];\nconst prepared = $('Prepare Runs').all().map((item) => item.json);\nconst responses = $input.all().map((item) => item.json || {});\nconst out = [];\nfor (let index = 0; index < prepared.length; index += 1) {\n  const run = prepared[index];\n  const response = responses[index] || {};\n  if (response.error || !response.run_id) {\n    out.push({ json: { run_id: run.run_id, phase: 'execute_failed' } });\n  } else if (response.status === 'accepted') {\n    out.push({ json: { run_id: response.run_id, phase: 'poll', poll_count: 0 } });\n  } else if (response.run && TERMINAL.includes(response.run.status)) {\n    out.push({ json: { run_id: response.run_id, phase: 'deliver', run: response.run } });\n  } else {\n    out.push({ json: { run_id: response.run_id, phase: 'poll', poll_count: 0 } });\n  }\n}\nreturn out;"
+      },
+      "id": "normalize-execute-response",
+      "name": "Normalize Execute Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [880, 0]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.phase }}",
+              "rightValue": "poll",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "polling-required-if",
+      "name": "Polling Required?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [1100, 0]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://horizon.adamzborovsky.com/api/v1/automation/research/runs/{{ $json.run_id }}/status",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "poll-run-status",
+      "name": "Poll Run Status",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1320, 0],
+      "onError": "continueRegularOutput",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "HORIZON_AUTOMATION_CREDENTIAL",
+          "name": "Horizon Automation Service"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// Classify one poll response. Terminal statuses advance to delivery;\n// everything else (including transport errors) keeps polling under the\n// bounded budget. Validation rejections never loop: terminal failures\n// are delivered honestly exactly once.\nconst previous = $('Normalize Execute Response').item.json || {};\nconst response = $input.item.json || {};\nconst TERMINAL = ['succeeded', 'limited', 'failed', 'stalled', 'superseded'];\nconst status = response.run && response.run.status;\nif (TERMINAL.includes(status)) {\n  return { json: { run_id: response.run.run_id, phase: 'deliver', run: response.run } };\n}\nreturn {\n  json: {\n    run_id: previous.run_id,\n    phase: 'poll',\n    poll_count: (previous.poll_count || 0) + 1,\n  },\n};"
+      },
+      "id": "classify-poll-result",
+      "name": "Classify Poll Result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1540, 0]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.phase }}",
+              "rightValue": "deliver",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "deliver-now-if",
+      "name": "Deliver Now?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [1760, 0]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.poll_count }}",
+              "rightValue": 60,
+              "operator": {
+                "type": "number",
+                "operation": "lt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "poll-budget-remaining-if",
+      "name": "Poll Budget Remaining?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [1980, 0]
+    },
+    {
+      "parameters": {
+        "amount": 30
+      },
+      "id": "wait-between-polls",
+      "name": "Wait Between Polls",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [2200, -200],
+      "webhookId": "horizon-research-poll-wait"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// Bounded budget exhausted: end honestly instead of polling forever.\nconst item = $input.item.json || {};\nreturn { json: { run_id: item.run_id, phase: 'poll_timeout' } };"
+      },
+      "id": "mark-poll-timeout",
+      "name": "Mark Poll Timeout",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2200, 200]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// Delivery is the persisted, server-validated state — nothing is\n// invented here. Terminal success requires bound result references;\n// failures and stalls require an honest error code; timeouts are labeled.\nconst item = $input.item.json || {};\nconst TERMINAL = ['succeeded', 'limited', 'failed', 'stalled', 'superseded'];\nif (item.phase === 'execute_failed') {\n  return { json: { run_id: item.run_id, delivery_status: 'execute_failed', delivered_at: new Date().toISOString() } };\n}\nif (item.phase === 'poll_timeout') {\n  return { json: { run_id: item.run_id, delivery_status: 'poll_timeout', delivered_at: new Date().toISOString() } };\n}\nconst run = item.run || {};\nif (!TERMINAL.includes(run.status)) {\n  throw new Error('Refusing to deliver a non-terminal research run');\n}\nconst delivery = {\n  run_id: run.run_id,\n  delivery_status: run.status,\n  position_id: run.position_id,\n  position_revision: run.position_revision,\n  delivered_at: new Date().toISOString(),\n};\nif (run.status === 'succeeded' || run.status === 'limited') {\n  if (!run.assessment_id || !run.evidence_snapshot_id) {\n    throw new Error('Terminal success without bound result references');\n  }\n  delivery.assessment_id = run.assessment_id;\n  delivery.evidence_snapshot_id = run.evidence_snapshot_id;\n} else if (run.status === 'failed' || run.status === 'stalled') {\n  if (!run.error_code) {\n    throw new Error('Terminal failure without an honest error code');\n  }\n  delivery.error_code = run.error_code;\n}\nreturn { json: delivery };"
+      },
+      "id": "assemble-delivery",
+      "name": "Assemble & Deliver Bound Result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2420, 0]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Execution log of the delivery envelope (codes and bound references\n// only — never credentials, prompts or raw payloads).\nconst deliveries = $input.all().map((item) => item.json);\nconsole.log('Horizon research deliveries:', JSON.stringify(deliveries));\nreturn deliveries.map((json) => ({ json }));"
+      },
+      "id": "log-delivery",
+      "name": "Log Delivery",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2640, 0]
+    }
+  ],
+  "connections": {
+    "Research Run Schedule": {
+      "main": [
+        [
+          {
+            "node": "Fetch Queued Runs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Queued Runs": {
+      "main": [
+        [
+          {
+            "node": "Prepare Runs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Runs": {
+      "main": [
+        [
+          {
+            "node": "Execute Research Run",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute Research Run": {
+      "main": [
+        [
+          {
+            "node": "Normalize Execute Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Execute Response": {
+      "main": [
+        [
+          {
+            "node": "Polling Required?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Polling Required?": {
+      "main": [
+        [
+          {
+            "node": "Poll Run Status",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Assemble & Deliver Bound Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Poll Run Status": {
+      "main": [
+        [
+          {
+            "node": "Classify Poll Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Classify Poll Result": {
+      "main": [
+        [
+          {
+            "node": "Deliver Now?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Deliver Now?": {
+      "main": [
+        [
+          {
+            "node": "Assemble & Deliver Bound Result",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Poll Budget Remaining?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Poll Budget Remaining?": {
+      "main": [
+        [
+          {
+            "node": "Wait Between Polls",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Mark Poll Timeout",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait Between Polls": {
+      "main": [
+        [
+          {
+            "node": "Poll Run Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mark Poll Timeout": {
+      "main": [
+        [
+          {
+            "node": "Assemble & Deliver Bound Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Assemble & Deliver Bound Result": {
+      "main": [
+        [
+          {
+            "node": "Log Delivery",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  }
+}

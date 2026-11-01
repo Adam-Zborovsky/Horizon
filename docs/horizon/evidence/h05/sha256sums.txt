@@ -1,0 +1,6 @@
+72ce394994bc953e54ed0f1e5e31a4dc9639bd151da444ab3bf0dce19040f81d  backend/src/features/market/providers/yahoo.js
+8a0aa1fb56ee308e8d53d062ac01b5265893276f5a557096f00776ac1dab7979  backend/test/market-history.test.cjs
+2325104c4d3bffc3cd54c9f26679dc4bf6a5fbe50accebf242c8da9d85f9a4da  docs/horizon/evidence/h05-repair-timeout.md
+9085369b48ef881490b1707fc2f5ee7710b2b3beeafba9334fc8d960423256ce  docs/horizon/evidence/h05/named-suite.log
+dee93067a0af17d49d40b5aab4bd90b3942a58c771601c10b95d9d77e592ac4c  docs/horizon/evidence/h05/aggregate-suite.log
+15f8238a9a2fcca24925a7b4aeecca36f951b05df41ddf37c94b638688bfddcb  docs/horizon/evidence/h05/regression-reproduce.log

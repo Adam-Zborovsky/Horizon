@@ -1,0 +1,27 @@
+=== CLI guards (no DB touched anywhere) ===
+--- node scripts/migrate-positions.cjs (no --uri)
+H04 position migration (dry-run first, additive, reversible)
+
+Usage:
+  node scripts/migrate-positions.cjs --uri mongodb://127.0.0.1:27017/<db> [--manifest-out <path>]
+  node scripts/migrate-positions.cjs --uri <uri> --apply
+
+Default is a dry run: reads BriefingConfig tickers and existing positions,
+prints a reversible change manifest, and writes nothing.
+
+--apply guardrails (live execution is operator-authorized only):
+  1. Requires HORIZON_MIGRATION_ACKNOWLEDGE=I-AUTHORIZE-LIVE-MIGRATION
+  2. Requires a loopback (127.0.0.1/localhost) target unless
+     HORIZON_MIGRATION_ALLOW_REMOTE=1 is also set explicitly
+  3. Creates legacy_unclassified positions only; never modifies existing
+     documents, users, briefings or briefing configs
+exit=2
+--- node scripts/migrate-positions.cjs --apply --uri mongodb://127.0.0.1:27017/x (no acknowledgement)
+Refusing --apply: live migration requires HORIZON_MIGRATION_ACKNOWLEDGE=I-AUTHORIZE-LIVE-MIGRATION. Live execution is operator-authorized only.
+exit=3
+--- node scripts/migrate-positions.cjs --apply --uri mongodb://10.0.0.5:27017/x (with acknowledgement, remote refused)
+Refusing --apply: target is not loopback. Set HORIZON_MIGRATION_ALLOW_REMOTE=1 only after operator authorization.
+exit=3
+require is inert (no side effects): true isLoopbackTarget 127.0.0.1: true isLoopbackTarget 10.0.0.5: false
+--- require of all five modules under a fresh node process
+all modules load cleanly

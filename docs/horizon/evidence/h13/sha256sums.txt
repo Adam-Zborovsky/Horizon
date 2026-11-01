@@ -1,0 +1,3 @@
+3ae015790af36256fbfdf05c64738a0284e63b71bfb627cf0bbff6cf02d8737a  frontend/lib/src/features/stock/widgets/chart_controller.dart
+7faa125b31b1b0c675d44538d8d858dd5cedc086ce9527823d2014899c2025f1  frontend/lib/src/features/stock/widgets/price_chart.dart
+b55cacb0d263a84a53dfbcfeba94f8b00e7dbfcc6c60818d332e633d100e0b9f  frontend/test/price_chart_test.dart

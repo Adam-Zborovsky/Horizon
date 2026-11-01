@@ -1,0 +1,127 @@
+{
+  "fixture_kind": "deterministic_metric_reference",
+  "contract_version": 1,
+  "fixture_purpose": "Hand-checked deterministic reference values for metric math, P&L economics and calendar horizon mapping. All numbers are synthetic arithmetic samples: not observed market data, not user positions, and not projections. Expected values were computed and checked independently of the implementation before the tests were written.",
+  "price_series": {
+    "monotonic": {
+      "closes": [100, 105, 110.25],
+      "periods_per_year": 252,
+      "expected": {
+        "simple_returns": [0.05, 0.05],
+        "mean_return": 0.05,
+        "cumulative_return": 0.1025,
+        "sample_variance": 0,
+        "sample_stddev": 0,
+        "annualized_volatility": 0,
+        "max_drawdown": 0
+      }
+    },
+    "with_drawdown": {
+      "closes": [100, 120, 96, 120],
+      "periods_per_year": 252,
+      "expected": {
+        "simple_returns": [0.2, -0.2, 0.25],
+        "mean_return": 0.08333333333333333,
+        "sample_variance": 0.060833333333333336,
+        "sample_stddev": 0.24664414311581237,
+        "annualized_volatility": 3.915354390090379,
+        "cumulative_return": 0.2,
+        "max_drawdown": -0.2,
+        "drawdown_peak_index": 1,
+        "drawdown_trough_index": 2,
+        "drawdown_peak_value": 120,
+        "drawdown_trough_value": 96
+      }
+    }
+  },
+  "relative_returns": {
+    "base_returns": [0.05, 0.05],
+    "benchmark_returns": [0.2, -0.2],
+    "expected": {
+      "per_period_excess": [-0.15, 0.25],
+      "cumulative_relative": 0.1484375
+    }
+  },
+  "pnl_cases": [
+    {
+      "name": "matching_currency_and_basis",
+      "average_cost": { "amount": "50.25", "currency": "USD" },
+      "quantity": "10",
+      "current_price": { "amount": "60.25", "currency": "USD" },
+      "cost_adjustment_basis": "split_adjusted",
+      "price_adjustment_basis": "split_adjusted",
+      "expected": { "status": "available", "absolute_pl": 100.0, "percent_pl": 0.19900497512437812, "currency": "USD" }
+    },
+    {
+      "name": "zero_pl_same_cost",
+      "average_cost": { "amount": "50.25", "currency": "USD" },
+      "quantity": "10",
+      "current_price": { "amount": "50.25", "currency": "USD" },
+      "cost_adjustment_basis": "split_adjusted",
+      "price_adjustment_basis": "split_adjusted",
+      "expected": { "status": "available", "absolute_pl": 0.0, "percent_pl": 0.0, "currency": "USD" }
+    },
+    {
+      "name": "fractional_quantity",
+      "average_cost": { "amount": "40", "currency": "USD" },
+      "quantity": "12.5",
+      "current_price": { "amount": "50", "currency": "USD" },
+      "cost_adjustment_basis": "split_adjusted",
+      "price_adjustment_basis": "split_adjusted",
+      "expected": { "status": "available", "absolute_pl": 125.0, "percent_pl": 0.25, "currency": "USD" }
+    },
+    {
+      "name": "currency_mismatch_unavailable",
+      "average_cost": { "amount": "50.25", "currency": "USD" },
+      "quantity": "10",
+      "current_price": { "amount": "60.25", "currency": "EUR" },
+      "cost_adjustment_basis": "split_adjusted",
+      "price_adjustment_basis": "split_adjusted",
+      "expected": { "status": "unavailable", "reason": "currency_mismatch" }
+    },
+    {
+      "name": "adjustment_basis_mismatch_unavailable",
+      "average_cost": { "amount": "50.25", "currency": "USD" },
+      "quantity": "10",
+      "current_price": { "amount": "60.25", "currency": "USD" },
+      "cost_adjustment_basis": "split_adjusted",
+      "price_adjustment_basis": "raw_ohlc_unadjusted",
+      "expected": { "status": "unavailable", "reason": "adjustment_basis_mismatch" }
+    }
+  ],
+  "calendar_cases": [
+    { "name": "leap_year_clamp", "session_as_of": "2024-01-31", "horizon_months": 1, "expected_calendar_target": "2024-02-29" },
+    { "name": "non_leap_clamp", "session_as_of": "2023-01-31", "horizon_months": 1, "expected_calendar_target": "2023-02-28" },
+    { "name": "year_roll_h1", "session_as_of": "2024-12-31", "horizon_months": 1, "expected_calendar_target": "2025-01-31" },
+    { "name": "year_roll_h2_clamp", "session_as_of": "2024-12-31", "horizon_months": 2, "expected_calendar_target": "2025-02-28" },
+    { "name": "year_roll_h3", "session_as_of": "2024-12-31", "horizon_months": 3, "expected_calendar_target": "2025-03-31" },
+    { "name": "as_of_leap_day_clamp", "session_as_of": "2024-02-29", "horizon_months": 1, "expected_calendar_target": "2024-03-29" },
+    {
+      "name": "weekend_and_holiday_walk_back",
+      "session_as_of": "2024-03-01",
+      "horizon_months": 1,
+      "expected_calendar_target": "2024-04-01",
+      "non_sessions": ["2024-03-29", "2024-03-30", "2024-03-31", "2024-04-01", "2024-04-06", "2024-04-07"],
+      "expected_evaluation_session": "2024-03-28",
+      "note": "2024-04-01 (Easter Monday) and 2024-03-29 (Good Friday) are declared exchange holidays; 2024-03-30/31 fall on a weekend; the walk-back ends Thursday 2024-03-28"
+    },
+    {
+      "name": "target_holiday_then_weekend_walk_back",
+      "session_as_of": "2024-06-01",
+      "horizon_months": 1,
+      "expected_calendar_target": "2024-07-01",
+      "non_sessions": ["2024-06-29", "2024-06-30", "2024-07-01", "2024-07-06", "2024-07-07"],
+      "expected_evaluation_session": "2024-06-28"
+    },
+    {
+      "name": "target_weekend_walk_back",
+      "session_as_of": "2024-04-05",
+      "horizon_months": 1,
+      "expected_calendar_target": "2024-05-05",
+      "non_sessions": ["2024-05-04", "2024-05-05", "2024-05-11", "2024-05-12"],
+      "expected_evaluation_session": "2024-05-03"
+    },
+    { "name": "unsupported_year_overflow_rejected", "session_as_of": "9999-12-31", "horizon_months": 1, "expected_error": "RangeError" }
+  ],
+  "numeric_projection_limitation": "Numeric projection is intentionally null: code-produced conditional scenario and volatility-reference projection output is held for H07A and has not been independently accepted, so this outlook contains no numeric price forecast. Qualitative cases remain valid without one."
+}

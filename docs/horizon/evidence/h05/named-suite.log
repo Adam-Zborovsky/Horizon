@@ -1,0 +1,82 @@
+TAP version 13
+# Subtest: maps every contract range to its truthful preferred resolution
+ok 1 - maps every contract range to its truthful preferred resolution
+  ---
+  duration_ms: 1.843058
+  type: 'test'
+  ...
+# Subtest: labels an unsupported requested resolution instead of silently relabeling it
+ok 2 - labels an unsupported requested resolution instead of silently relabeling it
+  ---
+  duration_ms: 4.468922
+  type: 'test'
+  ...
+# Subtest: removes invalid and duplicate provider bars, keeps ascending observed bars, and reports partial data
+ok 3 - removes invalid and duplicate provider bars, keeps ascending observed bars, and reports partial data
+  ---
+  duration_ms: 15.143264
+  type: 'test'
+  ...
+# Subtest: uses an expired immutable snapshot after a provider timeout and marks it stale
+ok 4 - uses an expired immutable snapshot after a provider timeout and marks it stale
+  ---
+  duration_ms: 1.385493
+  type: 'test'
+  ...
+# Subtest: returns an explicit unavailable result when the provider fails without cached observations
+ok 5 - returns an explicit unavailable result when the provider fails without cached observations
+  ---
+  duration_ms: 0.616846
+  type: 'test'
+  ...
+# Subtest: treats early closes and DST-bearing UTC timestamps as observed provider timestamps
+ok 6 - treats early closes and DST-bearing UTC timestamps as observed provider timestamps
+  ---
+  duration_ms: 1.551855
+  type: 'test'
+  ...
+# Subtest: parses Yahoo chart rows without manufacturing OHLC values and exposes delayed metadata
+ok 7 - parses Yahoo chart rows without manufacturing OHLC values and exposes delayed metadata
+  ---
+  duration_ms: 10.789422
+  type: 'test'
+  ...
+# Subtest: bounds a response body that ignores abort and classifies it as a provider timeout
+ok 8 - bounds a response body that ignores abort and classifies it as a provider timeout
+  ---
+  duration_ms: 25.554322
+  type: 'test'
+  ...
+# Subtest: bounds stalled header fetch and classifies it as a provider timeout
+ok 9 - bounds stalled header fetch and classifies it as a provider timeout
+  ---
+  duration_ms: 26.924736
+  type: 'test'
+  ...
+# Subtest: keeps the timeout through delayed body parsing and clears it after success
+ok 10 - keeps the timeout through delayed body parsing and clears it after success
+  ---
+  duration_ms: 63.447002
+  type: 'test'
+  ...
+# Subtest: classifies network failure as unavailable and body parse rejection as invalid response
+ok 11 - classifies network failure as unavailable and body parse rejection as invalid response
+  ---
+  duration_ms: 45.553112
+  type: 'test'
+  ...
+# Subtest: route factory applies injected authentication and only passes server-derived user context
+ok 12 - route factory applies injected authentication and only passes server-derived user context
+  ---
+  duration_ms: 2.487304
+  type: 'test'
+  ...
+1..12
+# tests 12
+# suites 0
+# pass 12
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 775.034083

@@ -1,0 +1,703 @@
+TAP version 13
+# Subtest: maps every contract range to its truthful preferred resolution
+ok 1 - maps every contract range to its truthful preferred resolution
+  ---
+  duration_ms: 1.989379
+  type: 'test'
+  ...
+# Subtest: labels an unsupported requested resolution instead of silently relabeling it
+ok 2 - labels an unsupported requested resolution instead of silently relabeling it
+  ---
+  duration_ms: 4.658844
+  type: 'test'
+  ...
+# Subtest: removes invalid and duplicate provider bars, keeps ascending observed bars, and reports partial data
+ok 3 - removes invalid and duplicate provider bars, keeps ascending observed bars, and reports partial data
+  ---
+  duration_ms: 55.88557
+  type: 'test'
+  ...
+# Subtest: uses an expired immutable snapshot after a provider timeout and marks it stale
+ok 4 - uses an expired immutable snapshot after a provider timeout and marks it stale
+  ---
+  duration_ms: 4.079998
+  type: 'test'
+  ...
+# Subtest: returns an explicit unavailable result when the provider fails without cached observations
+ok 5 - returns an explicit unavailable result when the provider fails without cached observations
+  ---
+  duration_ms: 4.866126
+  type: 'test'
+  ...
+# Subtest: treats early closes and DST-bearing UTC timestamps as observed provider timestamps
+ok 6 - treats early closes and DST-bearing UTC timestamps as observed provider timestamps
+  ---
+  duration_ms: 6.944786
+  type: 'test'
+  ...
+# Subtest: parses Yahoo chart rows without manufacturing OHLC values and exposes delayed metadata
+ok 7 - parses Yahoo chart rows without manufacturing OHLC values and exposes delayed metadata
+  ---
+  duration_ms: 85.246609
+  type: 'test'
+  ...
+# Subtest: bounds a response body that ignores abort and classifies it as a provider timeout
+ok 8 - bounds a response body that ignores abort and classifies it as a provider timeout
+  ---
+  duration_ms: 33.164195
+  type: 'test'
+  ...
+# Subtest: bounds stalled header fetch and classifies it as a provider timeout
+ok 9 - bounds stalled header fetch and classifies it as a provider timeout
+  ---
+  duration_ms: 26.621812
+  type: 'test'
+  ...
+# Subtest: keeps the timeout through delayed body parsing and clears it after success
+ok 10 - keeps the timeout through delayed body parsing and clears it after success
+  ---
+  duration_ms: 63.908767
+  type: 'test'
+  ...
+# Subtest: classifies network failure as unavailable and body parse rejection as invalid response
+ok 11 - classifies network failure as unavailable and body parse rejection as invalid response
+  ---
+  duration_ms: 43.759175
+  type: 'test'
+  ...
+# Subtest: route factory applies injected authentication and only passes server-derived user context
+ok 12 - route factory applies injected authentication and only passes server-derived user context
+  ---
+  duration_ms: 5.334891
+  type: 'test'
+  ...
+# Subtest: model: accepts a valid owned position document
+ok 13 - model: accepts a valid owned position document
+  ---
+  duration_ms: 16.451236
+  type: 'test'
+  ...
+# Subtest: model: candidate documents reject cost/quantity/open date
+ok 14 - model: candidate documents reject cost/quantity/open date
+  ---
+  duration_ms: 4.12072
+  type: 'test'
+  ...
+# Subtest: model: legacy_unclassified documents reject any economics
+ok 15 - model: legacy_unclassified documents reject any economics
+  ---
+  duration_ms: 1.619816
+  type: 'test'
+  ...
+# Subtest: model: unknown top-level fields are rejected (strict throw)
+ok 16 - model: unknown top-level fields are rejected (strict throw)
+  ---
+  duration_ms: 1.350613
+  type: 'test'
+  ...
+# Subtest: model: rejects non-ISO currency, non-positive amounts and malformed decimals
+not ok 17 - model: rejects non-ISO currency, non-positive amounts and malformed decimals
+  ---
+  duration_ms: 2.556304
+  type: 'test'
+  location: '/home/ubuntu/apps/Horizon/backend/test/positions.test.cjs:149:1'
+  failureType: 'testCodeFailure'
+  error: 'expected rejection for {"amount":"-1","currency":"USD"}'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  operator: '=='
+  stack: |-
+    TestContext.<anonymous> (/home/ubuntu/apps/Horizon/backend/test/positions.test.cjs:162:12)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: model: rejects malformed opened_on calendar dates
+ok 18 - model: rejects malformed opened_on calendar dates
+  ---
+  duration_ms: 6.310699
+  type: 'test'
+  ...
+# Subtest: service: decimal validation matrix
+ok 19 - service: decimal validation matrix
+  ---
+  duration_ms: 5.533973
+  type: 'test'
+  ...
+# Subtest: service: candidate creation with economics is rejected — desired entry belongs in review_conditions
+ok 20 - service: candidate creation with economics is rejected — desired entry belongs in review_conditions
+  ---
+  duration_ms: 0.398804
+  type: 'test'
+  ...
+# Subtest: service: legacy_unclassified positions carry null economics — no cost inferred from tickers or prose
+ok 21 - service: legacy_unclassified positions carry null economics — no cost inferred from tickers or prose
+  ---
+  duration_ms: 1.297012
+  type: 'test'
+  ...
+# Subtest: service: unknown fields in create and update payloads are rejected
+ok 22 - service: unknown fields in create and update payloads are rejected
+  ---
+  duration_ms: 1.872538
+  type: 'test'
+  ...
+# Subtest: service: another owner gets an indistinguishable NOT_FOUND, never a leak
+ok 23 - service: another owner gets an indistinguishable NOT_FOUND, never a leak
+  ---
+  duration_ms: 0.947609
+  type: 'test'
+  ...
+# Subtest: service: owner fields are not writable by clients (server-derived owner)
+ok 24 - service: owner fields are not writable by clients (server-derived owner)
+  ---
+  duration_ms: 0.532245
+  type: 'test'
+  ...
+# Subtest: service: list is scoped to the authenticated owner
+ok 25 - service: list is scoped to the authenticated owner
+  ---
+  duration_ms: 0.99989
+  type: 'test'
+  ...
+# Subtest: service: serialized positions never expose owner_id
+ok 26 - service: serialized positions never expose owner_id
+  ---
+  duration_ms: 0.354684
+  type: 'test'
+  ...
+# Subtest: service: duplicate active identity for the same owner returns 409-class error
+ok 27 - service: duplicate active identity for the same owner returns 409-class error
+  ---
+  duration_ms: 0.608766
+  type: 'test'
+  ...
+# Subtest: service: same instrument for different owners is allowed
+ok 28 - service: same instrument for different owners is allowed
+  ---
+  duration_ms: 0.367404
+  type: 'test'
+  ...
+# Subtest: service: archived positions free the identity; unarchive conflicts with a newer active position
+ok 29 - service: archived positions free the identity; unarchive conflicts with a newer active position
+  ---
+  duration_ms: 1.06689
+  type: 'test'
+  ...
+# Subtest: service: candidate -> owned is an explicit action with validated economics
+ok 30 - service: candidate -> owned is an explicit action with validated economics
+  ---
+  duration_ms: 0.559005
+  type: 'test'
+  ...
+# Subtest: service: owned -> candidate clears active economics and preserves the audit trail via revision
+ok 31 - service: owned -> candidate clears active economics and preserves the audit trail via revision
+  ---
+  duration_ms: 0.400283
+  type: 'test'
+  ...
+# Subtest: service: invalid transitions are rejected
+ok 32 - service: invalid transitions are rejected
+  ---
+  duration_ms: 30.156766
+  type: 'test'
+  ...
+# Subtest: service: transition to owned with malformed economics fails and leaves the position untouched
+ok 33 - service: transition to owned with malformed economics fails and leaves the position untouched
+  ---
+  duration_ms: 1.237332
+  type: 'test'
+  ...
+# Subtest: service: missing or stale expected_revision is rejected; correct revision increments
+ok 34 - service: missing or stale expected_revision is rejected; correct revision increments
+  ---
+  duration_ms: 3.990678
+  type: 'test'
+  ...
+# Subtest: pl: unknown cost stays null and P/L is unavailable with unknown_cost
+ok 35 - pl: unknown cost stays null and P/L is unavailable with unknown_cost
+  ---
+  duration_ms: 0.788847
+  type: 'test'
+  ...
+# Subtest: pl: currency mismatch blocks comparable P/L without silent FX approximation
+ok 36 - pl: currency mismatch blocks comparable P/L without silent FX approximation
+  ---
+  duration_ms: 0.392123
+  type: 'test'
+  ...
+# Subtest: pl: unreconciled split basis blocks comparable P/L with explanation
+ok 37 - pl: unreconciled split basis blocks comparable P/L with explanation
+  ---
+  duration_ms: 0.468084
+  type: 'test'
+  ...
+# Subtest: pl: matching basis yields decimal percent; absolute requires quantity; fees/dividends labeled excluded
+not ok 38 - pl: matching basis yields decimal percent; absolute requires quantity; fees/dividends labeled excluded
+  ---
+  duration_ms: 1.233771
+  type: 'test'
+  location: '/home/ubuntu/apps/Horizon/backend/test/positions.test.cjs:440:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    + actual - expected
+    
+    + '12437500'
+    - '49.62593516'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: '49.62593516'
+  actual: '12437500'
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (/home/ubuntu/apps/Horizon/backend/test/positions.test.cjs:445:10)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: pl: candidate and legacy_unclassified positions have no owned economics
+ok 39 - pl: candidate and legacy_unclassified positions have no owned economics
+  ---
+  duration_ms: 0.289883
+  type: 'test'
+  ...
+# Subtest: routes: auth is enforced, owner is server-derived, full CRUD behaves per contract
+ok 40 - routes: auth is enforced, owner is server-derived, full CRUD behaves per contract
+  ---
+  duration_ms: 575.460742
+  type: 'test'
+  ...
+# Subtest: migration: legacy tickers import as legacy_unclassified with null economics and exact counts
+ok 41 - migration: legacy tickers import as legacy_unclassified with null economics and exact counts
+  ---
+  duration_ms: 2.778947
+  type: 'test'
+  ...
+# Subtest: migration: second run is idempotent — zero new changes for existing active positions
+ok 42 - migration: second run is idempotent — zero new changes for existing active positions
+  ---
+  duration_ms: 0.303883
+  type: 'test'
+  ...
+# Subtest: migration: archived duplicates do not block re-import, but active ones do
+ok 43 - migration: archived duplicates do not block re-import, but active ones do
+  ---
+  duration_ms: 0.671286
+  type: 'test'
+  ...
+# Subtest: migration: manifest is reversible — every insert has a matching rollback step
+ok 44 - migration: manifest is reversible — every insert has a matching rollback step
+  ---
+  duration_ms: 0.946609
+  type: 'test'
+  ...
+# Subtest: migration: no cost/ownership facts are inferred from tickers or user prose
+ok 45 - migration: no cost/ownership facts are inferred from tickers or user prose
+  ---
+  duration_ms: 0.258123
+  type: 'test'
+  ...
+# Subtest: ticker policy: tickers-only PUT that would orphan active positions is blocked explicitly, not destructive
+not ok 46 - ticker policy: tickers-only PUT that would orphan active positions is blocked explicitly, not destructive
+  ---
+  duration_ms: 6.023697
+  type: 'test'
+  location: '/home/ubuntu/apps/Horizon/backend/test/positions.test.cjs:687:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly deep-equal:
+    + actual - expected
+    
+    + []
+    - [
+    -   'KO'
+    - ]
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+    0: 'KO'
+  actual:
+  operator: 'deepStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (/home/ubuntu/apps/Horizon/backend/test/positions.test.cjs:703:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: ticker policy: removals without active positions and additions pass through
+ok 47 - ticker policy: removals without active positions and additions pass through
+  ---
+  duration_ms: 3.292151
+  type: 'test'
+  ...
+# Subtest: ticker policy: case-insensitive ticker matching and owner scoping
+ok 48 - ticker policy: case-insensitive ticker matching and owner scoping
+  ---
+  duration_ms: 0.340683
+  type: 'test'
+  ...
+# Subtest: automation middleware fails closed when release configuration is absent
+ok 49 - automation middleware fails closed when release configuration is absent
+  ---
+  duration_ms: 1.270692
+  type: 'test'
+  ...
+# Subtest: legacy ingestion denies anonymous, invalid, expired, and insufficiently scoped automation requests
+ok 50 - legacy ingestion denies anonymous, invalid, expired, and insufficiently scoped automation requests
+  ---
+  duration_ms: 105.520242
+  type: 'test'
+  ...
+# Subtest: legacy ingestion cannot use a client userId to target another owner
+ok 51 - legacy ingestion cannot use a client userId to target another owner
+  ---
+  duration_ms: 21.272922
+  type: 'test'
+  ...
+# Subtest: automation route rejects bodies beyond its bounded callback payload limit
+ok 52 - automation route rejects bodies beyond its bounded callback payload limit
+  ---
+  duration_ms: 23.731345
+  type: 'test'
+  ...
+# Subtest: run callback authorization requires a current nonce and rejects conflicting replay deliveries
+ok 53 - run callback authorization requires a current nonce and rejects conflicting replay deliveries
+  ---
+  duration_ms: 2.224661
+  type: 'test'
+  ...
+# Subtest: legacy controller persists only the automation-bound owner and removes client userId
+ok 54 - legacy controller persists only the automation-bound owner and removes client userId
+  ---
+  duration_ms: 1.10461
+  type: 'test'
+  ...
+# Subtest: publishes one versioned, source-specific offline observed-bar recording
+ok 55 - publishes one versioned, source-specific offline observed-bar recording
+  ---
+  duration_ms: 5.804695
+  type: 'test'
+  ...
+# Subtest: accepts a named positive sample for every canonical schema
+ok 56 - accepts a named positive sample for every canonical schema
+  ---
+  duration_ms: 17.448766
+  type: 'test'
+  ...
+# Subtest: rejects a named negative sample for every canonical schema
+ok 57 - rejects a named negative sample for every canonical schema
+  ---
+  duration_ms: 4.502043
+  type: 'test'
+  ...
+# Subtest: rejects invalid calendar instants and bounded decimal overflow without number coercion
+ok 58 - rejects invalid calendar instants and bounded decimal overflow without number coercion
+  ---
+  duration_ms: 1.487934
+  type: 'test'
+  ...
+# Subtest: enforces bounded assessment nesting, identity references, and month-clamped horizons
+ok 59 - enforces bounded assessment nesting, identity references, and month-clamped horizons
+  ---
+  duration_ms: 3.844357
+  type: 'test'
+  ...
+# Subtest: enforces research run lifecycle states and history ordering
+ok 60 - enforces research run lifecycle states and history ordering
+  ---
+  duration_ms: 1.276732
+  type: 'test'
+  ...
+# Subtest: accepts queued lifecycle state only without active or terminal fields
+ok 61 - accepts queued lifecycle state only without active or terminal fields
+  ---
+  duration_ms: 0.569285
+  type: 'test'
+  ...
+# Subtest: accepts running lifecycle state with a bounded in-progress heartbeat
+ok 62 - accepts running lifecycle state with a bounded in-progress heartbeat
+  ---
+  duration_ms: 0.330243
+  type: 'test'
+  ...
+# Subtest: accepts a resumed running lifecycle state with its persisted evidence snapshot
+ok 63 - accepts a resumed running lifecycle state with its persisted evidence snapshot
+  ---
+  duration_ms: 1.06181
+  type: 'test'
+  ...
+# Subtest: accepts successful lifecycle state with matching snapshot and result
+ok 64 - accepts successful lifecycle state with matching snapshot and result
+  ---
+  duration_ms: 1.431733
+  type: 'test'
+  ...
+# Subtest: accepts failed lifecycle state with a terminal error and no assessment
+ok 65 - accepts failed lifecycle state with a terminal error and no assessment
+  ---
+  duration_ms: 0.746047
+  type: 'test'
+  ...
+# Subtest: accepts stalled lifecycle state only after deadline
+ok 66 - accepts stalled lifecycle state only after deadline
+  ---
+  duration_ms: 0.288002
+  type: 'test'
+  ...
+# Subtest: accepts superseded lifecycle state without a published result
+ok 67 - accepts superseded lifecycle state without a published result
+  ---
+  duration_ms: 0.256362
+  type: 'test'
+  ...
+# Subtest: enforces semantic assessment boundaries, calendar range, and additive response policy
+ok 68 - enforces semantic assessment boundaries, calendar range, and additive response policy
+  ---
+  duration_ms: 10.983184
+  type: 'test'
+  ...
+# Subtest: EvidenceService constructor validates required dependencies
+ok 69 - EvidenceService constructor validates required dependencies
+  ---
+  duration_ms: 1.828778
+  type: 'test'
+  ...
+# Subtest: SEC adapter: enforces official SEC URL allowlist and rejects arbitrary or untrusted URLs
+ok 70 - SEC adapter: enforces official SEC URL allowlist and rejects arbitrary or untrusted URLs
+  ---
+  duration_ms: 1.11437
+  type: 'test'
+  ...
+# Subtest: SEC adapter: enforces fair-access User-Agent header and handles timeouts safely
+ok 71 - SEC adapter: enforces fair-access User-Agent header and handles timeouts safely
+  ---
+  duration_ms: 32.001184
+  type: 'test'
+  ...
+# Subtest: SEC adapter: parses filings, source locators, reporting periods, and financial facts
+ok 72 - SEC adapter: parses filings, source locators, reporting periods, and financial facts
+  ---
+  duration_ms: 6.537182
+  type: 'test'
+  ...
+# Subtest: SEC adapter: respects point-in-time cutoff and separates amendments from original filings
+ok 73 - SEC adapter: respects point-in-time cutoff and separates amendments from original filings
+  ---
+  duration_ms: 2.938228
+  type: 'test'
+  ...
+# Subtest: Company News adapter: enforces news URL allowlist and rejects SSRF/arbitrary destinations
+ok 74 - Company News adapter: enforces news URL allowlist and rejects SSRF/arbitrary destinations
+  ---
+  duration_ms: 1.198851
+  type: 'test'
+  ...
+# Subtest: Company News adapter: deduplicates repeated stories and marks headline-only status
+ok 75 - Company News adapter: deduplicates repeated stories and marks headline-only status
+  ---
+  duration_ms: 2.706745
+  type: 'test'
+  ...
+# Subtest: Company News adapter: sanitizes untrusted content and prevents tool/prompt injection payloads
+ok 76 - Company News adapter: sanitizes untrusted content and prevents tool/prompt injection payloads
+  ---
+  duration_ms: 1.593895
+  type: 'test'
+  ...
+# Subtest: EvidenceService: creates immutable snapshot, enforces point-in-time cutoff, and generates content_digest
+ok 77 - EvidenceService: creates immutable snapshot, enforces point-in-time cutoff, and generates content_digest
+  ---
+  duration_ms: 14.207895
+  type: 'test'
+  ...
+# Subtest: EvidenceService: explicitly documents lean-source gaps and does not invent transcripts or consensus
+ok 78 - EvidenceService: explicitly documents lean-source gaps and does not invent transcripts or consensus
+  ---
+  duration_ms: 1.740696
+  type: 'test'
+  ...
+# Subtest: EvidenceService: analyst tools retrieve bounded excerpts and reject arbitrary URLs or unknown IDs
+ok 79 - EvidenceService: analyst tools retrieve bounded excerpts and reject arbitrary URLs or unknown IDs
+  ---
+  duration_ms: 1.256612
+  type: 'test'
+  ...
+# Subtest: Every produced EvidenceItem adheres strictly to contracts.evidenceItemSchema
+ok 80 - Every produced EvidenceItem adheres strictly to contracts.evidenceItemSchema
+  ---
+  duration_ms: 0.588845
+  type: 'test'
+  ...
+# Subtest: Company News adapter: no-sourceUrl path fetches a real allowlisted per-instrument URL (regression: never fetch(instrument))
+ok 81 - Company News adapter: no-sourceUrl path fetches a real allowlisted per-instrument URL (regression: never fetch(instrument))
+  ---
+  duration_ms: 3.762715
+  type: 'test'
+  ...
+# Subtest: Company News adapter: accepts an explicit instrument IR/news feed URL and still validates it against the allowlist
+ok 82 - Company News adapter: accepts an explicit instrument IR/news feed URL and still validates it against the allowlist
+  ---
+  duration_ms: 2.14518
+  type: 'test'
+  ...
+# Subtest: Company News adapter: dead api.company-news.local allowlist entry is removed
+ok 83 - Company News adapter: dead api.company-news.local allowlist entry is removed
+  ---
+  duration_ms: 0.324683
+  type: 'test'
+  ...
+# Subtest: News and SEC adapters: extended internal-IP deny list (172.16/12, 0.0.0.0, 127/8 remainder, ::1, fe80::/10)
+ok 84 - News and SEC adapters: extended internal-IP deny list (172.16/12, 0.0.0.0, 127/8 remainder, ::1, fe80::/10)
+  ---
+  duration_ms: 1.334093
+  type: 'test'
+  ...
+# Subtest: SEC adapter: missing CIK is explicit SEC unavailability, never a fabricated zero-CIK query
+ok 85 - SEC adapter: missing CIK is explicit SEC unavailability, never a fabricated zero-CIK query
+  ---
+  duration_ms: 0.331563
+  type: 'test'
+  ...
+# Subtest: EvidenceService: normalizes cutoffAt to an ISO string and rejects non-temporal input
+ok 86 - EvidenceService: normalizes cutoffAt to an ISO string and rejects non-temporal input
+  ---
+  duration_ms: 0.567606
+  type: 'test'
+  ...
+# Subtest: EvidenceService: real provider wiring produces SEC filings and company news end-to-end (production call path)
+ok 87 - EvidenceService: real provider wiring produces SEC filings and company news end-to-end (production call path)
+  ---
+  duration_ms: 2.07978
+  type: 'test'
+  ...
+# [dotenv@17.3.1] injecting env (6) from .env -- tip: 🔐 prevent building .env in docker: https://dotenvx.com/prebuild
+# Subtest: H15A integration: protected history route is reachable through actual application routing
+ok 88 - H15A integration: protected history route is reachable through actual application routing
+  ---
+  duration_ms: 75.480076
+  type: 'test'
+  ...
+# Subtest: H15A integration: anonymous denial rejects requests missing authorization header with 401
+ok 89 - H15A integration: anonymous denial rejects requests missing authorization header with 401
+  ---
+  duration_ms: 14.281936
+  type: 'test'
+  ...
+# Subtest: H15A integration: invalid token denial rejects invalid bearer token with 401
+ok 90 - H15A integration: invalid token denial rejects invalid bearer token with 401
+  ---
+  duration_ms: 8.111637
+  type: 'test'
+  ...
+# Subtest: H15A integration: truthful unavailable response on provider failure without cache
+ok 91 - H15A integration: truthful unavailable response on provider failure without cache
+  ---
+  duration_ms: 16.361715
+  type: 'test'
+  ...
+# Subtest: H15A integration: truthful stale-cache response on provider failure with expired cache
+ok 92 - H15A integration: truthful stale-cache response on provider failure with expired cache
+  ---
+  duration_ms: 11.957834
+  type: 'test'
+  ...
+# Subtest: H15A integration: labels unsupported requested resolution as unavailable
+ok 93 - H15A integration: labels unsupported requested resolution as unavailable
+  ---
+  duration_ms: 8.116757
+  type: 'test'
+  ...
+# ❌ Error: Error: INVALID_RANGE
+#     at requestError (/home/ubuntu/apps/Horizon/backend/src/features/market/market.service.js:24:17)
+#     at MarketHistoryService.getHistory (/home/ubuntu/apps/Horizon/backend/src/features/market/market.service.js:105:24)
+#     at /home/ubuntu/apps/Horizon/backend/src/features/market/market.routes.js:13:44
+#     at Layer.handleRequest (/home/ubuntu/apps/Horizon/backend/node_modules/router/lib/layer.js:152:17)
+#     at next (/home/ubuntu/apps/Horizon/backend/node_modules/router/lib/route.js:157:13)
+#     at Route.dispatch (/home/ubuntu/apps/Horizon/backend/node_modules/router/lib/route.js:117:3)
+#     at handle (/home/ubuntu/apps/Horizon/backend/node_modules/router/index.js:435:11)
+#     at Layer.handleRequest (/home/ubuntu/apps/Horizon/backend/node_modules/router/lib/layer.js:152:17)
+#     at /home/ubuntu/apps/Horizon/backend/node_modules/router/index.js:295:15
+#     at param (/home/ubuntu/apps/Horizon/backend/node_modules/router/index.js:600:14) {
+#   status: 400,
+#   code: 'INVALID_RANGE'
+# }
+# Subtest: H15A integration: error shape returns 400 INVALID_RANGE for unknown range
+ok 94 - H15A integration: error shape returns 400 INVALID_RANGE for unknown range
+  ---
+  duration_ms: 8.675723
+  type: 'test'
+  ...
+# ❌ Error: Error: INSTRUMENT_NOT_FOUND
+#     at requestError (/home/ubuntu/apps/Horizon/backend/src/features/market/market.service.js:24:17)
+#     at MarketHistoryService.getHistory (/home/ubuntu/apps/Horizon/backend/src/features/market/market.service.js:108:28)
+#     at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+#     at async /home/ubuntu/apps/Horizon/backend/src/features/market/market.routes.js:13:24 {
+#   status: 404,
+#   code: 'INSTRUMENT_NOT_FOUND'
+# }
+# Subtest: H15A integration: error shape returns 404 INSTRUMENT_NOT_FOUND for unknown instrument
+ok 95 - H15A integration: error shape returns 404 INSTRUMENT_NOT_FOUND for unknown instrument
+  ---
+  duration_ms: 9.126806
+  type: 'test'
+  ...
+# ❌ Error: Error: SNAPSHOT_NOT_FOUND
+#     at requestError (/home/ubuntu/apps/Horizon/backend/src/features/market/market.service.js:24:17)
+#     at MarketHistoryService.getSnapshot (/home/ubuntu/apps/Horizon/backend/src/features/market/market.service.js:131:13)
+#     at process.processTicksAndRejections (node:internal/process/task_queues:103:5) {
+#   status: 404,
+#   code: 'SNAPSHOT_NOT_FOUND'
+# }
+# Subtest: H15A integration: error shape returns 404 SNAPSHOT_NOT_FOUND for nonexistent snapshot
+ok 96 - H15A integration: error shape returns 404 SNAPSHOT_NOT_FOUND for nonexistent snapshot
+  ---
+  duration_ms: 16.107473
+  type: 'test'
+  ...
+# ❌ Error: PayloadTooLargeError: request entity too large
+#     at readStream (/home/ubuntu/apps/Horizon/backend/node_modules/raw-body/index.js:163:17)
+#     at getRawBody (/home/ubuntu/apps/Horizon/backend/node_modules/raw-body/index.js:116:12)
+#     at read (/home/ubuntu/apps/Horizon/backend/node_modules/body-parser/lib/read.js:113:3)
+#     at jsonParser (/home/ubuntu/apps/Horizon/backend/node_modules/body-parser/lib/types/json.js:88:5)
+#     at Layer.handleRequest (/home/ubuntu/apps/Horizon/backend/node_modules/router/lib/layer.js:152:17)
+#     at trimPrefix (/home/ubuntu/apps/Horizon/backend/node_modules/router/index.js:342:13)
+#     at /home/ubuntu/apps/Horizon/backend/node_modules/router/index.js:297:9
+#     at processParams (/home/ubuntu/apps/Horizon/backend/node_modules/router/index.js:582:12)
+#     at next (/home/ubuntu/apps/Horizon/backend/node_modules/router/index.js:291:5)
+#     at cors (/home/ubuntu/apps/Horizon/backend/node_modules/cors/lib/index.js:188:7) {
+#   expected: 71694,
+#   length: 71694,
+#   limit: 65536,
+#   type: 'entity.too.large'
+# }
+# Subtest: H15A integration: transport-level parser DoS protection rejects oversized payload with 413
+ok 97 - H15A integration: transport-level parser DoS protection rejects oversized payload with 413
+  ---
+  duration_ms: 16.175073
+  type: 'test'
+  ...
+# Subtest: H15A integration: isolated app import and no premature position/research/automation mounts
+ok 98 - H15A integration: isolated app import and no premature position/research/automation mounts
+  ---
+  duration_ms: 15.399866
+  type: 'test'
+  ...
+1..98
+# tests 98
+# suites 0
+# pass 95
+# fail 3
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 5971.576155

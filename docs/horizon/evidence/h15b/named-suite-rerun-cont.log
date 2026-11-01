@@ -1,0 +1,85 @@
+TAP version 13
+# [dotenv@17.3.1] injecting env (6) from .env -- tip: ⚙️  write to custom object with { processEnv: myObject }
+# ❌ Error: Error: INSTRUMENT_NOT_FOUND
+#     at requestError (/home/ubuntu/apps/Horizon/backend/src/features/market/market.service.js:24:17)
+#     at MarketHistoryService.getHistory (/home/ubuntu/apps/Horizon/backend/src/features/market/market.service.js:108:28)
+#     at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+#     at async /home/ubuntu/apps/Horizon/backend/src/features/market/market.routes.js:13:24 {
+#   status: 404,
+#   code: 'INSTRUMENT_NOT_FOUND'
+# }
+# Subtest: H15B: owner-scoped positions and research routes are reachable through real application routing
+ok 1 - H15B: owner-scoped positions and research routes are reachable through real application routing
+  ---
+  duration_ms: 104.825277
+  type: 'test'
+  ...
+# Subtest: H15B: default factory without services leaves /positions and /research unmounted (H15A 404 contract)
+ok 2 - H15B: default factory without services leaves /positions and /research unmounted (H15A 404 contract)
+  ---
+  duration_ms: 18.687905
+  type: 'test'
+  ...
+# Subtest: H15B: candidate carries no economics; owned promotion records it; unknown economics rejected
+ok 3 - H15B: candidate carries no economics; owned promotion records it; unknown economics rejected
+  ---
+  duration_ms: 33.480731
+  type: 'test'
+  ...
+# Subtest: H15B: stale expected_revision is a typed 409 conflict
+ok 4 - H15B: stale expected_revision is a typed 409 conflict
+  ---
+  duration_ms: 15.661475
+  type: 'test'
+  ...
+# Subtest: H15B: owner B cannot see, change or research owner A position (indistinguishable denial)
+ok 5 - H15B: owner B cannot see, change or research owner A position (indistinguishable denial)
+  ---
+  duration_ms: 29.427652
+  type: 'test'
+  ...
+# Subtest: H15B: research latest with no runs is a truthful 200 unavailable state, never an error
+ok 6 - H15B: research latest with no runs is a truthful 200 unavailable state, never an error
+  ---
+  duration_ms: 10.279702
+  type: 'test'
+  ...
+# Subtest: H15B: queued run is 202, replayed by idempotency key, and the run wire reconciles with the H11 model
+ok 7 - H15B: queued run is 202, replayed by idempotency key, and the run wire reconciles with the H11 model
+  ---
+  duration_ms: 22.145419
+  type: 'test'
+  ...
+# Subtest: H15B: delivered success lands in run_state.last_success and latest_assessment; latest_attempt tracks a later failure
+ok 8 - H15B: delivered success lands in run_state.last_success and latest_assessment; latest_attempt tracks a later failure
+  ---
+  duration_ms: 65.356007
+  type: 'test'
+  ...
+# Subtest: H15B: a limited result counts as last_success and stays distinct from a later failed attempt
+ok 9 - H15B: a limited result counts as last_success and stays distinct from a later failed attempt
+  ---
+  duration_ms: 16.645885
+  type: 'test'
+  ...
+# Subtest: H15B: prior-report changes — a new revision supersedes stale runs and never mutates prior assessments
+ok 10 - H15B: prior-report changes — a new revision supersedes stale runs and never mutates prior assessments
+  ---
+  duration_ms: 22.172379
+  type: 'test'
+  ...
+# Subtest: H15B: observed market history for a resolved instrument stays isolated from research snapshots
+ok 11 - H15B: observed market history for a resolved instrument stays isolated from research snapshots
+  ---
+  duration_ms: 13.754696
+  type: 'test'
+  ...
+1..11
+# tests 11
+# suites 0
+# pass 11
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 890.38753

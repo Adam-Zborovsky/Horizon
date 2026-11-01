@@ -1,0 +1,202 @@
+TAP version 13
+# Subtest: maps every contract range to its truthful preferred resolution
+ok 1 - maps every contract range to its truthful preferred resolution
+  ---
+  duration_ms: 3.077789
+  type: 'test'
+  ...
+# Subtest: labels an unsupported requested resolution instead of silently relabeling it
+ok 2 - labels an unsupported requested resolution instead of silently relabeling it
+  ---
+  duration_ms: 11.752832
+  type: 'test'
+  ...
+# Subtest: removes invalid and duplicate provider bars, keeps ascending observed bars, and reports partial data
+ok 3 - removes invalid and duplicate provider bars, keeps ascending observed bars, and reports partial data
+  ---
+  duration_ms: 34.412967
+  type: 'test'
+  ...
+# Subtest: uses an expired immutable snapshot after a provider timeout and marks it stale
+ok 4 - uses an expired immutable snapshot after a provider timeout and marks it stale
+  ---
+  duration_ms: 3.374432
+  type: 'test'
+  ...
+# Subtest: returns an explicit unavailable result when the provider fails without cached observations
+ok 5 - returns an explicit unavailable result when the provider fails without cached observations
+  ---
+  duration_ms: 0.767167
+  type: 'test'
+  ...
+# Subtest: treats early closes and DST-bearing UTC timestamps as observed provider timestamps
+ok 6 - treats early closes and DST-bearing UTC timestamps as observed provider timestamps
+  ---
+  duration_ms: 1.564415
+  type: 'test'
+  ...
+# Subtest: parses Yahoo chart rows without manufacturing OHLC values and exposes delayed metadata
+ok 7 - parses Yahoo chart rows without manufacturing OHLC values and exposes delayed metadata
+  ---
+  duration_ms: 11.476069
+  type: 'test'
+  ...
+# Subtest: bounds a response body that ignores abort and classifies it as a provider timeout
+ok 8 - bounds a response body that ignores abort and classifies it as a provider timeout
+  ---
+  duration_ms: 26.102608
+  type: 'test'
+  ...
+# Subtest: bounds stalled header fetch and classifies it as a provider timeout
+ok 9 - bounds stalled header fetch and classifies it as a provider timeout
+  ---
+  duration_ms: 29.49252
+  type: 'test'
+  ...
+# Subtest: keeps the timeout through delayed body parsing and clears it after success
+ok 10 - keeps the timeout through delayed body parsing and clears it after success
+  ---
+  duration_ms: 62.571434
+  type: 'test'
+  ...
+# Subtest: classifies network failure as unavailable and body parse rejection as invalid response
+ok 11 - classifies network failure as unavailable and body parse rejection as invalid response
+  ---
+  duration_ms: 45.554432
+  type: 'test'
+  ...
+# Subtest: route factory applies injected authentication and only passes server-derived user context
+ok 12 - route factory applies injected authentication and only passes server-derived user context
+  ---
+  duration_ms: 2.572384
+  type: 'test'
+  ...
+# Subtest: automation middleware fails closed when release configuration is absent
+ok 13 - automation middleware fails closed when release configuration is absent
+  ---
+  duration_ms: 1.332733
+  type: 'test'
+  ...
+# Subtest: legacy ingestion denies anonymous, invalid, expired, and insufficiently scoped automation requests
+ok 14 - legacy ingestion denies anonymous, invalid, expired, and insufficiently scoped automation requests
+  ---
+  duration_ms: 147.630402
+  type: 'test'
+  ...
+# Subtest: legacy ingestion cannot use a client userId to target another owner
+ok 15 - legacy ingestion cannot use a client userId to target another owner
+  ---
+  duration_ms: 39.405774
+  type: 'test'
+  ...
+# Subtest: automation route rejects bodies beyond its bounded callback payload limit
+ok 16 - automation route rejects bodies beyond its bounded callback payload limit
+  ---
+  duration_ms: 27.036177
+  type: 'test'
+  ...
+# Subtest: run callback authorization requires a current nonce and rejects conflicting replay deliveries
+ok 17 - run callback authorization requires a current nonce and rejects conflicting replay deliveries
+  ---
+  duration_ms: 4.704965
+  type: 'test'
+  ...
+# Subtest: legacy controller persists only the automation-bound owner and removes client userId
+ok 18 - legacy controller persists only the automation-bound owner and removes client userId
+  ---
+  duration_ms: 4.851406
+  type: 'test'
+  ...
+# Subtest: publishes one versioned, source-specific offline observed-bar recording
+ok 19 - publishes one versioned, source-specific offline observed-bar recording
+  ---
+  duration_ms: 5.368651
+  type: 'test'
+  ...
+# Subtest: accepts a named positive sample for every canonical schema
+ok 20 - accepts a named positive sample for every canonical schema
+  ---
+  duration_ms: 18.578376
+  type: 'test'
+  ...
+# Subtest: rejects a named negative sample for every canonical schema
+ok 21 - rejects a named negative sample for every canonical schema
+  ---
+  duration_ms: 4.885926
+  type: 'test'
+  ...
+# Subtest: rejects invalid calendar instants and bounded decimal overflow without number coercion
+ok 22 - rejects invalid calendar instants and bounded decimal overflow without number coercion
+  ---
+  duration_ms: 1.589975
+  type: 'test'
+  ...
+# Subtest: enforces bounded assessment nesting, identity references, and month-clamped horizons
+ok 23 - enforces bounded assessment nesting, identity references, and month-clamped horizons
+  ---
+  duration_ms: 4.064758
+  type: 'test'
+  ...
+# Subtest: enforces research run lifecycle states and history ordering
+ok 24 - enforces research run lifecycle states and history ordering
+  ---
+  duration_ms: 1.410254
+  type: 'test'
+  ...
+# Subtest: accepts queued lifecycle state only without active or terminal fields
+ok 25 - accepts queued lifecycle state only without active or terminal fields
+  ---
+  duration_ms: 0.557365
+  type: 'test'
+  ...
+# Subtest: accepts running lifecycle state with a bounded in-progress heartbeat
+ok 26 - accepts running lifecycle state with a bounded in-progress heartbeat
+  ---
+  duration_ms: 0.336243
+  type: 'test'
+  ...
+# Subtest: accepts a resumed running lifecycle state with its persisted evidence snapshot
+ok 27 - accepts a resumed running lifecycle state with its persisted evidence snapshot
+  ---
+  duration_ms: 1.06921
+  type: 'test'
+  ...
+# Subtest: accepts successful lifecycle state with matching snapshot and result
+ok 28 - accepts successful lifecycle state with matching snapshot and result
+  ---
+  duration_ms: 1.557455
+  type: 'test'
+  ...
+# Subtest: accepts failed lifecycle state with a terminal error and no assessment
+ok 29 - accepts failed lifecycle state with a terminal error and no assessment
+  ---
+  duration_ms: 0.784968
+  type: 'test'
+  ...
+# Subtest: accepts stalled lifecycle state only after deadline
+ok 30 - accepts stalled lifecycle state only after deadline
+  ---
+  duration_ms: 0.300923
+  type: 'test'
+  ...
+# Subtest: accepts superseded lifecycle state without a published result
+ok 31 - accepts superseded lifecycle state without a published result
+  ---
+  duration_ms: 0.274722
+  type: 'test'
+  ...
+# Subtest: enforces semantic assessment boundaries, calendar range, and additive response policy
+ok 32 - enforces semantic assessment boundaries, calendar range, and additive response policy
+  ---
+  duration_ms: 19.370824
+  type: 'test'
+  ...
+1..32
+# tests 32
+# suites 0
+# pass 32
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 3190.55751

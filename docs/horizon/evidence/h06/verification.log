@@ -1,0 +1,35 @@
+=== node --test backend/test/research-evidence.test.cjs ===
+# tests 12
+# pass 12
+# fail 0
+exit=0
+=== node --test backend/test/research-contracts.test.cjs ===
+# tests 14
+# pass 14
+# fail 0
+exit=0
+=== node --test backend/test/market-history.test.cjs ===
+# tests 12
+# pass 12
+# fail 0
+exit=0
+=== node --test backend/test/research-auth.test.cjs ===
+# tests 6
+# pass 6
+# fail 0
+exit=0
+=== node --test backend/test/research-history-integration.test.cjs ===
+# tests 11
+# pass 11
+# fail 0
+exit=0
+=== git diff --check ===
+clean (exit 0)
+=== SHA-256 ===
+7f5cbd85d1254a5690f0e3ddfb2004fa94afd65efe27047ffb22e053a656e9ec  backend/src/features/research/evidence.model.js
+a419a13a4699fab0a2c603b71b96dae7b9c4dee4eb92d2a4290b3b97a2ccb03f  backend/src/features/research/evidence.service.js
+92c6cbf52c9096d856d1ae2b2ebe72bb3fad8d37a630c5f5f5ebd76484822427  backend/src/features/research/providers/sec.js
+9def06e07b04d2c80b6ca4a0f7d3dbf50bf219a7a1ecb2b7dd51533336863c9a  backend/src/features/research/providers/company_news.js
+ebabc35f599713b40615e83eaa0038c4c5e52a813754e1585a7874fcc3e4ad1c  backend/test/research-evidence.test.cjs
+=== secret scan ===
+no embedded credential literals

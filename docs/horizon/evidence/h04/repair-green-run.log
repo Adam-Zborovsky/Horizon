@@ -1,0 +1,250 @@
+TAP version 13
+# Subtest: model: accepts a valid owned position document
+ok 1 - model: accepts a valid owned position document
+  ---
+  duration_ms: 75.109714
+  type: 'test'
+  ...
+# Subtest: model: candidate documents reject cost/quantity/open date
+ok 2 - model: candidate documents reject cost/quantity/open date
+  ---
+  duration_ms: 34.462687
+  type: 'test'
+  ...
+# Subtest: model: legacy_unclassified documents reject any economics
+ok 3 - model: legacy_unclassified documents reject any economics
+  ---
+  duration_ms: 8.565561
+  type: 'test'
+  ...
+# Subtest: model: unknown top-level fields are rejected (strict throw)
+ok 4 - model: unknown top-level fields are rejected (strict throw)
+  ---
+  duration_ms: 18.367974
+  type: 'test'
+  ...
+# Subtest: model: rejects non-ISO currency, non-positive amounts and malformed decimals
+ok 5 - model: rejects non-ISO currency, non-positive amounts and malformed decimals
+  ---
+  duration_ms: 58.457356
+  type: 'test'
+  ...
+# Subtest: model: rejects malformed opened_on calendar dates
+ok 6 - model: rejects malformed opened_on calendar dates
+  ---
+  duration_ms: 54.311116
+  type: 'test'
+  ...
+# Subtest: service: decimal validation matrix
+ok 7 - service: decimal validation matrix
+  ---
+  duration_ms: 55.496967
+  type: 'test'
+  ...
+# Subtest: service: candidate creation with economics is rejected — desired entry belongs in review_conditions
+ok 8 - service: candidate creation with economics is rejected — desired entry belongs in review_conditions
+  ---
+  duration_ms: 5.698494
+  type: 'test'
+  ...
+# Subtest: service: legacy_unclassified positions carry null economics — no cost inferred from tickers or prose
+ok 9 - service: legacy_unclassified positions carry null economics — no cost inferred from tickers or prose
+  ---
+  duration_ms: 11.60723
+  type: 'test'
+  ...
+# Subtest: service: unknown fields in create and update payloads are rejected
+ok 10 - service: unknown fields in create and update payloads are rejected
+  ---
+  duration_ms: 14.520818
+  type: 'test'
+  ...
+# Subtest: service: another owner gets an indistinguishable NOT_FOUND, never a leak
+ok 11 - service: another owner gets an indistinguishable NOT_FOUND, never a leak
+  ---
+  duration_ms: 5.340091
+  type: 'test'
+  ...
+# Subtest: service: owner fields are not writable by clients (server-derived owner)
+ok 12 - service: owner fields are not writable by clients (server-derived owner)
+  ---
+  duration_ms: 5.30473
+  type: 'test'
+  ...
+# Subtest: service: list is scoped to the authenticated owner
+ok 13 - service: list is scoped to the authenticated owner
+  ---
+  duration_ms: 2.329462
+  type: 'test'
+  ...
+# Subtest: service: serialized positions never expose owner_id
+ok 14 - service: serialized positions never expose owner_id
+  ---
+  duration_ms: 2.258302
+  type: 'test'
+  ...
+# Subtest: service: duplicate active identity for the same owner returns 409-class error
+ok 15 - service: duplicate active identity for the same owner returns 409-class error
+  ---
+  duration_ms: 0.741967
+  type: 'test'
+  ...
+# Subtest: service: same instrument for different owners is allowed
+ok 16 - service: same instrument for different owners is allowed
+  ---
+  duration_ms: 0.374804
+  type: 'test'
+  ...
+# Subtest: service: archived positions free the identity; unarchive conflicts with a newer active position
+ok 17 - service: archived positions free the identity; unarchive conflicts with a newer active position
+  ---
+  duration_ms: 14.209495
+  type: 'test'
+  ...
+# Subtest: service: candidate -> owned is an explicit action with validated economics
+ok 18 - service: candidate -> owned is an explicit action with validated economics
+  ---
+  duration_ms: 8.061196
+  type: 'test'
+  ...
+# Subtest: service: owned -> candidate clears active economics and preserves the audit trail via revision
+ok 19 - service: owned -> candidate clears active economics and preserves the audit trail via revision
+  ---
+  duration_ms: 0.449204
+  type: 'test'
+  ...
+# Subtest: service: invalid transitions are rejected
+ok 20 - service: invalid transitions are rejected
+  ---
+  duration_ms: 114.942052
+  type: 'test'
+  ...
+# Subtest: service: transition to owned with malformed economics fails and leaves the position untouched
+ok 21 - service: transition to owned with malformed economics fails and leaves the position untouched
+  ---
+  duration_ms: 10.171816
+  type: 'test'
+  ...
+# Subtest: service: missing or stale expected_revision is rejected; correct revision increments
+ok 22 - service: missing or stale expected_revision is rejected; correct revision increments
+  ---
+  duration_ms: 0.960089
+  type: 'test'
+  ...
+# Subtest: pl: unknown cost stays null and P/L is unavailable with unknown_cost
+ok 23 - pl: unknown cost stays null and P/L is unavailable with unknown_cost
+  ---
+  duration_ms: 11.452829
+  type: 'test'
+  ...
+# Subtest: pl: currency mismatch blocks comparable P/L without silent FX approximation
+ok 24 - pl: currency mismatch blocks comparable P/L without silent FX approximation
+  ---
+  duration_ms: 0.385804
+  type: 'test'
+  ...
+# Subtest: pl: unreconciled split basis blocks comparable P/L with explanation
+ok 25 - pl: unreconciled split basis blocks comparable P/L with explanation
+  ---
+  duration_ms: 4.25952
+  type: 'test'
+  ...
+# Subtest: pl: matching basis yields decimal percent; absolute requires quantity; fees/dividends labeled excluded
+ok 26 - pl: matching basis yields decimal percent; absolute requires quantity; fees/dividends labeled excluded
+  ---
+  duration_ms: 0.950449
+  type: 'test'
+  ...
+# Subtest: pl: candidate and legacy_unclassified positions have no owned economics
+ok 27 - pl: candidate and legacy_unclassified positions have no owned economics
+  ---
+  duration_ms: 0.292603
+  type: 'test'
+  ...
+# Subtest: routes: auth is enforced, owner is server-derived, full CRUD behaves per contract
+ok 28 - routes: auth is enforced, owner is server-derived, full CRUD behaves per contract
+  ---
+  duration_ms: 1079.023451
+  type: 'test'
+  ...
+# Subtest: migration: legacy tickers import as legacy_unclassified with null economics and exact counts
+ok 29 - migration: legacy tickers import as legacy_unclassified with null economics and exact counts
+  ---
+  duration_ms: 4.28508
+  type: 'test'
+  ...
+# Subtest: migration: second run is idempotent — zero new changes for existing active positions
+ok 30 - migration: second run is idempotent — zero new changes for existing active positions
+  ---
+  duration_ms: 1.451654
+  type: 'test'
+  ...
+# Subtest: migration: archived duplicates do not block re-import, but active ones do
+ok 31 - migration: archived duplicates do not block re-import, but active ones do
+  ---
+  duration_ms: 0.486365
+  type: 'test'
+  ...
+# Subtest: migration: manifest is reversible — every insert has a matching rollback step
+ok 32 - migration: manifest is reversible — every insert has a matching rollback step
+  ---
+  duration_ms: 2.387423
+  type: 'test'
+  ...
+# Subtest: migration: no cost/ownership facts are inferred from tickers or user prose
+ok 33 - migration: no cost/ownership facts are inferred from tickers or user prose
+  ---
+  duration_ms: 0.251242
+  type: 'test'
+  ...
+# Subtest: ticker policy: tickers-only PUT that would orphan active positions is blocked explicitly, not destructive
+ok 34 - ticker policy: tickers-only PUT that would orphan active positions is blocked explicitly, not destructive
+  ---
+  duration_ms: 2.673265
+  type: 'test'
+  ...
+# Subtest: ticker policy: removals without active positions and additions pass through
+ok 35 - ticker policy: removals without active positions and additions pass through
+  ---
+  duration_ms: 0.493124
+  type: 'test'
+  ...
+# Subtest: ticker policy: case-insensitive ticker matching and owner scoping
+ok 36 - ticker policy: case-insensitive ticker matching and owner scoping
+  ---
+  duration_ms: 5.457931
+  type: 'test'
+  ...
+# Subtest: model: _id is an opaque String schema path — pos-<uuid> ids validate (Finding 1)
+ok 37 - model: _id is an opaque String schema path — pos-<uuid> ids validate (Finding 1)
+  ---
+  duration_ms: 2.222221
+  type: 'test'
+  ...
+# Subtest: model: legacy-mig-* deterministic ids validate on the real schema (Finding 1 + 2)
+ok 38 - model: legacy-mig-* deterministic ids validate on the real schema (Finding 1 + 2)
+  ---
+  duration_ms: 6.079658
+  type: 'test'
+  ...
+# Subtest: migration: apply-path document persists the deterministic legacy-mig-* _id (Finding 2)
+ok 39 - migration: apply-path document persists the deterministic legacy-mig-* _id (Finding 2)
+  ---
+  duration_ms: 1.159132
+  type: 'test'
+  ...
+# Subtest: model: decimal validator matches the service bound — <=18 total / <=12 fraction digits (Note B)
+ok 40 - model: decimal validator matches the service bound — <=18 total / <=12 fraction digits (Note B)
+  ---
+  duration_ms: 30.58129
+  type: 'test'
+  ...
+1..40
+# tests 40
+# suites 0
+# pass 40
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 7104.266133

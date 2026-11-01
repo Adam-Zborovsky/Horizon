@@ -1,0 +1,201 @@
+{
+  "fixture_kind": "engineered_contract_cases",
+  "contract_version": 1,
+  "fixture_purpose": "Test-only valid and negative schema cases. Values are synthetic and do not represent a user position, market observation, or forecast.",
+  "valid": {
+    "positionWrite": {
+      "instrument_id": "instrument-ibm-xnys-usd",
+      "state": "owned",
+      "average_cost": { "amount": "150.25", "currency": "USD" },
+      "quantity": "2.5",
+      "opened_on": "2024-01-05",
+      "preferred_horizon_months": 3,
+      "original_thesis": "Synthetic test thesis.",
+      "review_conditions": ["Synthetic test condition."],
+      "risk_context": null,
+      "archived": false,
+      "expected_revision": 2
+    },
+    "marketBar": {
+      "time": "2024-01-02T14:30:00.000Z",
+      "session_date": "2024-01-02",
+      "open": 162.83,
+      "high": 163.29,
+      "low": 160.46,
+      "close": 161.5,
+      "volume": 3825000,
+      "adjusted_close": null,
+      "is_final": true
+    },
+    "evidenceItem": {
+      "id": "evidence-1",
+      "instrument_id": "instrument-ibm-xnys-usd",
+      "kind": "filing",
+      "title": "Synthetic filing evidence.",
+      "source_url": "https://example.test/evidence-1",
+      "source_name": "Synthetic test source",
+      "published_at": "2024-01-04T12:00:00.000Z",
+      "retrieved_at": "2024-01-05T21:00:00.000Z",
+      "available_at": "2024-01-04T12:00:00.000Z",
+      "reporting_period": { "start": "2023-10-01", "end": "2023-12-31", "label": "Synthetic Q4" },
+      "excerpt": "Synthetic permitted excerpt.",
+      "source_locator": "Synthetic locator.",
+      "facts": [{ "id": "fact-1", "label": "Synthetic fact", "value": 1, "unit": "USD", "currency": "USD", "basis": "GAAP", "reporting_period": { "start": "2023-10-01", "end": "2023-12-31", "label": "Synthetic Q4" } }],
+      "coverage_status": "available"
+    },
+    "claim": {
+      "text": "Synthetic observed claim.",
+      "evidence_ids": ["evidence-1"],
+      "metric_ids": [],
+      "claim_type": "observed"
+    },
+    "numericProjection": {
+      "id": "projection-1",
+      "assessment_id": "assessment-1",
+      "instrument_id": "instrument-ibm-xnys-usd",
+      "evidence_snapshot_id": "snapshot-1",
+      "anchor_time": "2024-01-05T21:00:00.000Z",
+      "anchor_price_metric_id": "metric-close-1",
+      "target_session_date": "2024-02-05",
+      "kind": "conditional_scenario",
+      "method": "synthetic-test-method",
+      "method_version": "1",
+      "input_metric_ids": ["metric-close-1"],
+      "assumption_ids": ["assumption-1"],
+      "lower": 150,
+      "central": 160,
+      "upper": 170,
+      "currency": "USD",
+      "adjustment_basis": "raw",
+      "calibration": null,
+      "valid_until": "2024-02-05T21:00:00.000Z",
+      "limitations": ["Synthetic test output."]
+    },
+    "researchAssessment": {
+      "id": "assessment-1",
+      "contract_version": 1,
+      "position_id": "position-1",
+      "position_revision": 2,
+      "instrument_id": "instrument-ibm-xnys-usd",
+      "run_id": "run-1",
+      "evidence_snapshot_id": "snapshot-1",
+      "generated_at": "2024-01-05T21:05:00.000Z",
+      "session_as_of": "2024-01-05",
+      "status": "limited",
+      "market_thesis": {
+        "business_assessment": { "summary": "Synthetic business assessment.", "claims": [] },
+        "price_technical_assessment": { "summary": "Synthetic price assessment.", "claims": [] },
+        "valuation_assessment": { "summary": "Synthetic valuation assessment.", "claims": [] },
+        "rationale": [],
+        "counterevidence": []
+      },
+      "recommendation": {
+        "action": "hold",
+        "horizon_months": 3,
+        "headline": "Synthetic test recommendation.",
+        "rationale": [],
+        "countercase": [],
+        "invalidation_conditions": [],
+        "evidence_quality": "limited",
+        "predictive_uncertainty": "high"
+      },
+      "position_context": {
+        "position_id": "position-1",
+        "instrument_id": "instrument-ibm-xnys-usd",
+        "state": "owned",
+        "revision": 2,
+        "average_cost": { "amount": "150.25", "currency": "USD" },
+        "quantity": "2.5",
+        "opened_on": "2024-01-05",
+        "economics_status": "available"
+      },
+      "changes_since_previous": null,
+      "checkpoints": [],
+      "outlooks": [
+        { "horizon_months": 1, "calendar_target_date": "2024-02-05", "evaluation_session_date": "2024-02-05", "direction": "mixed", "base_case": [], "upside_case": [], "downside_case": [], "catalysts": [], "invalidators": [], "numeric_projection": null, "data_limitations": ["Synthetic test output."] },
+        { "horizon_months": 2, "calendar_target_date": "2024-03-05", "evaluation_session_date": "2024-03-05", "direction": "mixed", "base_case": [], "upside_case": [], "downside_case": [], "catalysts": [], "invalidators": [], "numeric_projection": null, "data_limitations": ["Synthetic test output."] },
+        { "horizon_months": 3, "calendar_target_date": "2024-04-05", "evaluation_session_date": "2024-04-05", "direction": "mixed", "base_case": [], "upside_case": [], "downside_case": [], "catalysts": [], "invalidators": [], "numeric_projection": null, "data_limitations": ["Synthetic test output."] }
+      ],
+      "missing_data": ["Synthetic test output."],
+      "next_review": null,
+      "versions": { "prompt": "test" }
+    },
+    "researchRun": {
+      "id": "run-1",
+      "position_id": "position-1",
+      "owner_id_internal": "owner-internal-only",
+      "position_revision": 2,
+      "run_kind": "manual_refresh",
+      "idempotency_key": "test-key-1",
+      "status": "limited",
+      "stage": "delivery",
+      "created_at": "2024-01-05T21:00:00.000Z",
+      "started_at": "2024-01-05T21:01:00.000Z",
+      "heartbeat_at": "2024-01-05T21:04:00.000Z",
+      "deadline_at": "2024-01-05T21:10:00.000Z",
+      "finished_at": "2024-01-05T21:05:00.000Z",
+      "evidence_snapshot_id": "snapshot-1",
+      "assessment_id": "assessment-1",
+      "error_code": null,
+      "retry_count": 0,
+      "versions": { "contract": "1" }
+    },
+    "positionContext": {
+      "average_cost": { "amount": "150.25", "currency": "USD" },
+      "current_price": { "amount": 159.16, "currency": "USD" },
+      "quantity": "2.5",
+      "adjustment_basis": "raw"
+    },
+    "historyResponse": {
+      "contract_version": 1,
+      "instrument": { "instrument_id": "instrument-ibm-xnys-usd", "symbol": "IBM", "exchange": "XNYS", "currency": "USD", "provider_symbol": "IBM" },
+      "snapshot_id": "snapshot-market-1",
+      "range": "1M",
+      "requested_resolution": "1d",
+      "actual_resolution": "1d",
+      "exchange_timezone": "America/New_York",
+      "session_mode": "regular",
+      "adjustment_basis": "raw",
+      "as_of": "2024-01-05T21:00:00.000Z",
+      "fetched_at": "2024-01-05T21:01:00.000Z",
+      "data_status": "available",
+      "delay_status": "unknown",
+      "is_stale": false,
+      "available_ranges": ["1M"],
+      "bars": [],
+      "warnings": [],
+      "next_cursor": null
+    }
+  },
+  "invalid": {
+    "positionWrite": [
+      { "name": "candidate cannot carry economics", "changes": { "state": "candidate" } },
+      { "name": "unknown write field", "changes": { "unexpected": true } }
+    ],
+    "marketBar": [
+      { "name": "invalid calendar date", "changes": { "session_date": "2024-02-30" } },
+      { "name": "invalid OHLC ordering", "changes": { "low": 200 } }
+    ],
+    "evidenceItem": [
+      { "name": "invalid source URL", "changes": { "source_url": "not-a-url" } }
+    ],
+    "claim": [
+      { "name": "duplicate evidence references", "changes": { "evidence_ids": ["evidence-1", "evidence-1"] } }
+    ],
+    "numericProjection": [
+      { "name": "calibrated forecast lacks calibration", "changes": { "kind": "calibrated_forecast", "calibration": null } }
+    ],
+    "researchAssessment": [
+      { "name": "missing structured thesis", "changes": { "market_thesis": {} } }
+    ],
+    "researchRun": [
+      { "name": "queued run retains lifecycle results", "changes": { "status": "queued" } }
+    ],
+    "positionContext": [
+      { "name": "cross-currency economics", "changes": { "current_price": { "amount": 159.16, "currency": "EUR" } } }
+    ],
+    "historyResponse": [
+      { "name": "stale response claims realtime", "changes": { "is_stale": true, "delay_status": "realtime" } }
+    ]
+  }
+}

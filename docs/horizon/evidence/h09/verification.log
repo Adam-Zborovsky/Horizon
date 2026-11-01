@@ -1,0 +1,43 @@
+v22.22.2
+=== backend/test/market-history.test.cjs
+# tests 12
+# pass 12
+# fail 0
+=== backend/test/positions.test.cjs
+# tests 41
+# pass 41
+# fail 0
+=== backend/test/research-agent.test.cjs
+# tests 20
+# pass 20
+# fail 0
+=== backend/test/research-auth.test.cjs
+# tests 6
+# pass 6
+# fail 0
+=== backend/test/research-contracts.test.cjs
+# tests 14
+# pass 14
+# fail 0
+=== backend/test/research-evidence.test.cjs
+# tests 19
+# pass 19
+# fail 0
+=== backend/test/research-history-integration.test.cjs
+# tests 11
+# pass 11
+# fail 0
+=== backend/test/research-metrics.test.cjs
+# tests 24
+# pass 24
+# fail 0
+=== backend/test/research-state.test.cjs
+# tests 26
+# pass 26
+# fail 0
+=== backend/test/research-validation.test.cjs
+# tests 24
+# pass 24
+# fail 0
+=== git diff --check
+clean exit 0

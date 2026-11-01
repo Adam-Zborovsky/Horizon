@@ -1,0 +1,27 @@
+{
+  "fixture_kind": "observed_recording",
+  "contract_version": 1,
+  "fixture_purpose": "Offline validation recording; not current market data, a user position, or a projection.",
+  "instrument": {
+    "instrument_id": "instrument-ibm-xnys-usd",
+    "symbol": "IBM",
+    "exchange": "XNYS",
+    "currency": "USD",
+    "provider_symbol": "IBM"
+  },
+  "source": {
+    "name": "Yahoo Finance public chart response",
+    "capture_url": "https://query1.finance.yahoo.com/v8/finance/chart/IBM?period1=1704067200&period2=1704499200&interval=1d",
+    "retrieved_at": "2026-10-30T15:26:01Z",
+    "provenance_artifact": "docs/horizon/evidence/h01/observed-bars-provenance.json",
+    "content_sha256": "dcf75e1922753be1fc0ced05f47892c6dfbc48b4c52fe5bd2c2e0d9e83923caf",
+    "adjustment_basis": "raw provider OHLCV; adjusted close is intentionally omitted rather than mixed into raw candles"
+  },
+  "time_semantics": "time is the provider daily UTC start timestamp; session_date remains the exchange-local daily identity.",
+  "bars": [
+    { "time": "2024-01-02T14:30:00.000Z", "session_date": "2024-01-02", "open": 162.8300018310547, "high": 163.2899932861328, "low": 160.4600067138672, "close": 161.5, "volume": 3825000, "adjusted_close": null, "is_final": true },
+    { "time": "2024-01-03T14:30:00.000Z", "session_date": "2024-01-03", "open": 161, "high": 161.72999572753906, "low": 160.0800018310547, "close": 160.10000610351562, "volume": 4086100, "adjusted_close": null, "is_final": true },
+    { "time": "2024-01-04T14:30:00.000Z", "session_date": "2024-01-04", "open": 160.22000122070312, "high": 161.80999755859375, "low": 160.1699981689453, "close": 160.86000061035156, "volume": 3212000, "adjusted_close": null, "is_final": true },
+    { "time": "2024-01-05T14:30:00.000Z", "session_date": "2024-01-05", "open": 159.91000366210938, "high": 160.5500030517578, "low": 158.6699981689453, "close": 159.16000366210938, "volume": 4199400, "adjusted_close": null, "is_final": true }
+  ]
+}

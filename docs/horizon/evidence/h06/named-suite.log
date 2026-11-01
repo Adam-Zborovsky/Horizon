@@ -1,0 +1,82 @@
+TAP version 13
+# Subtest: EvidenceService constructor validates required dependencies
+ok 1 - EvidenceService constructor validates required dependencies
+  ---
+  duration_ms: 2.0385
+  type: 'test'
+  ...
+# Subtest: SEC adapter: enforces official SEC URL allowlist and rejects arbitrary or untrusted URLs
+ok 2 - SEC adapter: enforces official SEC URL allowlist and rejects arbitrary or untrusted URLs
+  ---
+  duration_ms: 1.169652
+  type: 'test'
+  ...
+# Subtest: SEC adapter: enforces fair-access User-Agent header and handles timeouts safely
+ok 3 - SEC adapter: enforces fair-access User-Agent header and handles timeouts safely
+  ---
+  duration_ms: 31.361058
+  type: 'test'
+  ...
+# Subtest: SEC adapter: parses filings, source locators, reporting periods, and financial facts
+ok 4 - SEC adapter: parses filings, source locators, reporting periods, and financial facts
+  ---
+  duration_ms: 6.839025
+  type: 'test'
+  ...
+# Subtest: SEC adapter: respects point-in-time cutoff and separates amendments from original filings
+ok 5 - SEC adapter: respects point-in-time cutoff and separates amendments from original filings
+  ---
+  duration_ms: 3.061469
+  type: 'test'
+  ...
+# Subtest: Company News adapter: enforces news URL allowlist and rejects SSRF/arbitrary destinations
+ok 6 - Company News adapter: enforces news URL allowlist and rejects SSRF/arbitrary destinations
+  ---
+  duration_ms: 1.066731
+  type: 'test'
+  ...
+# Subtest: Company News adapter: deduplicates repeated stories and marks headline-only status
+ok 7 - Company News adapter: deduplicates repeated stories and marks headline-only status
+  ---
+  duration_ms: 2.193101
+  type: 'test'
+  ...
+# Subtest: Company News adapter: sanitizes untrusted content and prevents tool/prompt injection payloads
+ok 8 - Company News adapter: sanitizes untrusted content and prevents tool/prompt injection payloads
+  ---
+  duration_ms: 1.431253
+  type: 'test'
+  ...
+# Subtest: EvidenceService: creates immutable snapshot, enforces point-in-time cutoff, and generates content_digest
+ok 9 - EvidenceService: creates immutable snapshot, enforces point-in-time cutoff, and generates content_digest
+  ---
+  duration_ms: 14.848061
+  type: 'test'
+  ...
+# Subtest: EvidenceService: explicitly documents lean-source gaps and does not invent transcripts or consensus
+ok 10 - EvidenceService: explicitly documents lean-source gaps and does not invent transcripts or consensus
+  ---
+  duration_ms: 1.953018
+  type: 'test'
+  ...
+# Subtest: EvidenceService: analyst tools retrieve bounded excerpts and reject arbitrary URLs or unknown IDs
+ok 11 - EvidenceService: analyst tools retrieve bounded excerpts and reject arbitrary URLs or unknown IDs
+  ---
+  duration_ms: 1.776017
+  type: 'test'
+  ...
+# Subtest: Every produced EvidenceItem adheres strictly to contracts.evidenceItemSchema
+ok 12 - Every produced EvidenceItem adheres strictly to contracts.evidenceItemSchema
+  ---
+  duration_ms: 0.638046
+  type: 'test'
+  ...
+1..12
+# tests 12
+# suites 0
+# pass 12
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 652.384645

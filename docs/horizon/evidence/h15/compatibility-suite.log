@@ -1,0 +1,103 @@
+TAP version 13
+# [dotenv@17.3.1] injecting env (6) from .env -- tip: ⚙️  override existing env vars with { override: true }
+# Subtest: A1: default app keeps /api/v1/automation/research unmounted (404 until wired)
+ok 1 - A1: default app keeps /api/v1/automation/research unmounted (404 until wired)
+  ---
+  duration_ms: 69.134462
+  type: 'test'
+  ...
+# Subtest: A2: mounted automation router demands the scoped service identity (401 without bearer)
+ok 2 - A2: mounted automation router demands the scoped service identity (401 without bearer)
+  ---
+  duration_ms: 20.212125
+  type: 'test'
+  ...
+# Subtest: A3: automation router rejects a valid bearer lacking the required scope (403)
+ok 3 - A3: automation router rejects a valid bearer lacking the required scope (403)
+  ---
+  duration_ms: 10.288145
+  type: 'test'
+  ...
+# Subtest: A4: scoped service identity lists its queued runs without economics exposure
+ok 4 - A4: scoped service identity lists its queued runs without economics exposure
+  ---
+  duration_ms: 13.799861
+  type: 'test'
+  ...
+# BriefingService: Triggering n8n workflow for user fixture-user (Reason: scheduled_daily)...
+# BriefingService: n8n workflow triggered successfully.
+# Subtest: B1: end-to-end journey — user queue, scoped automation view, bounded worker, persisted result
+ok 5 - B1: end-to-end journey — user queue, scoped automation view, bounded worker, persisted result
+  ---
+  duration_ms: 57.706107
+  type: 'test'
+  ...
+# Subtest: B2: composing the automation surface without a model client fails closed (TypeError)
+ok 6 - B2: composing the automation surface without a model client fails closed (TypeError)
+  ---
+  duration_ms: 9.658858
+  type: 'test'
+  ...
+# Subtest: B3: composing the automation surface without a shared runs store or input provider fails closed
+ok 7 - B3: composing the automation surface without a shared runs store or input provider fails closed
+  ---
+  duration_ms: 0.914889
+  type: 'test'
+  ...
+# Subtest: B4: composing the automation surface without a scoped service identity fails closed
+ok 8 - B4: composing the automation surface without a scoped service identity fails closed
+  ---
+  duration_ms: 0.463924
+  type: 'test'
+  ...
+# Subtest: C1: a stale tickers-only config PUT that would drop position-backed tickers is refused with 409 (non-destructive)
+ok 9 - C1: a stale tickers-only config PUT that would drop position-backed tickers is refused with 409 (non-destructive)
+  ---
+  duration_ms: 2.644787
+  type: 'test'
+  ...
+# Subtest: C2: a config PUT that does not touch position-backed tickers is accepted
+ok 10 - C2: a config PUT that does not touch position-backed tickers is accepted
+  ---
+  duration_ms: 1.129212
+  type: 'test'
+  ...
+# Subtest: C3: legacy tickers are derived from active positions (provider_symbol, then symbol), deduped
+ok 11 - C3: legacy tickers are derived from active positions (provider_symbol, then symbol), deduped
+  ---
+  duration_ms: 0.500245
+  type: 'test'
+  ...
+# Subtest: C4: a briefing covering position-derived tickers is not falsely flagged as hallucination
+ok 12 - C4: a briefing covering position-derived tickers is not falsely flagged as hallucination
+  ---
+  duration_ms: 0.98869
+  type: 'test'
+  ...
+# Subtest: C5: legacy factual enrichment writes the numeric legacy shape but never clobbers rich currency-denominated prices, and never fabricates history
+ok 13 - C5: legacy factual enrichment writes the numeric legacy shape but never clobbers rich currency-denominated prices, and never fabricates history
+  ---
+  duration_ms: 0.509885
+  type: 'test'
+  ...
+# Subtest: C6: legacy consumers keep working — getLatest parses stored string JSON and filters disabled topics
+ok 14 - C6: legacy consumers keep working — getLatest parses stored string JSON and filters disabled topics
+  ---
+  duration_ms: 0.862769
+  type: 'test'
+  ...
+# Subtest: C7: the legacy workflow payload derives tickers from active positions
+ok 15 - C7: the legacy workflow payload derives tickers from active positions
+  ---
+  duration_ms: 1.108732
+  type: 'test'
+  ...
+1..15
+# tests 15
+# suites 0
+# pass 15
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 759.507117

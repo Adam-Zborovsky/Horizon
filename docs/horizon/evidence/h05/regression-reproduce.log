@@ -1,0 +1,9 @@
+=== H05 Bounded Provider Response-Body Timeout Verification ===
+
+[Probe 1] Testing unpatched pattern (timeout cleared before body consumption)...
+Unpatched result: {"settled":false,"elapsed":76}
+
+[Probe 2] Testing repaired YahooMarketProvider with stalled body...
+Repaired result code: PROVIDER_TIMEOUT in 27 ms; aborted: true
+
+All reproduction and repair assertions passed.

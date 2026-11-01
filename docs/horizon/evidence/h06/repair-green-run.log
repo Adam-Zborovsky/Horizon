@@ -1,0 +1,124 @@
+TAP version 13
+# Subtest: EvidenceService constructor validates required dependencies
+ok 1 - EvidenceService constructor validates required dependencies
+  ---
+  duration_ms: 2.169021
+  type: 'test'
+  ...
+# Subtest: SEC adapter: enforces official SEC URL allowlist and rejects arbitrary or untrusted URLs
+ok 2 - SEC adapter: enforces official SEC URL allowlist and rejects arbitrary or untrusted URLs
+  ---
+  duration_ms: 1.186131
+  type: 'test'
+  ...
+# Subtest: SEC adapter: enforces fair-access User-Agent header and handles timeouts safely
+ok 3 - SEC adapter: enforces fair-access User-Agent header and handles timeouts safely
+  ---
+  duration_ms: 31.57282
+  type: 'test'
+  ...
+# Subtest: SEC adapter: parses filings, source locators, reporting periods, and financial facts
+ok 4 - SEC adapter: parses filings, source locators, reporting periods, and financial facts
+  ---
+  duration_ms: 35.692859
+  type: 'test'
+  ...
+# Subtest: SEC adapter: respects point-in-time cutoff and separates amendments from original filings
+ok 5 - SEC adapter: respects point-in-time cutoff and separates amendments from original filings
+  ---
+  duration_ms: 2.969428
+  type: 'test'
+  ...
+# Subtest: Company News adapter: enforces news URL allowlist and rejects SSRF/arbitrary destinations
+ok 6 - Company News adapter: enforces news URL allowlist and rejects SSRF/arbitrary destinations
+  ---
+  duration_ms: 1.209572
+  type: 'test'
+  ...
+# Subtest: Company News adapter: deduplicates repeated stories and marks headline-only status
+ok 7 - Company News adapter: deduplicates repeated stories and marks headline-only status
+  ---
+  duration_ms: 2.686906
+  type: 'test'
+  ...
+# Subtest: Company News adapter: sanitizes untrusted content and prevents tool/prompt injection payloads
+ok 8 - Company News adapter: sanitizes untrusted content and prevents tool/prompt injection payloads
+  ---
+  duration_ms: 1.735976
+  type: 'test'
+  ...
+# Subtest: EvidenceService: creates immutable snapshot, enforces point-in-time cutoff, and generates content_digest
+ok 9 - EvidenceService: creates immutable snapshot, enforces point-in-time cutoff, and generates content_digest
+  ---
+  duration_ms: 32.907112
+  type: 'test'
+  ...
+# Subtest: EvidenceService: explicitly documents lean-source gaps and does not invent transcripts or consensus
+ok 10 - EvidenceService: explicitly documents lean-source gaps and does not invent transcripts or consensus
+  ---
+  duration_ms: 2.349942
+  type: 'test'
+  ...
+# Subtest: EvidenceService: analyst tools retrieve bounded excerpts and reject arbitrary URLs or unknown IDs
+ok 11 - EvidenceService: analyst tools retrieve bounded excerpts and reject arbitrary URLs or unknown IDs
+  ---
+  duration_ms: 1.962539
+  type: 'test'
+  ...
+# Subtest: Every produced EvidenceItem adheres strictly to contracts.evidenceItemSchema
+ok 12 - Every produced EvidenceItem adheres strictly to contracts.evidenceItemSchema
+  ---
+  duration_ms: 0.502085
+  type: 'test'
+  ...
+# Subtest: Company News adapter: no-sourceUrl path fetches a real allowlisted per-instrument URL (regression: never fetch(instrument))
+ok 13 - Company News adapter: no-sourceUrl path fetches a real allowlisted per-instrument URL (regression: never fetch(instrument))
+  ---
+  duration_ms: 4.005478
+  type: 'test'
+  ...
+# Subtest: Company News adapter: accepts an explicit instrument IR/news feed URL and still validates it against the allowlist
+ok 14 - Company News adapter: accepts an explicit instrument IR/news feed URL and still validates it against the allowlist
+  ---
+  duration_ms: 2.1985
+  type: 'test'
+  ...
+# Subtest: Company News adapter: dead api.company-news.local allowlist entry is removed
+ok 15 - Company News adapter: dead api.company-news.local allowlist entry is removed
+  ---
+  duration_ms: 0.611046
+  type: 'test'
+  ...
+# Subtest: News and SEC adapters: extended internal-IP deny list (172.16/12, 0.0.0.0, 127/8 remainder, ::1, fe80::/10)
+ok 16 - News and SEC adapters: extended internal-IP deny list (172.16/12, 0.0.0.0, 127/8 remainder, ::1, fe80::/10)
+  ---
+  duration_ms: 1.335213
+  type: 'test'
+  ...
+# Subtest: SEC adapter: missing CIK is explicit SEC unavailability, never a fabricated zero-CIK query
+ok 17 - SEC adapter: missing CIK is explicit SEC unavailability, never a fabricated zero-CIK query
+  ---
+  duration_ms: 0.302483
+  type: 'test'
+  ...
+# Subtest: EvidenceService: normalizes cutoffAt to an ISO string and rejects non-temporal input
+ok 18 - EvidenceService: normalizes cutoffAt to an ISO string and rejects non-temporal input
+  ---
+  duration_ms: 0.570046
+  type: 'test'
+  ...
+# Subtest: EvidenceService: real provider wiring produces SEC filings and company news end-to-end (production call path)
+ok 19 - EvidenceService: real provider wiring produces SEC filings and company news end-to-end (production call path)
+  ---
+  duration_ms: 2.1473
+  type: 'test'
+  ...
+1..19
+# tests 19
+# suites 0
+# pass 19
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1044.275951

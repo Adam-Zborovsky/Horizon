@@ -1,0 +1,17 @@
+--- secret scan (credential/token literal patterns over delivered files)
+no matches
+--- git status touched paths
+?? backend/src/features/research/
+?? backend/test/research-agent.test.cjs
+?? backend/test/research-validation.test.cjs
+?? docs/horizon/evidence/h09/
+--- sha256
+11a69aff4cafb22d8e02db4c042601eddb9e2f287144e3c054ef5e71e69bd2d3  backend/src/features/research/prompts.js
+4604249a72745f29580a7cab98b382e6c059edcaea93f89efa25d6f33d96d86f  backend/src/features/research/agent_runtime.js
+d17e874f96d36221a2e8aebf14b08ab0d2d72679f7675f5b916ab950cba4b213  backend/src/features/research/result_validator.js
+3b8ffeb29946d479d63730f96ee05b14b1fb804c59f4810560ca86232b70a4ba  backend/test/research-agent.test.cjs
+78da215858b55f583a20feebdb60ee146f3c84e6a86c592c14094395c41e6ae0  backend/test/research-validation.test.cjs
+f8bbf798367d89659e95c16cc4c9e83b5e1886e0a66f36bc1e712e94e522441a  docs/horizon/evidence/h09/red-run.log
+a3d013654631f0695c5f74a49f2895509f08bb63f2e6c43d8c9213f0b9f210af  docs/horizon/evidence/h09/verification.log
+--- tracked-file modifications under research/
+none (all new files untracked)

@@ -1,0 +1,13 @@
+{
+  "marker": {
+    "board": "horizon-research-2026-10",
+    "run_ids": [
+      157,
+      159
+    ],
+    "controller_quota": true,
+    "automatic_resume": false
+  },
+  "archived_by": "parent-controller 2026-10-31 19:43 UTC",
+  "note": "Adam switched fleet to multi-vendor roster and authorized resume; preserved before reset"
+}

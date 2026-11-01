@@ -1,0 +1,314 @@
+TAP version 13
+# Subtest: maps every contract range to its truthful preferred resolution
+ok 1 - maps every contract range to its truthful preferred resolution
+  ---
+  duration_ms: 1.993499
+  type: 'test'
+  ...
+# Subtest: labels an unsupported requested resolution instead of silently relabeling it
+ok 2 - labels an unsupported requested resolution instead of silently relabeling it
+  ---
+  duration_ms: 4.518923
+  type: 'test'
+  ...
+# Subtest: removes invalid and duplicate provider bars, keeps ascending observed bars, and reports partial data
+ok 3 - removes invalid and duplicate provider bars, keeps ascending observed bars, and reports partial data
+  ---
+  duration_ms: 15.131985
+  type: 'test'
+  ...
+# Subtest: uses an expired immutable snapshot after a provider timeout and marks it stale
+ok 4 - uses an expired immutable snapshot after a provider timeout and marks it stale
+  ---
+  duration_ms: 1.247252
+  type: 'test'
+  ...
+# Subtest: returns an explicit unavailable result when the provider fails without cached observations
+ok 5 - returns an explicit unavailable result when the provider fails without cached observations
+  ---
+  duration_ms: 0.549685
+  type: 'test'
+  ...
+# Subtest: treats early closes and DST-bearing UTC timestamps as observed provider timestamps
+ok 6 - treats early closes and DST-bearing UTC timestamps as observed provider timestamps
+  ---
+  duration_ms: 1.433614
+  type: 'test'
+  ...
+# Subtest: parses Yahoo chart rows without manufacturing OHLC values and exposes delayed metadata
+ok 7 - parses Yahoo chart rows without manufacturing OHLC values and exposes delayed metadata
+  ---
+  duration_ms: 10.670902
+  type: 'test'
+  ...
+# Subtest: bounds a response body that ignores abort and classifies it as a provider timeout
+ok 8 - bounds a response body that ignores abort and classifies it as a provider timeout
+  ---
+  duration_ms: 25.879726
+  type: 'test'
+  ...
+# Subtest: bounds stalled header fetch and classifies it as a provider timeout
+ok 9 - bounds stalled header fetch and classifies it as a provider timeout
+  ---
+  duration_ms: 26.590613
+  type: 'test'
+  ...
+# Subtest: keeps the timeout through delayed body parsing and clears it after success
+ok 10 - keeps the timeout through delayed body parsing and clears it after success
+  ---
+  duration_ms: 63.275483
+  type: 'test'
+  ...
+# Subtest: classifies network failure as unavailable and body parse rejection as invalid response
+ok 11 - classifies network failure as unavailable and body parse rejection as invalid response
+  ---
+  duration_ms: 41.523836
+  type: 'test'
+  ...
+# Subtest: route factory applies injected authentication and only passes server-derived user context
+ok 12 - route factory applies injected authentication and only passes server-derived user context
+  ---
+  duration_ms: 2.396782
+  type: 'test'
+  ...
+# Subtest: automation middleware fails closed when release configuration is absent
+ok 13 - automation middleware fails closed when release configuration is absent
+  ---
+  duration_ms: 1.367133
+  type: 'test'
+  ...
+# Subtest: legacy ingestion denies anonymous, invalid, expired, and insufficiently scoped automation requests
+ok 14 - legacy ingestion denies anonymous, invalid, expired, and insufficiently scoped automation requests
+  ---
+  duration_ms: 163.199874
+  type: 'test'
+  ...
+# Subtest: legacy ingestion cannot use a client userId to target another owner
+ok 15 - legacy ingestion cannot use a client userId to target another owner
+  ---
+  duration_ms: 48.591662
+  type: 'test'
+  ...
+# Subtest: automation route rejects bodies beyond its bounded callback payload limit
+ok 16 - automation route rejects bodies beyond its bounded callback payload limit
+  ---
+  duration_ms: 37.420596
+  type: 'test'
+  ...
+# Subtest: run callback authorization requires a current nonce and rejects conflicting replay deliveries
+ok 17 - run callback authorization requires a current nonce and rejects conflicting replay deliveries
+  ---
+  duration_ms: 3.953878
+  type: 'test'
+  ...
+# Subtest: legacy controller persists only the automation-bound owner and removes client userId
+ok 18 - legacy controller persists only the automation-bound owner and removes client userId
+  ---
+  duration_ms: 3.044109
+  type: 'test'
+  ...
+# Subtest: publishes one versioned, source-specific offline observed-bar recording
+ok 19 - publishes one versioned, source-specific offline observed-bar recording
+  ---
+  duration_ms: 6.359021
+  type: 'test'
+  ...
+# Subtest: accepts a named positive sample for every canonical schema
+ok 20 - accepts a named positive sample for every canonical schema
+  ---
+  duration_ms: 113.277438
+  type: 'test'
+  ...
+# Subtest: rejects a named negative sample for every canonical schema
+ok 21 - rejects a named negative sample for every canonical schema
+  ---
+  duration_ms: 8.989486
+  type: 'test'
+  ...
+# Subtest: rejects invalid calendar instants and bounded decimal overflow without number coercion
+ok 22 - rejects invalid calendar instants and bounded decimal overflow without number coercion
+  ---
+  duration_ms: 1.553415
+  type: 'test'
+  ...
+# Subtest: enforces bounded assessment nesting, identity references, and month-clamped horizons
+ok 23 - enforces bounded assessment nesting, identity references, and month-clamped horizons
+  ---
+  duration_ms: 3.900717
+  type: 'test'
+  ...
+# Subtest: enforces research run lifecycle states and history ordering
+ok 24 - enforces research run lifecycle states and history ordering
+  ---
+  duration_ms: 1.311252
+  type: 'test'
+  ...
+# Subtest: accepts queued lifecycle state only without active or terminal fields
+ok 25 - accepts queued lifecycle state only without active or terminal fields
+  ---
+  duration_ms: 0.577966
+  type: 'test'
+  ...
+# Subtest: accepts running lifecycle state with a bounded in-progress heartbeat
+ok 26 - accepts running lifecycle state with a bounded in-progress heartbeat
+  ---
+  duration_ms: 0.359723
+  type: 'test'
+  ...
+# Subtest: accepts a resumed running lifecycle state with its persisted evidence snapshot
+ok 27 - accepts a resumed running lifecycle state with its persisted evidence snapshot
+  ---
+  duration_ms: 1.12589
+  type: 'test'
+  ...
+# Subtest: accepts successful lifecycle state with matching snapshot and result
+ok 28 - accepts successful lifecycle state with matching snapshot and result
+  ---
+  duration_ms: 1.516495
+  type: 'test'
+  ...
+# Subtest: accepts failed lifecycle state with a terminal error and no assessment
+ok 29 - accepts failed lifecycle state with a terminal error and no assessment
+  ---
+  duration_ms: 0.703566
+  type: 'test'
+  ...
+# Subtest: accepts stalled lifecycle state only after deadline
+ok 30 - accepts stalled lifecycle state only after deadline
+  ---
+  duration_ms: 0.410364
+  type: 'test'
+  ...
+# Subtest: accepts superseded lifecycle state without a published result
+ok 31 - accepts superseded lifecycle state without a published result
+  ---
+  duration_ms: 0.266003
+  type: 'test'
+  ...
+# Subtest: enforces semantic assessment boundaries, calendar range, and additive response policy
+ok 32 - enforces semantic assessment boundaries, calendar range, and additive response policy
+  ---
+  duration_ms: 19.834389
+  type: 'test'
+  ...
+# [dotenv@17.3.1] injecting env (6) from .env -- tip: ⚙️  write to custom object with { processEnv: myObject }
+# Subtest: H15A integration: protected history route is reachable through actual application routing
+ok 33 - H15A integration: protected history route is reachable through actual application routing
+  ---
+  duration_ms: 116.217507
+  type: 'test'
+  ...
+# Subtest: H15A integration: anonymous denial rejects requests missing authorization header with 401
+ok 34 - H15A integration: anonymous denial rejects requests missing authorization header with 401
+  ---
+  duration_ms: 45.346791
+  type: 'test'
+  ...
+# Subtest: H15A integration: invalid token denial rejects invalid bearer token with 401
+ok 35 - H15A integration: invalid token denial rejects invalid bearer token with 401
+  ---
+  duration_ms: 37.325636
+  type: 'test'
+  ...
+# Subtest: H15A integration: truthful unavailable response on provider failure without cache
+ok 36 - H15A integration: truthful unavailable response on provider failure without cache
+  ---
+  duration_ms: 46.765245
+  type: 'test'
+  ...
+# Subtest: H15A integration: truthful stale-cache response on provider failure with expired cache
+ok 37 - H15A integration: truthful stale-cache response on provider failure with expired cache
+  ---
+  duration_ms: 36.217385
+  type: 'test'
+  ...
+# Subtest: H15A integration: labels unsupported requested resolution as unavailable
+ok 38 - H15A integration: labels unsupported requested resolution as unavailable
+  ---
+  duration_ms: 23.581025
+  type: 'test'
+  ...
+# ❌ Error: Error: INVALID_RANGE
+#     at requestError (/home/ubuntu/apps/Horizon/backend/src/features/market/market.service.js:24:17)
+#     at MarketHistoryService.getHistory (/home/ubuntu/apps/Horizon/backend/src/features/market/market.service.js:105:24)
+#     at /home/ubuntu/apps/Horizon/backend/src/features/market/market.routes.js:13:44
+#     at Layer.handleRequest (/home/ubuntu/apps/Horizon/backend/node_modules/router/lib/layer.js:152:17)
+#     at next (/home/ubuntu/apps/Horizon/backend/node_modules/router/lib/route.js:157:13)
+#     at Route.dispatch (/home/ubuntu/apps/Horizon/backend/node_modules/router/lib/route.js:117:3)
+#     at handle (/home/ubuntu/apps/Horizon/backend/node_modules/router/index.js:435:11)
+#     at Layer.handleRequest (/home/ubuntu/apps/Horizon/backend/node_modules/router/lib/layer.js:152:17)
+#     at /home/ubuntu/apps/Horizon/backend/node_modules/router/index.js:295:15
+#     at param (/home/ubuntu/apps/Horizon/backend/node_modules/router/index.js:600:14) {
+#   status: 400,
+#   code: 'INVALID_RANGE'
+# }
+# Subtest: H15A integration: error shape returns 400 INVALID_RANGE for unknown range
+ok 39 - H15A integration: error shape returns 400 INVALID_RANGE for unknown range
+  ---
+  duration_ms: 37.89892
+  type: 'test'
+  ...
+# ❌ Error: Error: INSTRUMENT_NOT_FOUND
+#     at requestError (/home/ubuntu/apps/Horizon/backend/src/features/market/market.service.js:24:17)
+#     at MarketHistoryService.getHistory (/home/ubuntu/apps/Horizon/backend/src/features/market/market.service.js:108:28)
+#     at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+#     at async /home/ubuntu/apps/Horizon/backend/src/features/market/market.routes.js:13:24 {
+#   status: 404,
+#   code: 'INSTRUMENT_NOT_FOUND'
+# }
+# Subtest: H15A integration: error shape returns 404 INSTRUMENT_NOT_FOUND for unknown instrument
+ok 40 - H15A integration: error shape returns 404 INSTRUMENT_NOT_FOUND for unknown instrument
+  ---
+  duration_ms: 62.863359
+  type: 'test'
+  ...
+# ❌ Error: Error: SNAPSHOT_NOT_FOUND
+#     at requestError (/home/ubuntu/apps/Horizon/backend/src/features/market/market.service.js:24:17)
+#     at MarketHistoryService.getSnapshot (/home/ubuntu/apps/Horizon/backend/src/features/market/market.service.js:131:13)
+#     at process.processTicksAndRejections (node:internal/process/task_queues:103:5) {
+#   status: 404,
+#   code: 'SNAPSHOT_NOT_FOUND'
+# }
+# Subtest: H15A integration: error shape returns 404 SNAPSHOT_NOT_FOUND for nonexistent snapshot
+ok 41 - H15A integration: error shape returns 404 SNAPSHOT_NOT_FOUND for nonexistent snapshot
+  ---
+  duration_ms: 101.993691
+  type: 'test'
+  ...
+# ❌ Error: PayloadTooLargeError: request entity too large
+#     at readStream (/home/ubuntu/apps/Horizon/backend/node_modules/raw-body/index.js:163:17)
+#     at getRawBody (/home/ubuntu/apps/Horizon/backend/node_modules/raw-body/index.js:116:12)
+#     at read (/home/ubuntu/apps/Horizon/backend/node_modules/body-parser/lib/read.js:113:3)
+#     at jsonParser (/home/ubuntu/apps/Horizon/backend/node_modules/body-parser/lib/types/json.js:88:5)
+#     at Layer.handleRequest (/home/ubuntu/apps/Horizon/backend/node_modules/router/lib/layer.js:152:17)
+#     at trimPrefix (/home/ubuntu/apps/Horizon/backend/node_modules/router/index.js:342:13)
+#     at /home/ubuntu/apps/Horizon/backend/node_modules/router/index.js:297:9
+#     at processParams (/home/ubuntu/apps/Horizon/backend/node_modules/router/index.js:582:12)
+#     at next (/home/ubuntu/apps/Horizon/backend/node_modules/router/index.js:291:5)
+#     at cors (/home/ubuntu/apps/Horizon/backend/node_modules/cors/lib/index.js:188:7) {
+#   expected: 71694,
+#   length: 71694,
+#   limit: 65536,
+#   type: 'entity.too.large'
+# }
+# Subtest: H15A integration: transport-level parser DoS protection rejects oversized payload with 413
+ok 42 - H15A integration: transport-level parser DoS protection rejects oversized payload with 413
+  ---
+  duration_ms: 42.198482
+  type: 'test'
+  ...
+# Subtest: H15A integration: isolated app import and no premature position/research/automation mounts
+ok 43 - H15A integration: isolated app import and no premature position/research/automation mounts
+  ---
+  duration_ms: 34.157365
+  type: 'test'
+  ...
+1..43
+# tests 43
+# suites 0
+# pass 43
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 3425.019646

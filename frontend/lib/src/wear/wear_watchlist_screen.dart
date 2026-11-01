@@ -131,32 +131,45 @@ class _WearWatchlistScreenState extends State<WearWatchlistScreen> {
                               Column(
                                 crossAxisAlignment: CrossAxisAlignment.end,
                                 children: [
-                                  Text(
-                                    '\$${stock.currentPrice.toStringAsFixed(2)}',
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 4,
-                                      vertical: 1,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: color.withValues(alpha: 0.15),
-                                      borderRadius: BorderRadius.circular(4),
-                                    ),
-                                    child: Text(
-                                      '${stock.changePercent >= 0 ? "+" : ""}${stock.changePercent.toStringAsFixed(1)}%',
-                                      style: TextStyle(
-                                        color: color,
-                                        fontSize: 9,
+                                  // H15: 0.0 means "unavailable" — the watch
+                                  // never fabricates "$0.00"; it renders an
+                                  // explicit dash. No large chart on watch.
+                                  if (stock.currentPrice > 0) ...[
+                                    Text(
+                                      '\$${stock.currentPrice.toStringAsFixed(2)}',
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 12,
                                         fontWeight: FontWeight.bold,
                                       ),
                                     ),
-                                  ),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 4,
+                                        vertical: 1,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: color.withValues(alpha: 0.15),
+                                        borderRadius: BorderRadius.circular(4),
+                                      ),
+                                      child: Text(
+                                        '${stock.changePercent >= 0 ? "+" : ""}${stock.changePercent.toStringAsFixed(1)}%',
+                                        style: TextStyle(
+                                          color: color,
+                                          fontSize: 9,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                  ] else
+                                    const Text(
+                                      '—',
+                                      style: TextStyle(
+                                        color: Colors.white24,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
                                 ],
                               ),
                             ],

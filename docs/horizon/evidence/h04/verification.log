@@ -1,0 +1,32 @@
+=== Secret-pattern scan over delivered files ===
+no matches: no embedded credential literals
+=== Delivered file hashes ===
+935224ecf27652e3198d9b64347c365f6db4a7acbf8d012cff021c0686695a0d  backend/src/features/positions/position.model.js
+ad5b3ae9f52b75ba0870caaec062aae7b3b1295610fe8c264f52fc51403e8544  backend/src/features/positions/position.service.js
+ea1e4204e71ac521f91d3fc3908bc161174f9ba9731d4cd4f873b8a46e7e0bad  backend/src/features/positions/position.routes.js
+245b2797aad9d98cc1098360ff15e1beaceb43be827e9fae8bb2c5e00d07ae6d  backend/scripts/migrate-positions.cjs
+30b8b018743f3f4c4f95e45ed152dcbed1b1c7d1f9853ffb06e648e684a621d2  backend/test/positions.test.cjs
+sha256sum: docs/horizon/evidence/h04-author.md: No such file or directory
+=== Working-tree scope check (only package files new) ===
+ M backend/src/app.js
+ M backend/src/config/env.js
+ M backend/src/features/briefing/briefing.controller.js
+ M backend/src/features/briefing/briefing.routes.js
+ M backend/src/utils/scheduler.js
+?? N8N_REBUILD_PROMPT.md
+?? RESEARCH_RELEASE.md
+?? backend/scripts/migrate-positions.cjs
+?? backend/scripts/test-research-workflow.cjs
+?? backend/src/features/market/
+?? backend/src/features/positions/
+?? backend/src/features/research/
+?? backend/src/middleware/automation.middleware.js
+?? backend/test/
+?? docs/
+?? frontend/lib/src/features/market/
+?? frontend/lib/src/features/positions/
+?? frontend/lib/src/features/research/
+?? frontend/test/chart_capability_test.dart
+?? frontend/test/research_models_test.dart
+?? frontend/test/support/
+?? n8n-workflow.json

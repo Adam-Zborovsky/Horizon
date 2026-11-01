@@ -1,15 +1,84 @@
 const Briefing = require('./briefing.model');
 const BriefingConfig = require('./briefing_config.model');
 const marketUtil = require('../../utils/market');
+const { reconcileLegacyTickerUpdate } = require('../positions/position.service');
+
+// Default active-position source for legacy-ticker derivation (CONTRACTS
+// §10): non-archived positions of the owner, projected to the narrow shape
+// the compatibility helpers consume ({id, archived, instrument}).
+async function defaultListActivePositions(userId) {
+  const Position = require('../positions/position.model');
+  const docs = await Position.find({ owner_id: String(userId), archived: false })
+    .select('instrument archived')
+    .lean();
+  return docs.map((doc) => ({
+    id: String(doc._id),
+    archived: Boolean(doc.archived),
+    instrument: doc.instrument,
+  }));
+}
 
 class BriefingService {
+  constructor({
+    briefingModel = Briefing,
+    configModel = BriefingConfig,
+    marketDataProvider = marketUtil.fetchStockData,
+    listActivePositions = defaultListActivePositions,
+    userModel = null,
+    workflowFetch = globalThis.fetch,
+  } = {}) {
+    this.briefingModel = briefingModel;
+    this.configModel = configModel;
+    this.marketDataProvider = marketDataProvider;
+    this.listActivePositions = listActivePositions;
+    this.userModel = userModel;
+    this.workflowFetch = workflowFetch;
+  }
+
+  /**
+   * Derive the effective legacy ticker set for a user: the stored config
+   * tickers plus the tickers of active (non-archived) positions —
+   * provider_symbol when resolved, else the instrument symbol. Uppercased,
+   * deduplicated, config order preserved first. Legacy flows (n8n briefing,
+   * hallucination guard) consume this set so position instruments stay
+   * covered without being re-entered as bare tickers (CONTRACTS §10).
+   */
+  async getEffectiveTickers(userId) {
+    const config = await this.getConfig(userId);
+    const effective = [];
+    const seen = new Set();
+    const push = (ticker) => {
+      if (typeof ticker !== 'string') return;
+      const normalized = ticker.trim().toUpperCase();
+      if (!normalized || seen.has(normalized)) return;
+      seen.add(normalized);
+      effective.push(normalized);
+    };
+    (Array.isArray(config.tickers) ? config.tickers : []).forEach(push);
+    try {
+      const positions = this.listActivePositions
+        ? await this.listActivePositions(userId)
+        : [];
+      for (const position of positions || []) {
+        if (!position || position.archived || !position.instrument) continue;
+        const instrument = position.instrument;
+        push(instrument.provider_symbol || instrument.symbol);
+      }
+    } catch (err) {
+      // Derivation is additive; on lookup failure the stored config set is
+      // preserved (never weakened) and the failure is reported.
+      console.warn(`BriefingService: active-position ticker derivation failed: ${err.message}`);
+    }
+    return effective;
+  }
+
   /**
    * Get the most recent briefing for a specific user
    */
   async getLatest(userId) {
     try {
-      const briefing = await Briefing.findOne({ user: userId }).sort({ createdAt: -1 });
-      
+      const briefing = await this.briefingModel.findOne({ user: userId }).sort({ createdAt: -1 });
+
       let config = await this.getConfig(userId);
 
       if (!briefing) {
@@ -88,28 +157,10 @@ class BriefingService {
       }
     }
 
-    const enrichWithHistory = (obj) => {
-      if (!obj || typeof obj !== 'object') return;
-      if (Array.isArray(obj)) {
-        obj.forEach(item => enrichWithHistory(item));
-      } else {
-        if (obj.ticker && (obj.price || obj.sentiment_score || obj.sentiment)) {
-          const rawPrice = String(obj.price || '0').replace(/[^\d.]/g, '');
-          const price = parseFloat(rawPrice) || 0;
-          const change = parseFloat(String(obj.change || '0').replace(/[^\d.+-]/g, '')) || 0.0;
-          const sentiment = parseFloat(obj.sentiment_score || obj.sentiment || 0);
-          
-          if (!obj.history && price > 0) {
-            obj.history = this.generateHistory(price, change, sentiment);
-          }
-        }
-        Object.values(obj).forEach(val => {
-          if (typeof val === 'object') enrichWithHistory(val);
-        });
-      }
-    };
-
-    enrichWithHistory(parsedData);
+    // H15B: the legacy synthetic history enrichment was removed. Briefing
+    // items carry only what the model reported; observed price history comes
+    // exclusively from the market history slice (/api/v1/market), never from
+    // Math.random fabrication.
 
     const foundTickers = new Set();
     const findTickers = (obj) => {
@@ -128,11 +179,15 @@ class BriefingService {
     findTickers(parsedData);
 
     const config = await this.getConfig(userId);
-    if (config && config.tickers && config.tickers.length > 0 && typeof parsedData === 'object' && parsedData !== null) {
-      const requestedTickers = config.tickers.map(t => t.toUpperCase());
+    if (typeof parsedData === 'object' && parsedData !== null) {
+      // CONTRACTS §10: the hallucination guard compares against the EFFECTIVE
+      // ticker set (stored config + active-position derived tickers), so a
+      // briefing that covers position instruments is never falsely rejected.
+      const effectiveTickers = await this.getEffectiveTickers(userId);
+      const requestedTickers = effectiveTickers;
       const hasOverlap = requestedTickers.some(t => foundTickers.has(t));
-      
-      if (!hasOverlap && foundTickers.size > 0) {
+
+      if (!hasOverlap && foundTickers.size > 0 && requestedTickers.length > 0) {
         console.warn('⚠️ BriefingService: HALLUCINATION DETECTED.');
         this.triggerWorkflow(userId, 'hallucination_detected_retry');
         
@@ -143,7 +198,7 @@ class BriefingService {
     }
 
     try {
-      const factualMarketData = await marketUtil.fetchStockData(Array.from(foundTickers));
+      const factualMarketData = await this.marketDataProvider(Array.from(foundTickers));
       const validFactualData = factualMarketData.filter(d => d !== null);
 
       const updateWithFactualData = (obj) => {
@@ -152,15 +207,21 @@ class BriefingService {
           obj.forEach(item => updateWithFactualData(item));
         } else {
           if (obj.ticker && typeof obj.ticker === 'string') {
-            const factual = validFactualData.find(d => d.ticker.toUpperCase() === obj.ticker.toUpperCase());
-            if (factual) {
-              obj.price = factual.price;
-              obj.change = factual.change;
-              if (!obj.name) obj.name = factual.name;
-              obj.is_invalid = false;
-            } else {
-              // Mark as invalid if not found in real market data
-              obj.is_invalid = true;
+            // Rich currency-denominated price objects (typed data shape,
+            // CONTRACTS §1) are authoritative — the legacy tickers-only
+            // enrichment must never clobber them with a bare number.
+            const hasRichPrice = obj.price !== null && typeof obj.price === 'object';
+            if (!hasRichPrice) {
+              const factual = validFactualData.find(d => d.ticker.toUpperCase() === obj.ticker.toUpperCase());
+              if (factual) {
+                obj.price = factual.price;
+                obj.change = factual.change;
+                if (!obj.name) obj.name = factual.name;
+                obj.is_invalid = false;
+              } else {
+                // Mark as invalid if not found in real market data
+                obj.is_invalid = true;
+              }
             }
           }
           Object.values(obj).forEach(val => {
@@ -174,42 +235,15 @@ class BriefingService {
       console.error('BriefingService: Failed to compile market data:', err.message); 
     }
 
-    enrichWithHistory(parsedData);
+    // H15B: no synthetic history enrichment here either — factual compilation
+    // only. Items without a model-reported history carry none.
 
-    const briefing = new Briefing({
+    const briefing = new this.briefingModel({
       user: userId,
       data: parsedData,
       source: data.source || 'n8n',
     });
     return await briefing.save();
-  }
-
-  /**
-   * Generates a 15-point synthetic history for a ticker
-   */
-  generateHistory(currentPrice, changePercent, sentiment) {
-    if (!currentPrice || currentPrice <= 0) return Array.from({ length: 15 }, () => 10.0);
-    
-    const points = [];
-    let lastVal = parseFloat(currentPrice);
-    const change = parseFloat(changePercent) || 0;
-    const sent = parseFloat(sentiment) || 0;
-    
-    points.push(lastVal);
-    const effectiveChange = change === 0 ? (Math.random() - 0.5) * 0.5 : change;
-
-    for (let i = 0; i < 14; i++) {
-      const volatility = lastVal * 0.012;
-      const bias = (effectiveChange / 100) * (lastVal / 10);
-      const noise = (Math.random() - 0.5) * volatility;
-      const sentimentInfluence = sent * (lastVal * 0.002);
-      
-      lastVal = lastVal - bias + noise - sentimentInfluence;
-      if (lastVal < currentPrice * 0.7) lastVal = currentPrice * 0.7 + (Math.random() * 5);
-      
-      points.unshift(lastVal);
-    }
-    return points;
   }
 
   /**
@@ -235,6 +269,32 @@ class BriefingService {
     }
     
     if (tickers) {
+      if (!Array.isArray(tickers) || tickers.some(t => typeof t !== 'string')) {
+        const error = new Error('tickers must be an array of strings.');
+        error.status = 400;
+        throw error;
+      }
+
+      // CONTRACTS §10 / SPEC §5: an old client's stale tickers-only PUT must
+      // not wipe tickers that back active positions. The accepted H04
+      // reconcile helper classifies removals; conflicting updates are
+      // refused explicitly (409 with the blocked removals) instead of a
+      // destructive replacement.
+      const activePositions = this.listActivePositions
+        ? await this.listActivePositions(userId)
+        : [];
+      const reconciliation = reconcileLegacyTickerUpdate({
+        activePositions,
+        previousTickers: config.tickers,
+        incomingTickers: tickers,
+      });
+      if (reconciliation.status === 'conflict') {
+        const error = new Error(reconciliation.message);
+        error.status = 409;
+        error.code = 'POSITION_TICKER_CONFLICT';
+        error.details = reconciliation.blocked_removals;
+        throw error;
+      }
       config.tickers = tickers;
     }
 
@@ -267,7 +327,7 @@ class BriefingService {
    * Completely remove a topic from the configuration for a user.
    */
   async removeTopic(userId, topicName) {
-    const config = await BriefingConfig.findOne({ user: userId });
+    const config = await this.configModel.findOne({ user: userId });
     if (!config || !config.topics) return null;
     
     config.topics = config.topics.filter(t => t.name !== topicName);
@@ -281,7 +341,7 @@ class BriefingService {
    */
   async getRecommendedTopics(userId) {
     try {
-      const briefing = await Briefing.findOne({ user: userId }).sort({ createdAt: -1 });
+      const briefing = await this.briefingModel.findOne({ user: userId }).sort({ createdAt: -1 });
       const config = await this.getConfig(userId);
       
       const followedTopics = config ? config.topics.map(t => t.name) : [];
@@ -330,16 +390,21 @@ class BriefingService {
 
     try {
       // Find user to get username
-      const User = require('../auth/user.model');
+      const User = this.userModel || require('../auth/user.model');
       const user = await User.findById(userId);
       if (!user) return;
 
       // Get user's configuration
       const config = await this.getConfig(userId);
 
+      // CONTRACTS §10: the legacy payload carries the effective ticker set —
+      // stored config tickers plus active-position derived tickers — so the
+      // legacy workflow keeps covering position instruments.
+      const effectiveTickers = await this.getEffectiveTickers(userId);
+
       console.log(`BriefingService: Triggering n8n workflow for user ${user.username} (Reason: ${reason})...`);
-      
-      const response = await fetch(env.N8N_WEBHOOK_URL, {
+
+      const response = await this.workflowFetch(env.N8N_WEBHOOK_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -349,7 +414,7 @@ class BriefingService {
           username: user.username,
           config: {
             topics: config.topics,
-            tickers: config.tickers
+            tickers: effectiveTickers.length > 0 ? effectiveTickers : (config.tickers || []),
           },
           timestamp: new Date().toISOString()
         })
@@ -369,7 +434,7 @@ class BriefingService {
   async getConfig(userId) {
     // Atomic upsert: two concurrent requests on a fresh account both used to
     // findOne -> miss -> insert, and the loser hit E11000 (user_1 unique index).
-    let config = await BriefingConfig.findOneAndUpdate(
+    let config = await this.configModel.findOneAndUpdate(
       { user: userId },
       { $setOnInsert: { user: userId } },
       { upsert: true, new: true, setDefaultsOnInsert: true }
@@ -385,7 +450,7 @@ class BriefingService {
 
     try {
       const url = `https://query1.finance.yahoo.com/v1/finance/search?q=${encodeURIComponent(query)}&quotesCount=10&newsCount=0`;
-      const response = await fetch(url, {
+      const response = await this.workflowFetch(url, {
         headers: {
           'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36'
         }
@@ -418,7 +483,7 @@ class BriefingService {
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-    const briefings = await Briefing.find({
+    const briefings = await this.briefingModel.find({
       user: userId,
       createdAt: { $gte: thirtyDaysAgo },
     }).sort({ createdAt: -1 });
@@ -502,7 +567,7 @@ class BriefingService {
    * Get the timestamp of the latest briefing for a user (lightweight check)
    */
   async getLatestTimestamp(userId) {
-    const briefing = await Briefing.findOne({ user: userId })
+    const briefing = await this.briefingModel.findOne({ user: userId })
       .sort({ createdAt: -1 })
       .select('createdAt')
       .lean();
@@ -516,8 +581,8 @@ class BriefingService {
     const skip = (page - 1) * limit;
     
     const [briefings, total] = await Promise.all([
-      Briefing.find({ user: userId }).sort({ createdAt: -1 }).skip(skip).limit(limit),
-      Briefing.countDocuments({ user: userId }),
+      this.briefingModel.find({ user: userId }).sort({ createdAt: -1 }).skip(skip).limit(limit),
+      this.briefingModel.countDocuments({ user: userId }),
     ]);
 
     return {
@@ -530,3 +595,4 @@ class BriefingService {
 }
 
 module.exports = new BriefingService();
+module.exports.BriefingService = BriefingService;

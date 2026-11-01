@@ -1,0 +1,39 @@
+# H05 independent re-review — sanitized execution log (2026-10-31)
+
+Reviewer: reviewer/deepseek-v4-pro (independent of author worker/gemini-3.8-flash).
+No source files modified. All probes are hermetic (injected/mocked fetch); no live Yahoo, DB, or Flutter use.
+
+## Environment
+- node --version: v22.22.2
+
+## On-disk SHA-256 (vs repair evidence hashes)
+72ce394994bc953e54ed0f1e5e31a4dc9639bd151da444ab3bf0dce19040f81d  backend/src/features/market/providers/yahoo.js        (MATCH repair)
+8a0aa1fb56ee308e8d53d062ac01b5265893276f5a557096f00776ac1dab7979  backend/test/market-history.test.cjs                    (MATCH repair)
+ea69d9607b13157cd06af5af701e40d939a7b5497cea943023392e202db1da74  backend/src/features/market/market.service.js           (MATCH original, unchanged)
+b5413173f0c39dd110a41e50775bf0345eaa9169d18208144a1fd4ba24e9cee7  backend/src/features/market/market.routes.js            (MATCH original, unchanged)
+d30889e86d9cbe0f33a8a9f8949e185cd36c19d517d542130e1cf31b50c25b0d  backend/src/features/market/market_snapshot.model.js    (MATCH original, unchanged)
+
+## Named suite
+node --test backend/test/market-history.test.cjs  -> exit 0, 12 passed / 0 failed.
+
+## Aggregate suite
+node --test backend/test/*.test.cjs  -> exit 0, 32 passed / 0 failed.
+(Previously reported research-auth.test.cjs:232 failure is absent; resolved by concurrent H03 lane, not weakened here.)
+
+## Independent timeout probe (reviewer-authored, scratch only)
+Probe reproduced six paths against the real YahooMarketProvider:
+{
+  "stalledBody":      { "code": "PROVIDER_TIMEOUT", "elapsedMs": 27, "aborted": true },
+  "stalledHeader":    { "code": "PROVIDER_TIMEOUT", "aborted": true },
+  "successTimerCleanup": { "bars": 1, "abortedAfterWait": false },
+  "networkFailure":   { "code": "PROVIDER_UNAVAILABLE" },
+  "bodyParse":        { "code": "PROVIDER_INVALID_RESPONSE" },
+  "nonOkStatus":      { "code": "PROVIDER_UNAVAILABLE" }
+}
+Stalled body bounded within ~2 ms of the 25 ms timeout and aborts; header stall bounded;
+timer cleared on success (no late abort); network/parse/status classified distinctly.
+
+## Hygiene
+node --check backend/src/features/market/providers/yahoo.js  -> exit 0
+node --check backend/test/market-history.test.cjs            -> exit 0
+git diff --check                                              -> exit 0

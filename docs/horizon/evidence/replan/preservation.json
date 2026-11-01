@@ -1,0 +1,13 @@
+{
+  "docs/horizon/ORCHESTRATOR.md": "02ab7d9bf2fc08412d924a95da960c72cf4ac4518cfddca121519a83eb207137",
+  "docs/horizon/SPEC.md": "331e81cfbcafe2a5241484a9c47990030c69dcf3bf1de1c279331158ac8aa0e9",
+  "docs/horizon/CONTRACTS.md": "aae104555a4f5791be1d8a5df3053dbf296145d8a398ae6f3014440c2f95980a",
+  "docs/horizon/TASKS.md": "76a611199fce7f2349baeabbf33e6d420b96152907dccab88b1256a230c1da15",
+  "docs/horizon/task-graph.json": "447b067747044879fd050bcbcfaad05375d7d093c5af49687e59acf9722c41e8",
+  "backend/src/features/research/contracts.js": "f2a41e7ecc33ce9b0cbcb1d83c1e062b9a28dfa43bfd516329869cac586c54c4",
+  "backend/test/research-contracts.test.cjs": "80e8a7f0c48f2d1cf2ef4ea5f388513be3f3f4edac7f9563f0b5e7bd2511fa87",
+  "backend/test/fixtures/research/observed-bars.json": "53fe31001016ea150c914e2b110ba89867b54c4e23fc39d68e9920c43477b5d6",
+  "backend/test/fixtures/research/contract-cases.json": "f3f46864c64ab3de1355d0eff4fd6f2a2457d97aa329a70d77644b6cfc6d038d",
+  "backend/src/utils/scheduler.js": "26b5f6aaaf21a3d45bdc9f63d5795b0d49fdca358ca8b4a0f32e53db4536ffce",
+  "n8n-workflow.json": "bed7bb0c76b7bf9d64b5a1a39c01f08a7cee1606f9121a7cce44b8a83dab9c63"
+}

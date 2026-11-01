@@ -1,0 +1,58 @@
+# H04 review — sanitized reproduction log (reviewer, independent)
+
+Host: node v22.22.2, foreground, hermetic. No DB connection, no credentials, no live operations.
+
+## Test reproduction
+
+$ node --test backend/test/positions.test.cjs
+# tests 36 / pass 36 / fail 0
+
+$ node --test backend/test/*.test.cjs
+# tests 98 / pass 98 / fail 0
+
+## Hash verification (matches author evidence §1)
+
+$ sha256sum backend/src/features/positions/position.model.js backend/src/features/positions/position.service.js backend/src/features/positions/position.routes.js backend/scripts/migrate-positions.cjs backend/test/positions.test.cjs
+935224ecf27652e3198d9b64347c365f6db4a7acbf8d012cff021c0686695a0d  position.model.js
+ad5b3ae9f52b75ba0870caaec062aae7b3b1295610fe8c264f52fc51403e8544  position.service.js
+ea1e4204e71ac521f91d3fc3908bc161174f9ba9731d4cd4f873b8a46e7e0bad  position.routes.js
+245b2797aad9d98cc1098360ff15e1beaceb43be827e9fae8bb2c5e00d07ae6d  migrate-positions.cjs
+30b8b018743f3f4c4f95e45ed152dcbed1b1c7d1f9853ffb06e648e684a621d2  positions.test.cjs
+
+## Migration CLI guards
+
+$ node backend/scripts/migrate-positions.cjs                       -> exit 2 (usage; no --uri)
+$ node backend/scripts/migrate-positions.cjs --apply --uri mongodb://127.0.0.1:27017/x
+  -> exit 3 (Refusing --apply: ... requires HORIZON_MIGRATION_ACKNOWLEDGE=...)
+$ HORIZON_MIGRATION_ACKNOWLEDGE=I-AUTHORIZE-LIVE-MIGRATION node backend/scripts/migrate-positions.cjs --apply --uri mongodb://10.0.0.5:27017/x
+  -> exit 3 (Refusing --apply: target is not loopback ...)
+
+## Blocking-finding reproduction (offline Mongoose casting)
+
+Probe 1 — model _id type:
+  Position.schema.path('_id').options  -> { auto: true, type: 'ObjectId' }
+
+Probe 2 — repository insert shape { ...doc, _id: 'pos-abc-123' }:
+  new Position({ ...doc, _id: 'pos-abc-123' }).validateSync()
+  -> _id CastError: "Cast to ObjectId failed for value \"pos-abc-123\" (type string) at path \"_id\" because of \"BSONError\""
+
+Probe 3 — repository findById with opaque string id:
+  Position.findById('pos-abc-123')
+  -> CastError: "Cast to ObjectId failed for value \"pos-abc-123\" ... model \"Position\""
+
+Probe 4 — migration apply determinism:
+  plan = planLegacyMigration({ configs:[{owner_id:'owner-1', tickers:['MSFT']}], existingPositions:[], now:... })
+  change.position_id  -> "legacy-mig-owner-1-MSFT"
+  change.document has _id? -> false
+  new Position(change.document).validateSync() -> clean
+  constructed _id -> auto-generated ObjectId "6ae65757b736aef3b3c1730d"  (NOT "legacy-mig-owner-1-MSFT")
+
+Probe 5 — model/service decimal-bound divergence:
+  new Position({ ...owned, average_cost:{ amount:'0.0000000000001', currency:'USD' } }).validateSync()
+  -> undefined (model ACCEPTS 13-fraction-digit amount; service assertDecimalString rejects with INVALID_DECIMAL)
+
+## Secret-literal scan
+
+$ grep -rniE "(api[_-]?key|secret|password|token|passwd|authorization)\s*[:=]\s*['\"][A-Za-z0-9+/._-]{12,}" \
+    backend/src/features/positions/ backend/scripts/migrate-positions.cjs backend/test/positions.test.cjs
+-> no matches

@@ -1,0 +1,40 @@
+# H10 reviewer reproduction log — 2026-11-01 — node v22.22.2 (reviewer-independent)
+
+## sha256sum (4 canonical files)
+5621771f074148072de1ab0b473dea84dbd24f4fd90163bb231e4c9f7d81be7f  backend/src/features/research/automation.routes.js
+65e41c557034664421b981fa337ccb3c4ecee0900b414a4907ba1bc65027c816  backend/src/features/research/run_worker.js
+c23be1536ef57042484957800cb25b656c223f591c339afe55283fde79a2b67b  backend/test/research-workflow.test.cjs
+58a837417801db663febc390406d110eadd8ea42033c40bc7817dcf2f3e77967  n8n-workflow.json
+
+## research-workflow suite
+$ node --test test/research-workflow.test.cjs
+# tests 25  # pass 25  # fail 0  -> exit 0
+
+## 11-suite aggregate (explicit list, excludes concurrent H15B panel file)
+$ MONGODB_URI=mongodb://hermetic-placeholder.invalid:27017/db JWT_SECRET=hermetic-placeholder-value \
+  node --test test/market-history.test.cjs test/positions.test.cjs test/research-agent.test.cjs \
+  test/research-auth.test.cjs test/research-contracts.test.cjs test/research-evidence.test.cjs \
+  test/research-history-integration.test.cjs test/research-metrics.test.cjs test/research-state.test.cjs \
+  test/research-validation.test.cjs test/research-workflow.test.cjs
+# tests 223  # pass 223  # fail 0  -> exit 0
+
+## history-integration env gate
+$ node --test test/research-history-integration.test.cjs   (no env)  -> exit 1 (zod "Invalid URL")
+$ MONGODB_URI=mongodb://hermetic-placeholder.invalid:27017/db JWT_SECRET=... node --test test/research-history-integration.test.cjs
+# tests 11  # pass 11  # fail 0  -> exit 0   (hermetic; no Mongo, no .env read)
+
+## git diff --check
+exit 0 (clean)
+
+## poll-loop independent recompute (from n8n-workflow.json)
+Poll Run Status feeders      = ['Polling Required?', 'Wait Between Polls']
+Wait Between Polls feeders   = ['Poll Budget Remaining?']
+self-loop                    = false
+Poll Budget Remaining? cond  = poll_count < 60
+Wait Between Polls amount    = 30 (seconds)
+'Poll Budget Gate' node      = absent
+=> author test-side-only fix adjudicated CORRECT.
+
+## Concurrent-lane note
+test/research-panel-integration.test.cjs (H15B, mtime 08:17) has 5 failing tests tagged 'H15B:'.
+Out of H10 scope; flagged to controller. H10 suites unaffected (223/223).

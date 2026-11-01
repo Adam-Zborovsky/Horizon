@@ -9,6 +9,10 @@ const envSchema = zod.object({
   MONGODB_URI: zod.string().url(),
   API_PREFIX: zod.string().default('/api/v1'),
   N8N_WEBHOOK_URL: zod.string().url().optional(),
+  AUTOMATION_SERVICE_TOKEN: zod.string().min(1).optional(),
+  AUTOMATION_SERVICE_SCOPES: zod.string().min(1).optional(),
+  AUTOMATION_OWNER_ID: zod.string().min(1).optional(),
+  AUTOMATION_SERVICE_TOKEN_EXPIRES_AT: zod.string().datetime().optional(),
   JWT_SECRET: zod.string(),
   JWT_EXPIRES_IN: zod.string().default('30d'),
 });

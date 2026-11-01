@@ -1,0 +1,285 @@
+TAP version 13
+# Subtest: EvidenceService constructor validates required dependencies
+ok 1 - EvidenceService constructor validates required dependencies
+  ---
+  duration_ms: 1.750457
+  type: 'test'
+  ...
+# Subtest: SEC adapter: enforces official SEC URL allowlist and rejects arbitrary or untrusted URLs
+ok 2 - SEC adapter: enforces official SEC URL allowlist and rejects arbitrary or untrusted URLs
+  ---
+  duration_ms: 1.07677
+  type: 'test'
+  ...
+# Subtest: SEC adapter: enforces fair-access User-Agent header and handles timeouts safely
+ok 3 - SEC adapter: enforces fair-access User-Agent header and handles timeouts safely
+  ---
+  duration_ms: 31.6251
+  type: 'test'
+  ...
+# Subtest: SEC adapter: parses filings, source locators, reporting periods, and financial facts
+ok 4 - SEC adapter: parses filings, source locators, reporting periods, and financial facts
+  ---
+  duration_ms: 25.661404
+  type: 'test'
+  ...
+# Subtest: SEC adapter: respects point-in-time cutoff and separates amendments from original filings
+ok 5 - SEC adapter: respects point-in-time cutoff and separates amendments from original filings
+  ---
+  duration_ms: 2.866147
+  type: 'test'
+  ...
+# Subtest: Company News adapter: enforces news URL allowlist and rejects SSRF/arbitrary destinations
+ok 6 - Company News adapter: enforces news URL allowlist and rejects SSRF/arbitrary destinations
+  ---
+  duration_ms: 0.929929
+  type: 'test'
+  ...
+# Subtest: Company News adapter: deduplicates repeated stories and marks headline-only status
+not ok 7 - Company News adapter: deduplicates repeated stories and marks headline-only status
+  ---
+  duration_ms: 1.112651
+  type: 'test'
+  location: '/home/ubuntu/apps/Horizon/backend/test/research-evidence.test.cjs:322:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    0 !== 2
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 2
+  actual: 0
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (/home/ubuntu/apps/Horizon/backend/test/research-evidence.test.cjs:363:10)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: Company News adapter: sanitizes untrusted content and prevents tool/prompt injection payloads
+not ok 8 - Company News adapter: sanitizes untrusted content and prevents tool/prompt injection payloads
+  ---
+  duration_ms: 0.757367
+  type: 'test'
+  location: '/home/ubuntu/apps/Horizon/backend/test/research-evidence.test.cjs:377:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    0 !== 1
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 1
+  actual: 0
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (/home/ubuntu/apps/Horizon/backend/test/research-evidence.test.cjs:402:10)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: EvidenceService: creates immutable snapshot, enforces point-in-time cutoff, and generates content_digest
+not ok 9 - EvidenceService: creates immutable snapshot, enforces point-in-time cutoff, and generates content_digest
+  ---
+  duration_ms: 37.765118
+  type: 'test'
+  location: '/home/ubuntu/apps/Horizon/backend/test/research-evidence.test.cjs:410:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    + actual - expected
+    
+    + '2023-11-04T00:00:00Z'
+    - '2023-11-04T00:00:00.000Z'
+                          ^
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: '2023-11-04T00:00:00.000Z'
+  actual: '2023-11-04T00:00:00Z'
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (/home/ubuntu/apps/Horizon/backend/test/research-evidence.test.cjs:482:10)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: EvidenceService: explicitly documents lean-source gaps and does not invent transcripts or consensus
+ok 10 - EvidenceService: explicitly documents lean-source gaps and does not invent transcripts or consensus
+  ---
+  duration_ms: 1.595535
+  type: 'test'
+  ...
+# Subtest: EvidenceService: analyst tools retrieve bounded excerpts and reject arbitrary URLs or unknown IDs
+ok 11 - EvidenceService: analyst tools retrieve bounded excerpts and reject arbitrary URLs or unknown IDs
+  ---
+  duration_ms: 1.376133
+  type: 'test'
+  ...
+# Subtest: Every produced EvidenceItem adheres strictly to contracts.evidenceItemSchema
+ok 12 - Every produced EvidenceItem adheres strictly to contracts.evidenceItemSchema
+  ---
+  duration_ms: 0.515525
+  type: 'test'
+  ...
+# Subtest: Company News adapter: no-sourceUrl path fetches a real allowlisted per-instrument URL (regression: never fetch(instrument))
+not ok 13 - Company News adapter: no-sourceUrl path fetches a real allowlisted per-instrument URL (regression: never fetch(instrument))
+  ---
+  duration_ms: 0.549325
+  type: 'test'
+  location: '/home/ubuntu/apps/Horizon/backend/test/research-evidence.test.cjs:618:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    fetch must receive a URL string, never the instrument object
+    
+    'object' !== 'string'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 'string'
+  actual: 'object'
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (/home/ubuntu/apps/Horizon/backend/test/research-evidence.test.cjs:640:10)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: Company News adapter: accepts an explicit instrument IR/news feed URL and still validates it against the allowlist
+not ok 14 - Company News adapter: accepts an explicit instrument IR/news feed URL and still validates it against the allowlist
+  ---
+  duration_ms: 1.422533
+  type: 'test'
+  location: '/home/ubuntu/apps/Horizon/backend/test/research-evidence.test.cjs:660:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly deep-equal:
+    + actual - expected
+    
+      [
+    +   '[object Object]'
+    -   'https://investor.company.com/aapl/feed.json'
+      ]
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+    0: 'https://investor.company.com/aapl/feed.json'
+  actual:
+    0: '[object Object]'
+  operator: 'deepStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (/home/ubuntu/apps/Horizon/backend/test/research-evidence.test.cjs:680:10)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: Company News adapter: dead api.company-news.local allowlist entry is removed
+not ok 15 - Company News adapter: dead api.company-news.local allowlist entry is removed
+  ---
+  duration_ms: 0.628886
+  type: 'test'
+  location: '/home/ubuntu/apps/Horizon/backend/test/research-evidence.test.cjs:689:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    true !== false
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: false
+  actual: true
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (/home/ubuntu/apps/Horizon/backend/test/research-evidence.test.cjs:690:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: News and SEC adapters: extended internal-IP deny list (172.16/12, 0.0.0.0, 127/8 remainder, ::1, fe80::/10)
+not ok 16 - News and SEC adapters: extended internal-IP deny list (172.16/12, 0.0.0.0, 127/8 remainder, ::1, fe80::/10)
+  ---
+  duration_ms: 0.536485
+  type: 'test'
+  location: '/home/ubuntu/apps/Horizon/backend/test/research-evidence.test.cjs:698:1'
+  failureType: 'testCodeFailure'
+  error: 'news adapter must deny http://172.16.0.9/feed via the internal-IP list'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  stack: |-
+    async TestContext.<anonymous> (/home/ubuntu/apps/Horizon/backend/test/research-evidence.test.cjs:710:5)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: SEC adapter: missing CIK is explicit SEC unavailability, never a fabricated zero-CIK query
+not ok 17 - SEC adapter: missing CIK is explicit SEC unavailability, never a fabricated zero-CIK query
+  ---
+  duration_ms: 1.02761
+  type: 'test'
+  location: '/home/ubuntu/apps/Horizon/backend/test/research-evidence.test.cjs:723:1'
+  failureType: 'testCodeFailure'
+  error: 'Missing expected rejection.'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  stack: |-
+    async TestContext.<anonymous> (/home/ubuntu/apps/Horizon/backend/test/research-evidence.test.cjs:739:3)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: EvidenceService: normalizes cutoffAt to an ISO string and rejects non-temporal input
+not ok 18 - EvidenceService: normalizes cutoffAt to an ISO string and rejects non-temporal input
+  ---
+  duration_ms: 0.919169
+  type: 'test'
+  location: '/home/ubuntu/apps/Horizon/backend/test/research-evidence.test.cjs:746:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    'object' !== 'string'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 'string'
+  actual: 'object'
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (/home/ubuntu/apps/Horizon/backend/test/research-evidence.test.cjs:762:10)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: EvidenceService: real provider wiring produces SEC filings and company news end-to-end (production call path)
+not ok 19 - EvidenceService: real provider wiring produces SEC filings and company news end-to-end (production call path)
+  ---
+  duration_ms: 1.860258
+  type: 'test'
+  location: '/home/ubuntu/apps/Horizon/backend/test/research-evidence.test.cjs:775:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    + actual - expected
+    
+    + 'unavailable'
+    - 'available'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 'available'
+  actual: 'unavailable'
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (/home/ubuntu/apps/Horizon/backend/test/research-evidence.test.cjs:824:10)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+1..19
+# tests 19
+# suites 0
+# pass 9
+# fail 10
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1609.69503

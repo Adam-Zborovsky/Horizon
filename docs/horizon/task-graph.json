@@ -1,0 +1,1455 @@
+{
+  "schema_version": 1,
+  "board_review_consolidation": {
+    "applied_on": "2026-10-31",
+    "audit": "evidence/replan/trim-report.md",
+    "visible_before": 62,
+    "visible_after": 49,
+    "additional_duplicate_reviews_archived": 13,
+    "combined_review_packages": [
+      "H01",
+      "H02",
+      "H05",
+      "H06",
+      "H08",
+      "H09",
+      "H10",
+      "H11",
+      "H12",
+      "H13",
+      "H14",
+      "H15",
+      "H16",
+      "H17"
+    ],
+    "additional_focused_reviews": [
+      "H03",
+      "H04",
+      "H07",
+      "H18"
+    ],
+    "capacity_edges_removed": [
+      [
+        "H04",
+        "H05"
+      ],
+      [
+        "H05",
+        "H06"
+      ],
+      [
+        "H02",
+        "H11"
+      ],
+      [
+        "H12",
+        "H13"
+      ],
+      [
+        "H13",
+        "H14"
+      ],
+      [
+        "H10",
+        "H16"
+      ]
+    ],
+    "full_live_board_sync": "pending early integration and follow-up card materialization"
+  },
+  "implementation_status": "14 packages independently accepted source-only (H00-H09, H11, H12, H13, H15A); H14 + H10 author lanes running 2026-11-01",
+  "repository": "/home/ubuntu/apps/Horizon",
+  "contract": "CONTRACTS.md",
+  "specification": "SPEC.md",
+  "dispatch_authorized_this_session": true,
+  "recommended_initial_concurrency": 2,
+  "concurrency_policy": "Hard cap 2 global worker lanes; scheduled holds plus controller-managed ready queue. True artifact dependencies only; no capacity edges. First new quota wall stops dispatch and controller; no auto-resume.",
+  "tasks": [
+    {
+      "id": "H00",
+      "title": "Preflight and exact baseline",
+      "depends_on": [],
+      "role": "integration-worker",
+      "kind": "source_work",
+      "new_files": [
+        "docs/horizon/evidence/preflight.md"
+      ],
+      "existing_files": [],
+      "test_files": [],
+      "steps": [
+        "Recheck repository root, branch, dirty/untracked paths and nested project rules.",
+        "Record backend/deployment Node versions, actual Flutter lock resolution, SDK/build/device availability and existing test failures.",
+        "Discover live workflow identity/version read-only with primary-controlled credential use where required.",
+        "Define the shared-file lock/allowlists and record provider/license/live-operation gates."
+      ],
+      "acceptance": [
+        "Existing user changes are enumerated and protected; no secrets in baseline evidence.",
+        "Flutter absence or baseline failures have exact evidence and a resolution gate, not an assumed pass.",
+        "No live workflow or profile was changed."
+      ],
+      "invariants": [
+        "Secrets never in output, logs, fixtures, exported literal credentials, or card text; workers do not read .env or credential stores.",
+        "No ports: in Docker compose; expose: only, route through existing Cloudflare Tunnels. No DNS/tunnel changes.",
+        "No shell backgrounding (&, nohup, setsid); use tracked terminal background processes only when authorized.",
+        "Preserve existing dirty/untracked baseline and user data; no git reset/clean, database or volume deletion, commit/push/history rewrite without explicit authorization.",
+        "No live workflow publication, credential provisioning, live migration, paid service, license acceptance, or other-profile changes in worker cards; hand those to primary/admin.",
+        "Observed market data and conditional scenarios remain separate. No invented prices, candles, history, source claims or verification output.",
+        "Read SPEC.md and CONTRACTS.md; edit only assigned files. Shared files and generated outputs have one owner. Stop on contract drift.",
+        "Write failing tests first, run them, implement, rerun; attach actual commands/output and remaining limitations. Do not claim an unavailable toolchain passed.",
+        "After two failures on the same target, stop and escalate with exact errors and attempted fixes; no blind third retry.",
+        "No confidential business data, secrets, profile/shared-skill/global-config changes, live operations, SDK/container installation, commits/pushes, or nested delegation.",
+        "Author worker/gpt-5.6-terra; reviewer reviewer/gpt-6-luna; distinct profile/model, same OpenAI Codex vendor disclosed.",
+        "Flutter runtime checks are DEFERRED_TO_DEV_PC, never PASS from source inspection. No renderer replacement."
+      ],
+      "review": "One independent combined specification and quality review with separate verdicts; targeted author repair then independent re-review. Focused extra review only H03/H04/H07/H18.",
+      "status": "accepted_preflight_with_recorded_limits",
+      "delivery_phase": "core_source",
+      "handoff": "Durable artifact, changed paths, real commands/exits/results and limits; author needs_input block: review-required: author delivery ready. Never request-review or self-complete. Controller verifies delivery; reviewer independently inspects artifacts."
+    },
+    {
+      "id": "H01",
+      "title": "Executable shared contracts and offline fixtures",
+      "depends_on": [
+        "H00"
+      ],
+      "role": "contract-worker",
+      "kind": "source_work",
+      "new_files": [
+        "backend/src/features/research/contracts.js",
+        "backend/test/research-contracts.test.cjs",
+        "backend/test/fixtures/research/observed-bars.json",
+        "backend/test/fixtures/research/contract-cases.json"
+      ],
+      "existing_files": [],
+      "test_files": [
+        "backend/test/research-contracts.test.cjs"
+      ],
+      "steps": [
+        "Write failing schema tests for position, bars, claims, assessment, projections and run lifecycle.",
+        "Implement Zod/JSON schemas matching CONTRACTS.md, including strict write fields and bounded values.",
+        "Capture a source-dated sanitized observed-bar fixture and separately labeled engineered negative fixtures; no real personal costs.",
+        "Publish canonical schema/fixtures and sample serialized outputs to all dependent lanes."
+      ],
+      "acceptance": [
+        "Invalid OHLC, numeric strings where forbidden, candidate economics, duplicate/missing horizon, stale/cross-currency cases fail.",
+        "Fixtures explicitly distinguish observed recordings from test-only engineered cases.",
+        "Consumer schemas have one version and no incompatible local variants."
+      ],
+      "invariants": [
+        "Secrets never in output, logs, fixtures, exported literal credentials, or card text; workers do not read .env or credential stores.",
+        "No ports: in Docker compose; expose: only, route through existing Cloudflare Tunnels. No DNS/tunnel changes.",
+        "No shell backgrounding (&, nohup, setsid); use tracked terminal background processes only when authorized.",
+        "Preserve existing dirty/untracked baseline and user data; no git reset/clean, database or volume deletion, commit/push/history rewrite without explicit authorization.",
+        "No live workflow publication, credential provisioning, live migration, paid service, license acceptance, or other-profile changes in worker cards; hand those to primary/admin.",
+        "Observed market data and conditional scenarios remain separate. No invented prices, candles, history, source claims or verification output.",
+        "Read SPEC.md and CONTRACTS.md; edit only assigned files. Shared files and generated outputs have one owner. Stop on contract drift.",
+        "Write failing tests first, run them, implement, rerun; attach actual commands/output and remaining limitations. Do not claim an unavailable toolchain passed.",
+        "After two failures on the same target, stop and escalate with exact errors and attempted fixes; no blind third retry.",
+        "No confidential business data, secrets, profile/shared-skill/global-config changes, live operations, SDK/container installation, commits/pushes, or nested delegation.",
+        "Author worker/gpt-5.6-terra; reviewer reviewer/gpt-6-luna; distinct profile/model, same OpenAI Codex vendor disclosed.",
+        "Flutter runtime checks are DEFERRED_TO_DEV_PC, never PASS from source inspection. No renderer replacement."
+      ],
+      "review": "One independent combined specification and quality review with separate verdicts; targeted author repair then independent re-review. Focused extra review only H03/H04/H07/H18.",
+      "status": "independently_accepted_source_only",
+      "delivery_phase": "core_source",
+      "handoff": "Durable artifact, changed paths, real commands/exits/results and limits; author needs_input block: review-required: author delivery ready. Never request-review or self-complete. Controller verifies delivery; reviewer independently inspects artifacts."
+    },
+    {
+      "id": "H02",
+      "title": "Existing-library chart capability prototype",
+      "depends_on": [
+        "H01"
+      ],
+      "role": "chart-worker",
+      "kind": "source_work",
+      "new_files": [
+        "frontend/test/support/chart_probe.dart",
+        "frontend/test/chart_capability_test.dart",
+        "docs/horizon/evidence/chart-decision.md"
+      ],
+      "existing_files": [],
+      "test_files": [
+        "frontend/test/chart_capability_test.dart"
+      ],
+      "steps": [
+        "Read actual locked fl_chart APIs and versioned source, not redirected docs.",
+        "Build a test-only native probe with observed intraday/daily OHLCV, line/candles, exact selection readout and common-axis overlays.",
+        "Exercise pan/zoom/reset, range/style switches, volume context and phone/web touch semantics.",
+        "Record screenshots/interaction proof and keep/reject decision; stop after one focused prototype session if a hard requirement fails."
+      ],
+      "acceptance": [
+        "Exact O/H/L/C/V/time matches fixture in line/candle selection; style/range state is preserved.",
+        "Actual and future endpoint ranges never overlap as observed bars; stale/null projections handled.",
+        "Existing fl_chart retained if all required behaviors pass; new renderer needs explicit dependency/license approval.",
+        "Compile-only or no-phone-toolchain evidence is not mobile acceptance."
+      ],
+      "invariants": [
+        "Secrets never in output, logs, fixtures, exported literal credentials, or card text; workers do not read .env or credential stores.",
+        "No ports: in Docker compose; expose: only, route through existing Cloudflare Tunnels. No DNS/tunnel changes.",
+        "No shell backgrounding (&, nohup, setsid); use tracked terminal background processes only when authorized.",
+        "Preserve existing dirty/untracked baseline and user data; no git reset/clean, database or volume deletion, commit/push/history rewrite without explicit authorization.",
+        "No live workflow publication, credential provisioning, live migration, paid service, license acceptance, or other-profile changes in worker cards; hand those to primary/admin.",
+        "Observed market data and conditional scenarios remain separate. No invented prices, candles, history, source claims or verification output.",
+        "Read SPEC.md and CONTRACTS.md; edit only assigned files. Shared files and generated outputs have one owner. Stop on contract drift.",
+        "Write failing tests first, run them, implement, rerun; attach actual commands/output and remaining limitations. Do not claim an unavailable toolchain passed.",
+        "After two failures on the same target, stop and escalate with exact errors and attempted fixes; no blind third retry.",
+        "No confidential business data, secrets, profile/shared-skill/global-config changes, live operations, SDK/container installation, commits/pushes, or nested delegation.",
+        "Author worker/gpt-5.6-terra; reviewer reviewer/gpt-6-luna; distinct profile/model, same OpenAI Codex vendor disclosed.",
+        "Flutter runtime checks are DEFERRED_TO_DEV_PC, never PASS from source inspection. No renderer replacement."
+      ],
+      "review": "One independent combined specification and quality review with separate verdicts; targeted author repair then independent re-review. Focused extra review only H03/H04/H07/H18.",
+      "status": "independently_accepted_source_only",
+      "delivery_phase": "core_source",
+      "handoff": "Durable artifact, changed paths, real commands/exits/results and limits; author needs_input block: review-required: author delivery ready. Never request-review or self-complete. Controller verifies delivery; reviewer independently inspects artifacts."
+    },
+    {
+      "id": "H03",
+      "title": "Scoped automation security and tenancy tests",
+      "depends_on": [
+        "H01"
+      ],
+      "role": "security-worker",
+      "kind": "source_work",
+      "new_files": [
+        "backend/src/middleware/automation.middleware.js",
+        "backend/test/research-auth.test.cjs"
+      ],
+      "existing_files": [
+        "backend/src/features/briefing/briefing.routes.js",
+        "backend/src/features/briefing/briefing.controller.js",
+        "backend/src/config/env.js"
+      ],
+      "test_files": [
+        "backend/test/research-auth.test.cjs"
+      ],
+      "steps": [
+        "Write anonymous ingestion/config, invalid service token/scope and owner spoofing denial tests.",
+        "Implement fail-closed automation authentication with injected test secrets, safe logging and bounded bodies.",
+        "Protect legacy system/ingestion code in source; document coordinated n8n deployment, without applying it live.",
+        "Define run-bound callback nonce/lease authorization helper for new routes."
+      ],
+      "acceptance": [
+        "Anonymous legacy sensitive routes fail in tests; wrong/expired scopes and replay conflicts fail.",
+        "Client-supplied userId cannot authorize new position/research operations.",
+        "No real credential read/generated/stored by worker; live credential setup remains release gate."
+      ],
+      "invariants": [
+        "Secrets never in output, logs, fixtures, exported literal credentials, or card text; workers do not read .env or credential stores.",
+        "No ports: in Docker compose; expose: only, route through existing Cloudflare Tunnels. No DNS/tunnel changes.",
+        "No shell backgrounding (&, nohup, setsid); use tracked terminal background processes only when authorized.",
+        "Preserve existing dirty/untracked baseline and user data; no git reset/clean, database or volume deletion, commit/push/history rewrite without explicit authorization.",
+        "No live workflow publication, credential provisioning, live migration, paid service, license acceptance, or other-profile changes in worker cards; hand those to primary/admin.",
+        "Observed market data and conditional scenarios remain separate. No invented prices, candles, history, source claims or verification output.",
+        "Read SPEC.md and CONTRACTS.md; edit only assigned files. Shared files and generated outputs have one owner. Stop on contract drift.",
+        "Write failing tests first, run them, implement, rerun; attach actual commands/output and remaining limitations. Do not claim an unavailable toolchain passed.",
+        "After two failures on the same target, stop and escalate with exact errors and attempted fixes; no blind third retry.",
+        "No confidential business data, secrets, profile/shared-skill/global-config changes, live operations, SDK/container installation, commits/pushes, or nested delegation.",
+        "Author worker/gpt-5.6-terra; reviewer reviewer/gpt-6-luna; distinct profile/model, same OpenAI Codex vendor disclosed.",
+        "Flutter runtime checks are DEFERRED_TO_DEV_PC, never PASS from source inspection. No renderer replacement."
+      ],
+      "review": "One independent combined specification and quality review with separate verdicts; targeted author repair then independent re-review. Focused extra review only H03/H04/H07/H18.",
+      "status": "independently_accepted_source_only",
+      "delivery_phase": "core_source",
+      "handoff": "Durable artifact, changed paths, real commands/exits/results and limits; author needs_input block: review-required: author delivery ready. Never request-review or self-complete. Controller verifies delivery; reviewer independently inspects artifacts."
+    },
+    {
+      "id": "H04",
+      "title": "Position persistence, owner-scoped API and migration preview",
+      "depends_on": [
+        "H03"
+      ],
+      "role": "backend-worker",
+      "kind": "source_work",
+      "new_files": [
+        "backend/src/features/positions/position.model.js",
+        "backend/src/features/positions/position.service.js",
+        "backend/src/features/positions/position.routes.js",
+        "backend/scripts/migrate-positions.cjs",
+        "backend/test/positions.test.cjs"
+      ],
+      "existing_files": [],
+      "test_files": [
+        "backend/test/positions.test.cjs"
+      ],
+      "steps": [
+        "Write owner-isolation, transitions, decimal validation, duplicate identity and revision-conflict tests.",
+        "Implement position model/service/router with server-derived owner and reversible archival.",
+        "Write dry-run-first additive migration with exact counts, legacy_unclassified defaults and reversible change manifest.",
+        "Test candidate-to-owned and stale legacy tickers update policy without touching live DB."
+      ],
+      "acceptance": [
+        "No cost/ownership facts inferred from old tickers or model prose.",
+        "Unknown costs remain null; currency mismatch and split basis block misleading P/L.",
+        "Migration only exercised on isolated test data; live execution is not authorized."
+      ],
+      "invariants": [
+        "Secrets never in output, logs, fixtures, exported literal credentials, or card text; workers do not read .env or credential stores.",
+        "No ports: in Docker compose; expose: only, route through existing Cloudflare Tunnels. No DNS/tunnel changes.",
+        "No shell backgrounding (&, nohup, setsid); use tracked terminal background processes only when authorized.",
+        "Preserve existing dirty/untracked baseline and user data; no git reset/clean, database or volume deletion, commit/push/history rewrite without explicit authorization.",
+        "No live workflow publication, credential provisioning, live migration, paid service, license acceptance, or other-profile changes in worker cards; hand those to primary/admin.",
+        "Observed market data and conditional scenarios remain separate. No invented prices, candles, history, source claims or verification output.",
+        "Read SPEC.md and CONTRACTS.md; edit only assigned files. Shared files and generated outputs have one owner. Stop on contract drift.",
+        "Write failing tests first, run them, implement, rerun; attach actual commands/output and remaining limitations. Do not claim an unavailable toolchain passed.",
+        "After two failures on the same target, stop and escalate with exact errors and attempted fixes; no blind third retry.",
+        "No confidential business data, secrets, profile/shared-skill/global-config changes, live operations, SDK/container installation, commits/pushes, or nested delegation.",
+        "Author worker/gpt-5.6-terra; reviewer reviewer/gpt-6-luna; distinct profile/model, same OpenAI Codex vendor disclosed.",
+        "Flutter runtime checks are DEFERRED_TO_DEV_PC, never PASS from source inspection. No renderer replacement."
+      ],
+      "review": "One independent combined specification and quality review with separate verdicts; targeted author repair then independent re-review. Focused extra review only H03/H04/H07/H18.",
+      "status": "independently_accepted_source_only",
+      "delivery_phase": "core_source",
+      "handoff": "Durable artifact, changed paths, real commands/exits/results and limits; author needs_input block: review-required: author delivery ready. Never request-review or self-complete. Controller verifies delivery; reviewer independently inspects artifacts."
+    },
+    {
+      "id": "H05",
+      "title": "Observed OHLCV history, snapshots and chart API",
+      "depends_on": [
+        "H01"
+      ],
+      "role": "market-data-worker",
+      "kind": "source_work",
+      "new_files": [
+        "backend/src/features/market/market.service.js",
+        "backend/src/features/market/market.routes.js",
+        "backend/src/features/market/market_snapshot.model.js",
+        "backend/src/features/market/providers/yahoo.js",
+        "backend/test/market-history.test.cjs"
+      ],
+      "existing_files": [],
+      "test_files": [
+        "backend/test/market-history.test.cjs"
+      ],
+      "steps": [
+        "Write range/resolution, ordering, invalid bars, stale cache, provider timeout and DST/holiday/early-close tests.",
+        "Implement vetted instrument mapping, provider adapter, source metadata and immutable chart snapshots.",
+        "Expose owner-authenticated history with truthful actual resolution and partial/unavailable status.",
+        "Add request limits/cache keys and forbid fabricated OHLC or fallback quotes."
+      ],
+      "acceptance": [
+        "All six ranges follow CONTRACTS.md; unsupported intervals are labeled, not silently relabeled.",
+        "Real timestamps/currency/adjustment/delay status survive serialization.",
+        "Provider failures yield explicit gaps or stale cache, not synthetic points."
+      ],
+      "invariants": [
+        "Secrets never in output, logs, fixtures, exported literal credentials, or card text; workers do not read .env or credential stores.",
+        "No ports: in Docker compose; expose: only, route through existing Cloudflare Tunnels. No DNS/tunnel changes.",
+        "No shell backgrounding (&, nohup, setsid); use tracked terminal background processes only when authorized.",
+        "Preserve existing dirty/untracked baseline and user data; no git reset/clean, database or volume deletion, commit/push/history rewrite without explicit authorization.",
+        "No live workflow publication, credential provisioning, live migration, paid service, license acceptance, or other-profile changes in worker cards; hand those to primary/admin.",
+        "Observed market data and conditional scenarios remain separate. No invented prices, candles, history, source claims or verification output.",
+        "Read SPEC.md and CONTRACTS.md; edit only assigned files. Shared files and generated outputs have one owner. Stop on contract drift.",
+        "Write failing tests first, run them, implement, rerun; attach actual commands/output and remaining limitations. Do not claim an unavailable toolchain passed.",
+        "After two failures on the same target, stop and escalate with exact errors and attempted fixes; no blind third retry.",
+        "No confidential business data, secrets, profile/shared-skill/global-config changes, live operations, SDK/container installation, commits/pushes, or nested delegation.",
+        "Author worker/gpt-5.6-terra; reviewer reviewer/gpt-6-luna; distinct profile/model, same OpenAI Codex vendor disclosed.",
+        "Flutter runtime checks are DEFERRED_TO_DEV_PC, never PASS from source inspection. No renderer replacement."
+      ],
+      "review": "One independent combined specification and quality review with separate verdicts; targeted author repair then independent re-review. Focused extra review only H03/H04/H07/H18.",
+      "status": "independently_accepted_source_only",
+      "delivery_phase": "core_source",
+      "handoff": "Durable artifact, changed paths, real commands/exits/results and limits; author needs_input block: review-required: author delivery ready. Never request-review or self-complete. Controller verifies delivery; reviewer independently inspects artifacts."
+    },
+    {
+      "id": "H06",
+      "title": "Primary evidence adapters and registry",
+      "depends_on": [
+        "H01"
+      ],
+      "role": "research-data-worker",
+      "kind": "source_work",
+      "new_files": [
+        "backend/src/features/research/evidence.model.js",
+        "backend/src/features/research/evidence.service.js",
+        "backend/src/features/research/providers/sec.js",
+        "backend/src/features/research/providers/company_news.js",
+        "backend/test/research-evidence.test.cjs"
+      ],
+      "existing_files": [],
+      "test_files": [
+        "backend/test/research-evidence.test.cjs"
+      ],
+      "steps": [
+        "Write cutoff, filing-period/unit, amendment, URL allowlist, duplicate-news and unavailable-coverage tests.",
+        "Implement SEC/company IR/accessible news evidence adapters with bounded retrieval and fair-access behavior.",
+        "Persist source locators, publication/availability/retrieval times and headline-only flags.",
+        "Create normalized fact/excerpt outputs for analyst tools; do not invent transcripts/consensus."
+      ],
+      "acceptance": [
+        "Later filings or amended facts cannot enter earlier-cutoff evidence.",
+        "Untrusted content cannot request tools, secrets, arbitrary HTTP or policy changes.",
+        "Lean-source gaps are explicit and do not produce generic business claims."
+      ],
+      "invariants": [
+        "Secrets never in output, logs, fixtures, exported literal credentials, or card text; workers do not read .env or credential stores.",
+        "No ports: in Docker compose; expose: only, route through existing Cloudflare Tunnels. No DNS/tunnel changes.",
+        "No shell backgrounding (&, nohup, setsid); use tracked terminal background processes only when authorized.",
+        "Preserve existing dirty/untracked baseline and user data; no git reset/clean, database or volume deletion, commit/push/history rewrite without explicit authorization.",
+        "No live workflow publication, credential provisioning, live migration, paid service, license acceptance, or other-profile changes in worker cards; hand those to primary/admin.",
+        "Observed market data and conditional scenarios remain separate. No invented prices, candles, history, source claims or verification output.",
+        "Read SPEC.md and CONTRACTS.md; edit only assigned files. Shared files and generated outputs have one owner. Stop on contract drift.",
+        "Write failing tests first, run them, implement, rerun; attach actual commands/output and remaining limitations. Do not claim an unavailable toolchain passed.",
+        "After two failures on the same target, stop and escalate with exact errors and attempted fixes; no blind third retry.",
+        "No confidential business data, secrets, profile/shared-skill/global-config changes, live operations, SDK/container installation, commits/pushes, or nested delegation.",
+        "Author worker/gpt-5.6-terra; reviewer reviewer/gpt-6-luna; distinct profile/model, same OpenAI Codex vendor disclosed.",
+        "Flutter runtime checks are DEFERRED_TO_DEV_PC, never PASS from source inspection. No renderer replacement."
+      ],
+      "review": "One independent combined specification and quality review with separate verdicts; targeted author repair then independent re-review. Focused extra review only H03/H04/H07/H18.",
+      "status": "independently_accepted_source_only",
+      "delivery_phase": "core_source",
+      "handoff": "Durable artifact, changed paths, real commands/exits/results and limits; author needs_input block: review-required: author delivery ready. Never request-review or self-complete. Controller verifies delivery; reviewer independently inspects artifacts."
+    },
+    {
+      "id": "H07",
+      "title": "Core deterministic metrics, economics and calendar horizons",
+      "depends_on": [
+        "H05",
+        "H06"
+      ],
+      "role": "quant-worker",
+      "kind": "source_work",
+      "new_files": [
+        "backend/src/features/research/metrics.js",
+        "backend/test/research-metrics.test.cjs"
+      ],
+      "existing_files": [],
+      "test_files": [
+        "backend/test/research-metrics.test.cjs"
+      ],
+      "steps": [
+        "Write independently checked fixtures for returns/averages/volatility/drawdown/relative returns/P&L and calendar horizon mapping.",
+        "Implement registry with method/input/source IDs and finite-value/basis guards.",
+        "Keep numeric_projection null with explicit limitation until H07A is independently accepted. No scenario engine prerequisite."
+      ],
+      "acceptance": [
+        "Money/quantity handling is deterministic; same-cost/split/currency assumptions tested.",
+        "Calendar target/evaluation sessions correct at month ends, holidays and leap years.",
+        "Metric references remain reproducible and code-calculated; no fabricated projection."
+      ],
+      "invariants": [
+        "Secrets never in output, logs, fixtures, exported literal credentials, or card text; workers do not read .env or credential stores.",
+        "No ports: in Docker compose; expose: only, route through existing Cloudflare Tunnels. No DNS/tunnel changes.",
+        "No shell backgrounding (&, nohup, setsid); use tracked terminal background processes only when authorized.",
+        "Preserve existing dirty/untracked baseline and user data; no git reset/clean, database or volume deletion, commit/push/history rewrite without explicit authorization.",
+        "No live workflow publication, credential provisioning, live migration, paid service, license acceptance, or other-profile changes in worker cards; hand those to primary/admin.",
+        "Observed market data and conditional scenarios remain separate. No invented prices, candles, history, source claims or verification output.",
+        "Read SPEC.md and CONTRACTS.md; edit only assigned files. Shared files and generated outputs have one owner. Stop on contract drift.",
+        "Write failing tests first, run them, implement, rerun; attach actual commands/output and remaining limitations. Do not claim an unavailable toolchain passed.",
+        "After two failures on the same target, stop and escalate with exact errors and attempted fixes; no blind third retry.",
+        "No confidential business data, secrets, profile/shared-skill/global-config changes, live operations, SDK/container installation, commits/pushes, or nested delegation.",
+        "Author worker/gpt-5.6-terra; reviewer reviewer/gpt-6-luna; distinct profile/model, same OpenAI Codex vendor disclosed.",
+        "Flutter runtime checks are DEFERRED_TO_DEV_PC, never PASS from source inspection. No renderer replacement."
+      ],
+      "review": "One independent combined specification and quality review with separate verdicts; targeted author repair then independent re-review. Focused extra review only H03/H04/H07/H18.",
+      "status": "independently_accepted_source_only",
+      "delivery_phase": "core_source",
+      "handoff": "Durable artifact, changed paths, real commands/exits/results and limits; author needs_input block: review-required: author delivery ready. Never request-review or self-complete. Controller verifies delivery; reviewer independently inspects artifacts."
+    },
+    {
+      "id": "H08",
+      "title": "Durable run state, evidence snapshots and thesis memory",
+      "depends_on": [
+        "H04",
+        "H07"
+      ],
+      "role": "backend-worker",
+      "kind": "source_work",
+      "new_files": [
+        "backend/src/features/research/research_run.model.js",
+        "backend/src/features/research/research_assessment.model.js",
+        "backend/src/features/research/research_snapshot.model.js",
+        "backend/src/features/research/thesis_state.model.js",
+        "backend/src/features/research/research.service.js",
+        "backend/src/features/research/research.routes.js",
+        "backend/test/research-state.test.cjs"
+      ],
+      "existing_files": [],
+      "test_files": [
+        "backend/test/research-state.test.cjs"
+      ],
+      "steps": [
+        "Write persisted idempotency, duplicate claim, owner isolation, revision superseding and checkpoint change tests.",
+        "Implement immutable assessment/snapshot references, exact position revisions and separate last-success/latest-attempt state.",
+        "Persist atomic claims/idempotency, immutable run input/result references, heartbeat/deadline/stalled states; safe restart terminates or explicitly supersedes an incomplete run. Generalized stage replay/recovery is H09X, not core prerequisite.",
+        "Expose research read/run endpoints as isolated router; integration lane mounts it later."
+      ],
+      "acceptance": [
+        "Concurrent callbacks cannot create duplicate assessments or cross-owner writes.",
+        "Prior judgments are identified as judgments; triggered/retired/replaced checkpoints retain history.",
+        "A crashed/expired run becomes stalled or recoverable, not forever running."
+      ],
+      "invariants": [
+        "Secrets never in output, logs, fixtures, exported literal credentials, or card text; workers do not read .env or credential stores.",
+        "No ports: in Docker compose; expose: only, route through existing Cloudflare Tunnels. No DNS/tunnel changes.",
+        "No shell backgrounding (&, nohup, setsid); use tracked terminal background processes only when authorized.",
+        "Preserve existing dirty/untracked baseline and user data; no git reset/clean, database or volume deletion, commit/push/history rewrite without explicit authorization.",
+        "No live workflow publication, credential provisioning, live migration, paid service, license acceptance, or other-profile changes in worker cards; hand those to primary/admin.",
+        "Observed market data and conditional scenarios remain separate. No invented prices, candles, history, source claims or verification output.",
+        "Read SPEC.md and CONTRACTS.md; edit only assigned files. Shared files and generated outputs have one owner. Stop on contract drift.",
+        "Write failing tests first, run them, implement, rerun; attach actual commands/output and remaining limitations. Do not claim an unavailable toolchain passed.",
+        "After two failures on the same target, stop and escalate with exact errors and attempted fixes; no blind third retry.",
+        "No confidential business data, secrets, profile/shared-skill/global-config changes, live operations, SDK/container installation, commits/pushes, or nested delegation.",
+        "Author worker/gpt-5.6-terra; reviewer reviewer/gpt-6-luna; distinct profile/model, same OpenAI Codex vendor disclosed.",
+        "Flutter runtime checks are DEFERRED_TO_DEV_PC, never PASS from source inspection. No renderer replacement."
+      ],
+      "review": "One independent combined specification and quality review with separate verdicts; targeted author repair then independent re-review. Focused extra review only H03/H04/H07/H18.",
+      "status": "independently_accepted_source_only",
+      "delivery_phase": "core_source",
+      "handoff": "Durable artifact, changed paths, real commands/exits/results and limits; author needs_input block: review-required: author delivery ready. Never request-review or self-complete. Controller verifies delivery; reviewer independently inspects artifacts."
+    },
+    {
+      "id": "H09",
+      "title": "Bounded grounded research pipeline and validation",
+      "depends_on": [
+        "H07",
+        "H08"
+      ],
+      "role": "research-engine-worker",
+      "kind": "source_work",
+      "new_files": [
+        "backend/src/features/research/prompts.js",
+        "backend/src/features/research/agent_runtime.js",
+        "backend/src/features/research/result_validator.js",
+        "backend/test/research-agent.test.cjs",
+        "backend/test/research-validation.test.cjs"
+      ],
+      "existing_files": [],
+      "test_files": [
+        "backend/test/research-agent.test.cjs",
+        "backend/test/research-validation.test.cjs"
+      ],
+      "steps": [
+        "Test exact owner/revision/snapshot binding, direct state-aware actions, three distinct horizons, prior-assessment/checkpoint continuity and invalid evidence/number/cutoff cases.",
+        "Use existing H05/H06/H07/H08 modules and injected clients in one fixed bounded Node pipeline, not a generalized tool/stage runtime. Freeze bounded source context before model invocation.",
+        "Generate one grounded cost-free market synthesis (position state/horizon allowed, purchase cost/quantity excluded); deterministic server composition adds exact owner-bound economics and validates state-compatible stance. Changing cost alone cannot change the market thesis.",
+        "Allow at most two synthesis/repair attempts total, explicit deadlines, missing coverage and failed/limited status. No model reviewer stage by default; preserve quality comparison requirement before adding one.",
+        "Test with mocks, planted factual/temporal/unsupported-claim fixtures and a frozen evaluation protocol; no paid/live model calls or superiority claims."
+      ],
+      "acceptance": [
+        "Fabricated metrics/sources, post-cutoff facts and state-incompatible actions fail closed.",
+        "Exactly one/two/three-month outlooks, direct source-backed conclusion/countercase, explicit missing data and prior-report/checkpoint changes.",
+        "Personal economics stays out of market synthesis/shared caches; server joins exact revision and deterministic P/L.",
+        "Bounded retrieval/repair/deadlines and real failure status; no generalized runtime or paid model comparison prerequisite."
+      ],
+      "invariants": [
+        "Secrets never in output, logs, fixtures, exported literal credentials, or card text; workers do not read .env or credential stores.",
+        "No ports: in Docker compose; expose: only, route through existing Cloudflare Tunnels. No DNS/tunnel changes.",
+        "No shell backgrounding (&, nohup, setsid); use tracked terminal background processes only when authorized.",
+        "Preserve existing dirty/untracked baseline and user data; no git reset/clean, database or volume deletion, commit/push/history rewrite without explicit authorization.",
+        "No live workflow publication, credential provisioning, live migration, paid service, license acceptance, or other-profile changes in worker cards; hand those to primary/admin.",
+        "Observed market data and conditional scenarios remain separate. No invented prices, candles, history, source claims or verification output.",
+        "Read SPEC.md and CONTRACTS.md; edit only assigned files. Shared files and generated outputs have one owner. Stop on contract drift.",
+        "Write failing tests first, run them, implement, rerun; attach actual commands/output and remaining limitations. Do not claim an unavailable toolchain passed.",
+        "After two failures on the same target, stop and escalate with exact errors and attempted fixes; no blind third retry.",
+        "No confidential business data, secrets, profile/shared-skill/global-config changes, live operations, SDK/container installation, commits/pushes, or nested delegation.",
+        "Author worker/gpt-5.6-terra; reviewer reviewer/gpt-6-luna; distinct profile/model, same OpenAI Codex vendor disclosed.",
+        "Flutter runtime checks are DEFERRED_TO_DEV_PC, never PASS from source inspection. No renderer replacement."
+      ],
+      "review": "One independent combined specification and quality review with separate verdicts; targeted author repair then independent re-review. Focused extra review only H03/H04/H07/H18.",
+      "status": "independently_accepted_source_only",
+      "delivery_phase": "core_source",
+      "handoff": "Durable artifact, changed paths, real commands/exits/results and limits; author needs_input block: review-required: author delivery ready. Never request-review or self-complete. Controller verifies delivery; reviewer independently inspects artifacts."
+    },
+    {
+      "id": "H10",
+      "title": "Thin n8n trigger/poll/delivery and bounded run worker",
+      "depends_on": [
+        "H03",
+        "H09"
+      ],
+      "role": "workflow-worker",
+      "kind": "source_work",
+      "new_files": [
+        "backend/src/features/research/automation.routes.js",
+        "backend/src/features/research/run_worker.js",
+        "backend/test/research-workflow.test.cjs"
+      ],
+      "existing_files": [
+        "n8n-workflow.json",
+        "backend/src/utils/scheduler.js",
+        "backend/scripts/test-research-workflow.cjs"
+      ],
+      "test_files": [
+        "backend/test/research-workflow.test.cjs"
+      ],
+      "steps": [
+        "Preserve source baseline; live workflow comparison is an operator release gate, not permission to access production here.",
+        "Write hermetic trigger/execute/poll/result replay, deadline/stall, authorization and restart tests with injected clients.",
+        "Node owns fixed pipeline execution; n8n only triggers, polls persisted status and delivers validated bound results, without an analyst loop.",
+        "Implement minimal atomic persisted claims/leases, duplicate suppression, deadlines/stalls and bounded delivery; advanced scheduler/leader redesign is H10X. Preserve existing scheduler behavior outside this scope.",
+        "Compile source Code nodes safely and separate live smoke; no workflow publication or production calls."
+      ],
+      "acceptance": [
+        "Duplicate schedules/restarts do not duplicate research; status exposes failures/stalls and last success honestly.",
+        "No arbitrary callback userId, unbounded 422 loop or literal exported credential.",
+        "Unrelated n8n workflows remain untouched; source/export changes are not called a live deployment."
+      ],
+      "invariants": [
+        "Secrets never in output, logs, fixtures, exported literal credentials, or card text; workers do not read .env or credential stores.",
+        "No ports: in Docker compose; expose: only, route through existing Cloudflare Tunnels. No DNS/tunnel changes.",
+        "No shell backgrounding (&, nohup, setsid); use tracked terminal background processes only when authorized.",
+        "Preserve existing dirty/untracked baseline and user data; no git reset/clean, database or volume deletion, commit/push/history rewrite without explicit authorization.",
+        "No live workflow publication, credential provisioning, live migration, paid service, license acceptance, or other-profile changes in worker cards; hand those to primary/admin.",
+        "Observed market data and conditional scenarios remain separate. No invented prices, candles, history, source claims or verification output.",
+        "Read SPEC.md and CONTRACTS.md; edit only assigned files. Shared files and generated outputs have one owner. Stop on contract drift.",
+        "Write failing tests first, run them, implement, rerun; attach actual commands/output and remaining limitations. Do not claim an unavailable toolchain passed.",
+        "After two failures on the same target, stop and escalate with exact errors and attempted fixes; no blind third retry.",
+        "No confidential business data, secrets, profile/shared-skill/global-config changes, live operations, SDK/container installation, commits/pushes, or nested delegation.",
+        "Author worker/gpt-5.6-terra; reviewer reviewer/gpt-6-luna; distinct profile/model, same OpenAI Codex vendor disclosed.",
+        "Flutter runtime checks are DEFERRED_TO_DEV_PC, never PASS from source inspection. No renderer replacement."
+      ],
+      "review": "One independent combined specification and quality review with separate verdicts; targeted author repair then independent re-review. Focused extra review only H03/H04/H07/H18.",
+      "status": "running_author_delivery",
+      "delivery_phase": "core_source",
+      "handoff": "Durable artifact, changed paths, real commands/exits/results and limits; author needs_input block: review-required: author delivery ready. Never request-review or self-complete. Controller verifies delivery; reviewer independently inspects artifacts."
+    },
+    {
+      "id": "H11",
+      "title": "Flutter typed domain and authenticated repositories",
+      "depends_on": [
+        "H01"
+      ],
+      "role": "flutter-domain-worker",
+      "kind": "source_work",
+      "new_files": [
+        "frontend/lib/src/features/positions/position_models.dart",
+        "frontend/lib/src/features/positions/position_repository.dart",
+        "frontend/lib/src/features/market/market_models.dart",
+        "frontend/lib/src/features/market/market_repository.dart",
+        "frontend/lib/src/features/research/research_models.dart",
+        "frontend/lib/src/features/research/research_repository.dart",
+        "frontend/test/research_models_test.dart"
+      ],
+      "existing_files": [],
+      "test_files": [
+        "frontend/test/research_models_test.dart"
+      ],
+      "steps": [
+        "Trace existing auth token/client conventions before importing anything; do not invent an api_client.dart.",
+        "Write parser/serialization/error-state tests from canonical fixtures.",
+        "Implement typed nullable economics, observed bars, claims/outlooks/overlays/run states and authenticated requests.",
+        "Regenerate only owned Freezed/JSON/Riverpod outputs under a generation lock; publish stable interfaces to UI lanes."
+      ],
+      "acceptance": [
+        "Strict semantics preserve unavailable versus zero, currency/time/basis and legacy classification states.",
+        "Auth/error and cancellation behavior tested; no credential persisted into fixtures or JS bridge.",
+        "Generated files are not hand edited."
+      ],
+      "invariants": [
+        "Secrets never in output, logs, fixtures, exported literal credentials, or card text; workers do not read .env or credential stores.",
+        "No ports: in Docker compose; expose: only, route through existing Cloudflare Tunnels. No DNS/tunnel changes.",
+        "No shell backgrounding (&, nohup, setsid); use tracked terminal background processes only when authorized.",
+        "Preserve existing dirty/untracked baseline and user data; no git reset/clean, database or volume deletion, commit/push/history rewrite without explicit authorization.",
+        "No live workflow publication, credential provisioning, live migration, paid service, license acceptance, or other-profile changes in worker cards; hand those to primary/admin.",
+        "Observed market data and conditional scenarios remain separate. No invented prices, candles, history, source claims or verification output.",
+        "Read SPEC.md and CONTRACTS.md; edit only assigned files. Shared files and generated outputs have one owner. Stop on contract drift.",
+        "Write failing tests first, run them, implement, rerun; attach actual commands/output and remaining limitations. Do not claim an unavailable toolchain passed.",
+        "After two failures on the same target, stop and escalate with exact errors and attempted fixes; no blind third retry.",
+        "No confidential business data, secrets, profile/shared-skill/global-config changes, live operations, SDK/container installation, commits/pushes, or nested delegation.",
+        "Author worker/gpt-5.6-terra; reviewer reviewer/gpt-6-luna; distinct profile/model, same OpenAI Codex vendor disclosed.",
+        "Flutter runtime checks are DEFERRED_TO_DEV_PC, never PASS from source inspection. No renderer replacement."
+      ],
+      "review": "One independent combined specification and quality review with separate verdicts; targeted author repair then independent re-review. Focused extra review only H03/H04/H07/H18.",
+      "status": "independently_accepted_source_only",
+      "delivery_phase": "core_source",
+      "handoff": "Durable artifact, changed paths, real commands/exits/results and limits; author needs_input block: review-required: author delivery ready. Never request-review or self-complete. Controller verifies delivery; reviewer independently inspects artifacts."
+    },
+    {
+      "id": "H12",
+      "title": "Position editor and candidate/owned experience",
+      "depends_on": [
+        "H04",
+        "H11"
+      ],
+      "role": "flutter-position-worker",
+      "kind": "source_work",
+      "new_files": [
+        "frontend/lib/src/features/positions/widgets/position_editor.dart",
+        "frontend/lib/src/features/positions/widgets/position_badge.dart",
+        "frontend/test/position_editor_test.dart"
+      ],
+      "existing_files": [],
+      "test_files": [
+        "frontend/test/position_editor_test.dart"
+      ],
+      "steps": [
+        "Write widget tests for add candidate, classify legacy, edit owned cost/quantity/horizon, archive and revision conflict.",
+        "Build reusable widgets in existing theme without editing shared stock screen/router.",
+        "Make candidate/owned transitions explicit, unknown values honest and currency validation visible.",
+        "Supply integration-ready widgets and exact usage contract to H15."
+      ],
+      "acceptance": [
+        "No hypothetical entry becomes a filled purchase; no fake portfolio sizing.",
+        "Text scaling/semantics/touch targets and error/retry states are verified."
+      ],
+      "invariants": [
+        "Secrets never in output, logs, fixtures, exported literal credentials, or card text; workers do not read .env or credential stores.",
+        "No ports: in Docker compose; expose: only, route through existing Cloudflare Tunnels. No DNS/tunnel changes.",
+        "No shell backgrounding (&, nohup, setsid); use tracked terminal background processes only when authorized.",
+        "Preserve existing dirty/untracked baseline and user data; no git reset/clean, database or volume deletion, commit/push/history rewrite without explicit authorization.",
+        "No live workflow publication, credential provisioning, live migration, paid service, license acceptance, or other-profile changes in worker cards; hand those to primary/admin.",
+        "Observed market data and conditional scenarios remain separate. No invented prices, candles, history, source claims or verification output.",
+        "Read SPEC.md and CONTRACTS.md; edit only assigned files. Shared files and generated outputs have one owner. Stop on contract drift.",
+        "Write failing tests first, run them, implement, rerun; attach actual commands/output and remaining limitations. Do not claim an unavailable toolchain passed.",
+        "After two failures on the same target, stop and escalate with exact errors and attempted fixes; no blind third retry.",
+        "No confidential business data, secrets, profile/shared-skill/global-config changes, live operations, SDK/container installation, commits/pushes, or nested delegation.",
+        "Author worker/gpt-5.6-terra; reviewer reviewer/gpt-6-luna; distinct profile/model, same OpenAI Codex vendor disclosed.",
+        "Flutter runtime checks are DEFERRED_TO_DEV_PC, never PASS from source inspection. No renderer replacement."
+      ],
+      "review": "One independent combined specification and quality review with separate verdicts; targeted author repair then independent re-review. Focused extra review only H03/H04/H07/H18.",
+      "status": "independently_accepted_source_only",
+      "delivery_phase": "core_source",
+      "handoff": "Durable artifact, changed paths, real commands/exits/results and limits; author needs_input block: review-required: author delivery ready. Never request-review or self-complete. Controller verifies delivery; reviewer independently inspects artifacts."
+    },
+    {
+      "id": "H13",
+      "title": "Interactive observed-data chart and projection display",
+      "depends_on": [
+        "H02",
+        "H05",
+        "H11"
+      ],
+      "role": "flutter-chart-worker",
+      "kind": "source_work",
+      "new_files": [
+        "frontend/lib/src/features/stock/widgets/price_chart.dart",
+        "frontend/lib/src/features/stock/widgets/chart_controller.dart",
+        "frontend/test/price_chart_test.dart"
+      ],
+      "existing_files": [],
+      "test_files": [
+        "frontend/test/price_chart_test.dart"
+      ],
+      "steps": [
+        "Write widget/controller tests for all six ranges, line/candles, stale response cancellation and observed/projection separation.",
+        "Promote approved prototype behavior into reusable themed component with axes, OHLCV readout, volume context, pan/zoom/reset.",
+        "Implement typed endpoint/range projection overlay and user-cost line with basis/freshness gates.",
+        "Capture phone/web interaction evidence and deliver component interface; H15 alone edits stock_detail_screen.dart."
+      ],
+      "acceptance": [
+        "Exact fixture values/timestamps and selected range survive style changes; no manufactured candles or future daily trajectories.",
+        "Null/stale forecasts produce clear state and snapshot action, not scraped prose targets.",
+        "Unavailable feed and first-load data gaps never render synthetic prices."
+      ],
+      "invariants": [
+        "Secrets never in output, logs, fixtures, exported literal credentials, or card text; workers do not read .env or credential stores.",
+        "No ports: in Docker compose; expose: only, route through existing Cloudflare Tunnels. No DNS/tunnel changes.",
+        "No shell backgrounding (&, nohup, setsid); use tracked terminal background processes only when authorized.",
+        "Preserve existing dirty/untracked baseline and user data; no git reset/clean, database or volume deletion, commit/push/history rewrite without explicit authorization.",
+        "No live workflow publication, credential provisioning, live migration, paid service, license acceptance, or other-profile changes in worker cards; hand those to primary/admin.",
+        "Observed market data and conditional scenarios remain separate. No invented prices, candles, history, source claims or verification output.",
+        "Read SPEC.md and CONTRACTS.md; edit only assigned files. Shared files and generated outputs have one owner. Stop on contract drift.",
+        "Write failing tests first, run them, implement, rerun; attach actual commands/output and remaining limitations. Do not claim an unavailable toolchain passed.",
+        "After two failures on the same target, stop and escalate with exact errors and attempted fixes; no blind third retry.",
+        "No confidential business data, secrets, profile/shared-skill/global-config changes, live operations, SDK/container installation, commits/pushes, or nested delegation.",
+        "Author worker/gpt-5.6-terra; reviewer reviewer/gpt-6-luna; distinct profile/model, same OpenAI Codex vendor disclosed.",
+        "Flutter runtime checks are DEFERRED_TO_DEV_PC, never PASS from source inspection. No renderer replacement."
+      ],
+      "review": "One independent combined specification and quality review with separate verdicts; targeted author repair then independent re-review. Focused extra review only H03/H04/H07/H18.",
+      "status": "independently_accepted_source_only",
+      "delivery_phase": "core_source",
+      "handoff": "Durable artifact, changed paths, real commands/exits/results and limits; author needs_input block: review-required: author delivery ready. Never request-review or self-complete. Controller verifies delivery; reviewer independently inspects artifacts."
+    },
+    {
+      "id": "H14",
+      "title": "Direct recommendation and multi-horizon research panels",
+      "depends_on": [
+        "H09",
+        "H11"
+      ],
+      "role": "flutter-research-worker",
+      "kind": "source_work",
+      "new_files": [
+        "frontend/lib/src/features/research/widgets/research_panel.dart",
+        "frontend/lib/src/features/research/widgets/outlook_panel.dart",
+        "frontend/lib/src/features/research/widgets/evidence_sheet.dart",
+        "frontend/test/research_panel_test.dart"
+      ],
+      "existing_files": [],
+      "test_files": [
+        "frontend/test/research_panel_test.dart"
+      ],
+      "steps": [
+        "Write widgets tests for candidate versus owned actions, limited results, source links and independent 1/2/3-month tabs.",
+        "Build decision-first panel: action/reason/countercase/what-changed/invalidators with business versus price distinction.",
+        "Add source/freshness/run status and snapshot links; keep horizon selectors distinct from historical chart ranges.",
+        "Deliver standalone widgets; do not independently modify shared detail screen or global theme."
+      ],
+      "acceptance": [
+        "No vague placeholder replaces an evidence-backed recommendation; insufficient evidence remains a valid explicit conclusion.",
+        "All displayed numbers resolve to validated metrics; date/currency/uncertainty labels readable and accessible."
+      ],
+      "invariants": [
+        "Secrets never in output, logs, fixtures, exported literal credentials, or card text; workers do not read .env or credential stores.",
+        "No ports: in Docker compose; expose: only, route through existing Cloudflare Tunnels. No DNS/tunnel changes.",
+        "No shell backgrounding (&, nohup, setsid); use tracked terminal background processes only when authorized.",
+        "Preserve existing dirty/untracked baseline and user data; no git reset/clean, database or volume deletion, commit/push/history rewrite without explicit authorization.",
+        "No live workflow publication, credential provisioning, live migration, paid service, license acceptance, or other-profile changes in worker cards; hand those to primary/admin.",
+        "Observed market data and conditional scenarios remain separate. No invented prices, candles, history, source claims or verification output.",
+        "Read SPEC.md and CONTRACTS.md; edit only assigned files. Shared files and generated outputs have one owner. Stop on contract drift.",
+        "Write failing tests first, run them, implement, rerun; attach actual commands/output and remaining limitations. Do not claim an unavailable toolchain passed.",
+        "After two failures on the same target, stop and escalate with exact errors and attempted fixes; no blind third retry.",
+        "No confidential business data, secrets, profile/shared-skill/global-config changes, live operations, SDK/container installation, commits/pushes, or nested delegation.",
+        "Author worker/gpt-5.6-terra; reviewer reviewer/gpt-6-luna; distinct profile/model, same OpenAI Codex vendor disclosed.",
+        "Flutter runtime checks are DEFERRED_TO_DEV_PC, never PASS from source inspection. No renderer replacement."
+      ],
+      "review": "One independent combined specification and quality review with separate verdicts; targeted author repair then independent re-review. Focused extra review only H03/H04/H07/H18.",
+      "status": "running_author_delivery",
+      "delivery_phase": "core_source",
+      "handoff": "Durable artifact, changed paths, real commands/exits/results and limits; author needs_input block: review-required: author delivery ready. Never request-review or self-complete. Controller verifies delivery; reviewer independently inspects artifacts."
+    },
+    {
+      "id": "H15",
+      "title": "Application integration and legacy/mobile/Wear compatibility",
+      "depends_on": [
+        "H15B",
+        "H10",
+        "H13"
+      ],
+      "role": "integration-worker",
+      "kind": "source_work",
+      "new_files": [
+        "backend/test/research-compatibility.test.cjs",
+        "frontend/test/research_compatibility_test.dart"
+      ],
+      "existing_files": [
+        "backend/src/app.js",
+        "backend/package.json",
+        "backend/src/server.js",
+        "backend/src/features/briefing/briefing.service.js",
+        "frontend/lib/main.dart",
+        "frontend/lib/src/features/stock/stock_detail_screen.dart",
+        "frontend/lib/src/features/stock/stock_repository.dart",
+        "frontend/lib/src/features/briefing/briefing_repository.dart",
+        "frontend/lib/src/features/briefing/briefing_config_repository.dart",
+        "frontend/lib/src/features/dashboard/watchlist_provider.dart",
+        "frontend/lib/src/features/nexus/management/manage_watchlist_screen.dart",
+        "frontend/lib/src/wear/wear_watchlist_screen.dart",
+        "frontend/lib/src/wear/wear_opportunities_screen.dart",
+        "frontend/pubspec.yaml",
+        "frontend/pubspec.lock"
+      ],
+      "test_files": [
+        "backend/test/research-compatibility.test.cjs",
+        "frontend/test/research_compatibility_test.dart"
+      ],
+      "steps": [
+        "Write chart/automation/mobile/Wear integration tests, then compose chart into shared screens after the H15B shared-file handoff.",
+        "Mount automation router and bounded run worker; retain H15A/H15B authenticated integration and accepted shared-file changes.",
+        "Integrate typed data with legacy briefings/topics/opportunities; protect rich positions from old tickers-only writes.",
+        "Remove random/fake price-history fallbacks and extraction of authoritative prices from prose; render unavailable states across all real-market surfaces.",
+        "Update currency-aware summaries/Wear, stock screen heading and watchlist/star behavior; preserve design and inspect remaining synthetic call paths.",
+        "Own all shared manifest/model/glue changes and serialized code generation needed for existing models."
+      ],
+      "acceptance": [
+        "Current topics/news/opportunity consumers and Wear compile/parse correctly without a large chart on watch.",
+        "No $100/random fallback or silent latest-price/old-analysis overwrite persists in new research flow.",
+        "Only integrator edits shared files; updates to scheduler/export preserve prior dirty changes."
+      ],
+      "invariants": [
+        "Secrets never in output, logs, fixtures, exported literal credentials, or card text; workers do not read .env or credential stores.",
+        "No ports: in Docker compose; expose: only, route through existing Cloudflare Tunnels. No DNS/tunnel changes.",
+        "No shell backgrounding (&, nohup, setsid); use tracked terminal background processes only when authorized.",
+        "Preserve existing dirty/untracked baseline and user data; no git reset/clean, database or volume deletion, commit/push/history rewrite without explicit authorization.",
+        "No live workflow publication, credential provisioning, live migration, paid service, license acceptance, or other-profile changes in worker cards; hand those to primary/admin.",
+        "Observed market data and conditional scenarios remain separate. No invented prices, candles, history, source claims or verification output.",
+        "Read SPEC.md and CONTRACTS.md; edit only assigned files. Shared files and generated outputs have one owner. Stop on contract drift.",
+        "Write failing tests first, run them, implement, rerun; attach actual commands/output and remaining limitations. Do not claim an unavailable toolchain passed.",
+        "After two failures on the same target, stop and escalate with exact errors and attempted fixes; no blind third retry.",
+        "No confidential business data, secrets, profile/shared-skill/global-config changes, live operations, SDK/container installation, commits/pushes, or nested delegation.",
+        "Author worker/gpt-5.6-terra; reviewer reviewer/gpt-6-luna; distinct profile/model, same OpenAI Codex vendor disclosed.",
+        "Flutter runtime checks are DEFERRED_TO_DEV_PC, never PASS from source inspection. No renderer replacement."
+      ],
+      "review": "One independent combined specification and quality review with separate verdicts; targeted author repair then independent re-review. Focused extra review only H03/H04/H07/H18.",
+      "status": "scheduled",
+      "delivery_phase": "core_source",
+      "handoff": "Durable artifact, changed paths, real commands/exits/results and limits; author needs_input block: review-required: author delivery ready. Never request-review or self-complete. Controller verifies delivery; reviewer independently inspects artifacts."
+    },
+    {
+      "id": "H16",
+      "title": "Forward outcome ledger and quality scorecard",
+      "depends_on": [
+        "H08",
+        "H09"
+      ],
+      "role": "evaluation-worker",
+      "kind": "source_work",
+      "new_files": [
+        "backend/src/features/research/outcome.model.js",
+        "backend/src/features/research/outcome.service.js",
+        "backend/test/research-outcomes.test.cjs",
+        "docs/horizon/evidence/evaluation-protocol.md"
+      ],
+      "existing_files": [],
+      "test_files": [
+        "backend/test/research-outcomes.test.cjs"
+      ],
+      "steps": [
+        "Write tests preventing settlement before availability, duplicate settlements and original assessment rewrites.",
+        "Implement append-only realized horizon/benchmark outcomes using exact calendar evaluation dates and method versions.",
+        "Define frozen quality set and simple no-change/no-LLM/strategy-appropriate baselines; separate quality from forecasting metrics.",
+        "Record insufficient mature observations without advertising a forecasting edge."
+      ],
+      "acceptance": [
+        "Outcome timing is point-in-time valid and idempotent.",
+        "No retrospective lessons enter earlier snapshots; probabilistic metrics only when probabilities are valid/calibrated."
+      ],
+      "invariants": [
+        "Secrets never in output, logs, fixtures, exported literal credentials, or card text; workers do not read .env or credential stores.",
+        "No ports: in Docker compose; expose: only, route through existing Cloudflare Tunnels. No DNS/tunnel changes.",
+        "No shell backgrounding (&, nohup, setsid); use tracked terminal background processes only when authorized.",
+        "Preserve existing dirty/untracked baseline and user data; no git reset/clean, database or volume deletion, commit/push/history rewrite without explicit authorization.",
+        "No live workflow publication, credential provisioning, live migration, paid service, license acceptance, or other-profile changes in worker cards; hand those to primary/admin.",
+        "Observed market data and conditional scenarios remain separate. No invented prices, candles, history, source claims or verification output.",
+        "Read SPEC.md and CONTRACTS.md; edit only assigned files. Shared files and generated outputs have one owner. Stop on contract drift.",
+        "Write failing tests first, run them, implement, rerun; attach actual commands/output and remaining limitations. Do not claim an unavailable toolchain passed.",
+        "After two failures on the same target, stop and escalate with exact errors and attempted fixes; no blind third retry.",
+        "No confidential business data, secrets, profile/shared-skill/global-config changes, live operations, SDK/container installation, commits/pushes, or nested delegation.",
+        "Author worker/gpt-5.6-terra; reviewer reviewer/gpt-6-luna; distinct profile/model, same OpenAI Codex vendor disclosed.",
+        "Flutter runtime checks are DEFERRED_TO_DEV_PC, never PASS from source inspection. No renderer replacement."
+      ],
+      "review": "One independent combined specification and quality review with separate verdicts; targeted author repair then independent re-review. Focused extra review only H03/H04/H07/H18.",
+      "status": "deferred_held",
+      "delivery_phase": "follow_up",
+      "handoff": "Durable artifact, changed paths, real commands/exits/results and limits; author needs_input block: review-required: author delivery ready. Never request-review or self-complete. Controller verifies delivery; reviewer independently inspects artifacts."
+    },
+    {
+      "id": "H17",
+      "title": "Full integration, failure injection and build evidence",
+      "depends_on": [
+        "H15"
+      ],
+      "role": "qa-worker",
+      "kind": "source_work",
+      "new_files": [
+        "backend/test/research-end-to-end.test.cjs",
+        "frontend/integration_test/research_journey_test.dart",
+        "docs/horizon/evidence/test-report.md",
+        "docs/horizon/DEV_PC_HANDOFF.md"
+      ],
+      "existing_files": [],
+      "test_files": [
+        "backend/test/research-end-to-end.test.cjs",
+        "frontend/integration_test/research_journey_test.dart"
+      ],
+      "steps": [
+        "Run hermetic backend tests plus Flutter analyze/widget/parser tests on an actual supported toolchain.",
+        "Exercise candidate add -> research -> owned transition -> cost edit -> chart range/style -> snapshot/source/forecast -> failed/stalled run journey.",
+        "Inject provider/model/schema/timeouts/restart/concurrent edit/callback replay and source injection fixtures.",
+        "Build Flutter web and supported mobile/Wear targets; capture actual interaction proof and baseline-versus-new report review.",
+        "Keep live provider/generation/DB acceptance separate for primary coordinator; attach exact outputs and unresolved blockers.",
+        "Produce DEV_PC_HANDOFF.md with exact source snapshot hashes, deferred criteria, safe transfer, generator order, actual discovered commands and APK artifact/hash requirements; server cannot pass PC gate."
+      ],
+      "acceptance": [
+        "No critical security/data correctness/continuity/chart regressions remain.",
+        "Absent SDK/device/build access is explicitly blocked, never substituted with plausible output.",
+        "All configured tickers are accounted for, not only AMD; coverage gaps are visible."
+      ],
+      "invariants": [
+        "Secrets never in output, logs, fixtures, exported literal credentials, or card text; workers do not read .env or credential stores.",
+        "No ports: in Docker compose; expose: only, route through existing Cloudflare Tunnels. No DNS/tunnel changes.",
+        "No shell backgrounding (&, nohup, setsid); use tracked terminal background processes only when authorized.",
+        "Preserve existing dirty/untracked baseline and user data; no git reset/clean, database or volume deletion, commit/push/history rewrite without explicit authorization.",
+        "No live workflow publication, credential provisioning, live migration, paid service, license acceptance, or other-profile changes in worker cards; hand those to primary/admin.",
+        "Observed market data and conditional scenarios remain separate. No invented prices, candles, history, source claims or verification output.",
+        "Read SPEC.md and CONTRACTS.md; edit only assigned files. Shared files and generated outputs have one owner. Stop on contract drift.",
+        "Write failing tests first, run them, implement, rerun; attach actual commands/output and remaining limitations. Do not claim an unavailable toolchain passed.",
+        "After two failures on the same target, stop and escalate with exact errors and attempted fixes; no blind third retry.",
+        "No confidential business data, secrets, profile/shared-skill/global-config changes, live operations, SDK/container installation, commits/pushes, or nested delegation.",
+        "Author worker/gpt-5.6-terra; reviewer reviewer/gpt-6-luna; distinct profile/model, same OpenAI Codex vendor disclosed.",
+        "Flutter runtime checks are DEFERRED_TO_DEV_PC, never PASS from source inspection. No renderer replacement."
+      ],
+      "review": "One independent combined specification and quality review with separate verdicts; targeted author repair then independent re-review. Focused extra review only H03/H04/H07/H18.",
+      "status": "scheduled",
+      "delivery_phase": "core_source",
+      "handoff": "Durable artifact, changed paths, real commands/exits/results and limits; author needs_input block: review-required: author delivery ready. Never request-review or self-complete. Controller verifies delivery; reviewer independently inspects artifacts."
+    },
+    {
+      "id": "H18",
+      "title": "Independent release-readiness and financial-UX review",
+      "depends_on": [
+        "H17",
+        "DEVPC",
+        "H07A",
+        "H09X",
+        "H10X",
+        "H16"
+      ],
+      "role": "independent-reviewer",
+      "kind": "source_work",
+      "new_files": [
+        "docs/horizon/evidence/release-review.md"
+      ],
+      "existing_files": [],
+      "test_files": [],
+      "steps": [
+        "Read actual diffs, contracts and test evidence; reproduce critical tests independently.",
+        "Check privacy/tenancy, idempotency, evidence/math, uncertainty, report continuity, chart semantics and mobile accessibility.",
+        "Verify no hidden paid dependency, auth bypass, synthetic data path, unrelated refactor or unapproved profile/live change.",
+        "Approve with explicit remaining gates or return concrete defects to owning lanes; reviewer does not implement fixes."
+      ],
+      "acceptance": [
+        "Separate spec compliance and code/quality conclusions; author self-report is not acceptance.",
+        "All contractual requirements have traceable tests/evidence or explicit blocker.",
+        "Unresolved follow-up requirements block full-release acceptance unless Adam explicitly changes scope. Source demo completion is not full scope completion."
+      ],
+      "invariants": [
+        "Secrets never in output, logs, fixtures, exported literal credentials, or card text; workers do not read .env or credential stores.",
+        "No ports: in Docker compose; expose: only, route through existing Cloudflare Tunnels. No DNS/tunnel changes.",
+        "No shell backgrounding (&, nohup, setsid); use tracked terminal background processes only when authorized.",
+        "Preserve existing dirty/untracked baseline and user data; no git reset/clean, database or volume deletion, commit/push/history rewrite without explicit authorization.",
+        "No live workflow publication, credential provisioning, live migration, paid service, license acceptance, or other-profile changes in worker cards; hand those to primary/admin.",
+        "Observed market data and conditional scenarios remain separate. No invented prices, candles, history, source claims or verification output.",
+        "Read SPEC.md and CONTRACTS.md; edit only assigned files. Shared files and generated outputs have one owner. Stop on contract drift.",
+        "Write failing tests first, run them, implement, rerun; attach actual commands/output and remaining limitations. Do not claim an unavailable toolchain passed.",
+        "After two failures on the same target, stop and escalate with exact errors and attempted fixes; no blind third retry.",
+        "No confidential business data, secrets, profile/shared-skill/global-config changes, live operations, SDK/container installation, commits/pushes, or nested delegation.",
+        "Author worker/gpt-5.6-terra; reviewer reviewer/gpt-6-luna; distinct profile/model, same OpenAI Codex vendor disclosed.",
+        "Flutter runtime checks are DEFERRED_TO_DEV_PC, never PASS from source inspection. No renderer replacement."
+      ],
+      "review": "One independent combined specification and quality review with separate verdicts; targeted author repair then independent re-review. Focused extra review only H03/H04/H07/H18.",
+      "status": "scheduled_external_acceptance_wait",
+      "delivery_phase": "full_release_gate",
+      "handoff": "Durable artifact, changed paths, real commands/exits/results and limits; author needs_input block: review-required: author delivery ready. Never request-review or self-complete. Controller verifies delivery; reviewer independently inspects artifacts."
+    },
+    {
+      "id": "H19",
+      "title": "Primary-controlled migration, publication and readback",
+      "depends_on": [
+        "H18"
+      ],
+      "role": "primary-admin",
+      "kind": "primary_release_gate",
+      "new_files": [
+        "docs/horizon/evidence/release-readback.md"
+      ],
+      "existing_files": [],
+      "test_files": [],
+      "steps": [
+        "Present exact live change set, credential/license/provider/budget needs, backup/restore proof and rollback to Adam.",
+        "After explicit approval, provision scoped service auth, dry-run and execute additive migration, then coordinate backend/client/workflow publication.",
+        "Read back live workflow published version, owner-scoped records, chart bars, all configured instrument results, failure/status behavior and public HTTP health.",
+        "Exercise rollback without deleting data/volumes; report actual verified end state and close/archive engagement only when gates pass."
+      ],
+      "acceptance": [
+        "No live actions before approval; no shared n8n restart or unrelated workflow changes.",
+        "Backup restoration/readback is demonstrated and user data preserved.",
+        "Publication is verified by exact target readback; tests plus source export alone are not a release."
+      ],
+      "invariants": [
+        "Secrets never in output, logs, fixtures, exported literal credentials, or card text; workers do not read .env or credential stores.",
+        "No ports: in Docker compose; expose: only, route through existing Cloudflare Tunnels. No DNS/tunnel changes.",
+        "No shell backgrounding (&, nohup, setsid); use tracked terminal background processes only when authorized.",
+        "Preserve existing dirty/untracked baseline and user data; no git reset/clean, database or volume deletion, commit/push/history rewrite without explicit authorization.",
+        "No live workflow publication, credential provisioning, live migration, paid service, license acceptance, or other-profile changes in worker cards; hand those to primary/admin.",
+        "Observed market data and conditional scenarios remain separate. No invented prices, candles, history, source claims or verification output.",
+        "Read SPEC.md and CONTRACTS.md; edit only assigned files. Shared files and generated outputs have one owner. Stop on contract drift.",
+        "Write failing tests first, run them, implement, rerun; attach actual commands/output and remaining limitations. Do not claim an unavailable toolchain passed.",
+        "After two failures on the same target, stop and escalate with exact errors and attempted fixes; no blind third retry.",
+        "No confidential business data, secrets, profile/shared-skill/global-config changes, live operations, SDK/container installation, commits/pushes, or nested delegation.",
+        "Author worker/gpt-5.6-terra; reviewer reviewer/gpt-6-luna; distinct profile/model, same OpenAI Codex vendor disclosed.",
+        "Flutter runtime checks are DEFERRED_TO_DEV_PC, never PASS from source inspection. No renderer replacement."
+      ],
+      "review": "One independent combined specification and quality review with separate verdicts; targeted author repair then independent re-review. Focused extra review only H03/H04/H07/H18.",
+      "status": "operator_only_held",
+      "delivery_phase": "full_release_gate",
+      "handoff": "Durable artifact, changed paths, real commands/exits/results and limits; author needs_input block: review-required: author delivery ready. Never request-review or self-complete. Controller verifies delivery; reviewer independently inspects artifacts."
+    },
+    {
+      "id": "H15A",
+      "title": "Early protected observed-history API slice",
+      "depends_on": [
+        "H03",
+        "H05"
+      ],
+      "role": "integration-worker",
+      "kind": "source_work",
+      "new_files": [
+        "backend/test/research-history-integration.test.cjs"
+      ],
+      "existing_files": [
+        "backend/src/app.js"
+      ],
+      "test_files": [
+        "backend/test/research-history-integration.test.cjs"
+      ],
+      "steps": [
+        "Read accepted H03/H05 interfaces; isolate app import/test setup from live server/database/scheduler.",
+        "Mount authenticated observed-history route in existing app glue; retain legacy behavior and truthful unavailable responses.",
+        "Exercise anonymous denial, valid authenticated observed fixture, unavailable/stale responses and error shape using hermetic injected mocks."
+      ],
+      "acceptance": [
+        "Protected history route is reachable through actual application routing in isolated tests, not only a detached service.",
+        "No live bootstrap, fabricated history or premature position/research/automation mount.",
+        "Publish exact shared app.js handoff for H15B."
+      ],
+      "invariants": [
+        "Secrets never in output, logs, fixtures, exported literal credentials, or card text; workers do not read .env or credential stores.",
+        "No ports: in Docker compose; expose: only, route through existing Cloudflare Tunnels. No DNS/tunnel changes.",
+        "No shell backgrounding (&, nohup, setsid); use tracked terminal background processes only when authorized.",
+        "Preserve existing dirty/untracked baseline and user data; no git reset/clean, database or volume deletion, commit/push/history rewrite without explicit authorization.",
+        "No live workflow publication, credential provisioning, live migration, paid service, license acceptance, or other-profile changes in worker cards; hand those to primary/admin.",
+        "Observed market data and conditional scenarios remain separate. No invented prices, candles, history, source claims or verification output.",
+        "Read SPEC.md and CONTRACTS.md; edit only assigned files. Shared files and generated outputs have one owner. Stop on contract drift.",
+        "Write failing tests first, run them, implement, rerun; attach actual commands/output and remaining limitations. Do not claim an unavailable toolchain passed.",
+        "After two failures on the same target, stop and escalate with exact errors and attempted fixes; no blind third retry.",
+        "No confidential business data, secrets, profile/shared-skill/global-config changes, live operations, SDK/container installation, commits/pushes, or nested delegation.",
+        "Author worker/gpt-5.6-terra; reviewer reviewer/gpt-6-luna; distinct profile/model, same OpenAI Codex vendor disclosed.",
+        "Flutter runtime checks are DEFERRED_TO_DEV_PC, never PASS from source inspection. No renderer replacement."
+      ],
+      "review": "One independent combined specification and quality review with separate verdicts; targeted author repair then independent re-review. Focused extra review only H03/H04/H07/H18.",
+      "status": "independently_accepted_source_only",
+      "delivery_phase": "core_source",
+      "handoff": "Durable artifact, changed paths, real commands/exits/results and limits; author needs_input block: review-required: author delivery ready. Never request-review or self-complete. Controller verifies delivery; reviewer independently inspects artifacts."
+    },
+    {
+      "id": "H15B",
+      "title": "Early position and research panel integration",
+      "depends_on": [
+        "H04",
+        "H09",
+        "H12",
+        "H14",
+        "H15A"
+      ],
+      "role": "integration-worker",
+      "kind": "source_work",
+      "new_files": [
+        "backend/test/research-panel-integration.test.cjs",
+        "frontend/test/research_panel_integration_test.dart"
+      ],
+      "existing_files": [
+        "backend/src/app.js",
+        "backend/src/features/briefing/briefing.service.js",
+        "frontend/lib/src/features/stock/stock_detail_screen.dart",
+        "frontend/lib/src/features/stock/stock_repository.dart",
+        "frontend/lib/src/features/briefing/briefing_repository.dart",
+        "frontend/lib/src/features/briefing/briefing_config_repository.dart",
+        "frontend/lib/src/features/dashboard/watchlist_provider.dart",
+        "frontend/lib/src/features/nexus/management/manage_watchlist_screen.dart"
+      ],
+      "test_files": [
+        "backend/test/research-panel-integration.test.cjs",
+        "frontend/test/research_panel_integration_test.dart"
+      ],
+      "steps": [
+        "After H15A accepted shared-file handoff mount owner-scoped positions/research routes; retain protected observed-history slice.",
+        "Connect position editor and decision/outlook/evidence panels to existing stock/watchlist flows with existing theme; preserve chart slot without requiring H13 first.",
+        "Test candidate/owned/unknown economics, revision conflicts, prior-report changes, limited/no-result and latest-attempt versus latest-success using isolated fixtures.",
+        "Do not overwrite immutable research prices with newly fetched values; remove synthetic fallbacks in touched flow. Runtime Flutter evidence deferred to PC."
+      ],
+      "acceptance": [
+        "An integrated source journey connects positions and grounded research panels without waiting for chart completion.",
+        "Owner isolation, snapshot consistency and truthful unavailable states verified in executable backend integration tests.",
+        "H15 receives shared-file diff/interface handoff; generated outputs remain PC-only."
+      ],
+      "invariants": [
+        "Secrets never in output, logs, fixtures, exported literal credentials, or card text; workers do not read .env or credential stores.",
+        "No ports: in Docker compose; expose: only, route through existing Cloudflare Tunnels. No DNS/tunnel changes.",
+        "No shell backgrounding (&, nohup, setsid); use tracked terminal background processes only when authorized.",
+        "Preserve existing dirty/untracked baseline and user data; no git reset/clean, database or volume deletion, commit/push/history rewrite without explicit authorization.",
+        "No live workflow publication, credential provisioning, live migration, paid service, license acceptance, or other-profile changes in worker cards; hand those to primary/admin.",
+        "Observed market data and conditional scenarios remain separate. No invented prices, candles, history, source claims or verification output.",
+        "Read SPEC.md and CONTRACTS.md; edit only assigned files. Shared files and generated outputs have one owner. Stop on contract drift.",
+        "Write failing tests first, run them, implement, rerun; attach actual commands/output and remaining limitations. Do not claim an unavailable toolchain passed.",
+        "After two failures on the same target, stop and escalate with exact errors and attempted fixes; no blind third retry.",
+        "No confidential business data, secrets, profile/shared-skill/global-config changes, live operations, SDK/container installation, commits/pushes, or nested delegation.",
+        "Author worker/gpt-5.6-terra; reviewer reviewer/gpt-6-luna; distinct profile/model, same OpenAI Codex vendor disclosed.",
+        "Flutter runtime checks are DEFERRED_TO_DEV_PC, never PASS from source inspection. No renderer replacement."
+      ],
+      "review": "One independent combined specification and quality review with separate verdicts; targeted author repair then independent re-review. Focused extra review only H03/H04/H07/H18.",
+      "status": "scheduled_awaits_H14",
+      "delivery_phase": "core_source",
+      "handoff": "Durable artifact, changed paths, real commands/exits/results and limits; author needs_input block: review-required: author delivery ready. Never request-review or self-complete. Controller verifies delivery; reviewer independently inspects artifacts."
+    },
+    {
+      "id": "H07A",
+      "title": "Follow-up: auditable numerical scenarios and overlay production",
+      "depends_on": [
+        "H07"
+      ],
+      "role": "backend-worker",
+      "kind": "source_work",
+      "new_files": [
+        "backend/src/features/research/scenarios.js",
+        "backend/test/research-scenarios.test.cjs"
+      ],
+      "existing_files": [],
+      "test_files": [
+        "backend/test/research-scenarios.test.cjs"
+      ],
+      "steps": [
+        "Retain original H07 conditional scenario/volatility reference requirements, methods, inputs and independently computed fixture arithmetic.",
+        "Produce optional projection objects only with auditable assumptions and compatible basis; do not manufacture daily paths."
+      ],
+      "acceptance": [
+        "Conditional ranges are not calibrated probabilities or directional volatility forecasts.",
+        "Null/insufficient inputs remain explicit; downstream optional renderer contract preserved."
+      ],
+      "invariants": [
+        "Secrets never in output, logs, fixtures, exported literal credentials, or card text; workers do not read .env or credential stores.",
+        "No ports: in Docker compose; expose: only, route through existing Cloudflare Tunnels. No DNS/tunnel changes.",
+        "No shell backgrounding (&, nohup, setsid); use tracked terminal background processes only when authorized.",
+        "Preserve existing dirty/untracked baseline and user data; no git reset/clean, database or volume deletion, commit/push/history rewrite without explicit authorization.",
+        "No live workflow publication, credential provisioning, live migration, paid service, license acceptance, or other-profile changes in worker cards; hand those to primary/admin.",
+        "Observed market data and conditional scenarios remain separate. No invented prices, candles, history, source claims or verification output.",
+        "Read SPEC.md and CONTRACTS.md; edit only assigned files. Shared files and generated outputs have one owner. Stop on contract drift.",
+        "Write failing tests first, run them, implement, rerun; attach actual commands/output and remaining limitations. Do not claim an unavailable toolchain passed.",
+        "After two failures on the same target, stop and escalate with exact errors and attempted fixes; no blind third retry.",
+        "No confidential business data, secrets, profile/shared-skill/global-config changes, live operations, SDK/container installation, commits/pushes, or nested delegation.",
+        "Author worker/gpt-5.6-terra; reviewer reviewer/gpt-6-luna; distinct profile/model, same OpenAI Codex vendor disclosed.",
+        "Flutter runtime checks are DEFERRED_TO_DEV_PC, never PASS from source inspection. No renderer replacement."
+      ],
+      "review": "One independent combined specification and quality review with separate verdicts; targeted author repair then independent re-review. Focused extra review only H03/H04/H07/H18.",
+      "status": "deferred_held",
+      "delivery_phase": "follow_up",
+      "handoff": "Durable artifact, changed paths, real commands/exits/results and limits; author needs_input block: review-required: author delivery ready. Never request-review or self-complete. Controller verifies delivery; reviewer independently inspects artifacts."
+    },
+    {
+      "id": "H09X",
+      "title": "Follow-up: generalized tools, stage replay and recovery",
+      "depends_on": [
+        "H09",
+        "H08",
+        "H03",
+        "H10"
+      ],
+      "role": "backend-worker",
+      "kind": "source_work",
+      "new_files": [
+        "backend/src/features/research/tool_registry.js",
+        "backend/test/research-runtime.test.cjs"
+      ],
+      "existing_files": [
+        "backend/src/features/research/agent_runtime.js",
+        "backend/src/features/research/automation.routes.js",
+        "backend/src/features/research/research.service.js"
+      ],
+      "test_files": [
+        "backend/test/research-runtime.test.cjs"
+      ],
+      "steps": [
+        "Preserve original typed tool names, scoped stage/tools endpoints, persisted stage replay and generalized recovery requirements from preserved SPEC/CONTRACTS.",
+        "Only introduce additional model reviewer stages after frozen quality/cost/latency evidence justifies them; no automatic paid calls.",
+        "Keep single Node execution owner, exact owner/revision/cutoff bindings, private economics isolation and no replay re-charge."
+      ],
+      "acceptance": [
+        "No unrestricted tool URLs/commands/owner IDs; response size/call/stage budgets enforced in code.",
+        "Replay/recovery preserves immutable references and deadlines; extra stage benefits not asserted without evidence."
+      ],
+      "invariants": [
+        "Secrets never in output, logs, fixtures, exported literal credentials, or card text; workers do not read .env or credential stores.",
+        "No ports: in Docker compose; expose: only, route through existing Cloudflare Tunnels. No DNS/tunnel changes.",
+        "No shell backgrounding (&, nohup, setsid); use tracked terminal background processes only when authorized.",
+        "Preserve existing dirty/untracked baseline and user data; no git reset/clean, database or volume deletion, commit/push/history rewrite without explicit authorization.",
+        "No live workflow publication, credential provisioning, live migration, paid service, license acceptance, or other-profile changes in worker cards; hand those to primary/admin.",
+        "Observed market data and conditional scenarios remain separate. No invented prices, candles, history, source claims or verification output.",
+        "Read SPEC.md and CONTRACTS.md; edit only assigned files. Shared files and generated outputs have one owner. Stop on contract drift.",
+        "Write failing tests first, run them, implement, rerun; attach actual commands/output and remaining limitations. Do not claim an unavailable toolchain passed.",
+        "After two failures on the same target, stop and escalate with exact errors and attempted fixes; no blind third retry.",
+        "No confidential business data, secrets, profile/shared-skill/global-config changes, live operations, SDK/container installation, commits/pushes, or nested delegation.",
+        "Author worker/gpt-5.6-terra; reviewer reviewer/gpt-6-luna; distinct profile/model, same OpenAI Codex vendor disclosed.",
+        "Flutter runtime checks are DEFERRED_TO_DEV_PC, never PASS from source inspection. No renderer replacement."
+      ],
+      "review": "One independent combined specification and quality review with separate verdicts; targeted author repair then independent re-review. Focused extra review only H03/H04/H07/H18.",
+      "status": "deferred_held",
+      "delivery_phase": "follow_up",
+      "handoff": "Durable artifact, changed paths, real commands/exits/results and limits; author needs_input block: review-required: author delivery ready. Never request-review or self-complete. Controller verifies delivery; reviewer independently inspects artifacts."
+    },
+    {
+      "id": "H10X",
+      "title": "Follow-up: advanced scheduler recovery and leadership",
+      "depends_on": [
+        "H10",
+        "H09X"
+      ],
+      "role": "backend-worker",
+      "kind": "source_work",
+      "new_files": [
+        "backend/test/research-scheduler.test.cjs"
+      ],
+      "existing_files": [
+        "backend/src/utils/scheduler.js",
+        "backend/src/features/research/run_worker.js",
+        "n8n-workflow.json"
+      ],
+      "test_files": [
+        "backend/test/research-scheduler.test.cjs"
+      ],
+      "steps": [
+        "Retain advanced persisted stage scheduling/recovery and replica leader policy from original H10; no competing research owner.",
+        "Tests cover lease ownership, process restart and bounded retry with isolated inputs; no service lifecycle/publication."
+      ],
+      "acceptance": [
+        "No duplicate model execution or deliveries from competing leaders; no unbounded delay chain.",
+        "Preserve original dirty scheduler/workflow baseline and core bounded timeout/stall semantics."
+      ],
+      "invariants": [
+        "Secrets never in output, logs, fixtures, exported literal credentials, or card text; workers do not read .env or credential stores.",
+        "No ports: in Docker compose; expose: only, route through existing Cloudflare Tunnels. No DNS/tunnel changes.",
+        "No shell backgrounding (&, nohup, setsid); use tracked terminal background processes only when authorized.",
+        "Preserve existing dirty/untracked baseline and user data; no git reset/clean, database or volume deletion, commit/push/history rewrite without explicit authorization.",
+        "No live workflow publication, credential provisioning, live migration, paid service, license acceptance, or other-profile changes in worker cards; hand those to primary/admin.",
+        "Observed market data and conditional scenarios remain separate. No invented prices, candles, history, source claims or verification output.",
+        "Read SPEC.md and CONTRACTS.md; edit only assigned files. Shared files and generated outputs have one owner. Stop on contract drift.",
+        "Write failing tests first, run them, implement, rerun; attach actual commands/output and remaining limitations. Do not claim an unavailable toolchain passed.",
+        "After two failures on the same target, stop and escalate with exact errors and attempted fixes; no blind third retry.",
+        "No confidential business data, secrets, profile/shared-skill/global-config changes, live operations, SDK/container installation, commits/pushes, or nested delegation.",
+        "Author worker/gpt-5.6-terra; reviewer reviewer/gpt-6-luna; distinct profile/model, same OpenAI Codex vendor disclosed.",
+        "Flutter runtime checks are DEFERRED_TO_DEV_PC, never PASS from source inspection. No renderer replacement."
+      ],
+      "review": "One independent combined specification and quality review with separate verdicts; targeted author repair then independent re-review. Focused extra review only H03/H04/H07/H18.",
+      "status": "deferred_held",
+      "delivery_phase": "follow_up",
+      "handoff": "Durable artifact, changed paths, real commands/exits/results and limits; author needs_input block: review-required: author delivery ready. Never request-review or self-complete. Controller verifies delivery; reviewer independently inspects artifacts."
+    },
+    {
+      "id": "DEVPC",
+      "title": "Development-PC runtime validation gate",
+      "depends_on": [
+        "H17"
+      ],
+      "role": "controller",
+      "kind": "external_validation_gate",
+      "new_files": [],
+      "existing_files": [],
+      "test_files": [],
+      "steps": [
+        "Receive real PC generation/analyze/tests/device interactions/web/mobile/Wear/APK results and source snapshot/artifact hashes."
+      ],
+      "acceptance": [
+        "Real independent verification, not source-only PASS; no auto-dispatch on server."
+      ],
+      "invariants": [
+        "Secrets never in output, logs, fixtures, exported literal credentials, or card text; workers do not read .env or credential stores.",
+        "No ports: in Docker compose; expose: only, route through existing Cloudflare Tunnels. No DNS/tunnel changes.",
+        "No shell backgrounding (&, nohup, setsid); use tracked terminal background processes only when authorized.",
+        "Preserve existing dirty/untracked baseline and user data; no git reset/clean, database or volume deletion, commit/push/history rewrite without explicit authorization.",
+        "No live workflow publication, credential provisioning, live migration, paid service, license acceptance, or other-profile changes in worker cards; hand those to primary/admin.",
+        "Observed market data and conditional scenarios remain separate. No invented prices, candles, history, source claims or verification output.",
+        "Read SPEC.md and CONTRACTS.md; edit only assigned files. Shared files and generated outputs have one owner. Stop on contract drift.",
+        "Write failing tests first, run them, implement, rerun; attach actual commands/output and remaining limitations. Do not claim an unavailable toolchain passed.",
+        "After two failures on the same target, stop and escalate with exact errors and attempted fixes; no blind third retry.",
+        "No confidential business data, secrets, profile/shared-skill/global-config changes, live operations, SDK/container installation, commits/pushes, or nested delegation.",
+        "Author worker/gpt-5.6-terra; reviewer reviewer/gpt-6-luna; distinct profile/model, same OpenAI Codex vendor disclosed.",
+        "Flutter runtime checks are DEFERRED_TO_DEV_PC, never PASS from source inspection. No renderer replacement."
+      ],
+      "review": "Independent evidence review at H18",
+      "status": "controller_held",
+      "delivery_phase": "external_acceptance"
+    }
+  ],
+  "board": "horizon-research-2026-10",
+  "amendment": "AMENDMENT-2026-10-30.md",
+  "source_runtime_boundary": "Backend hermetic tests on server; Flutter analysis/generation/tests/devices/APKs DEFERRED_TO_DEV_PC. H18 requires PC gate; root/H19 operator-held.",
+  "milestones": [
+    {
+      "id": "M1",
+      "title": "Safe truthful foundation",
+      "packages": [
+        "H00",
+        "H01",
+        "H03",
+        "H05",
+        "H15A"
+      ],
+      "status": "H01_source_accepted_foundation_queued"
+    },
+    {
+      "id": "M2",
+      "title": "Research end to end",
+      "packages": [
+        "H04",
+        "H06",
+        "H07",
+        "H08",
+        "H09"
+      ],
+      "status": "queued"
+    },
+    {
+      "id": "M3",
+      "title": "Usable interactive chart",
+      "packages": [
+        "H02",
+        "H11",
+        "H13"
+      ],
+      "status": "source_queued_runtime_deferred_to_dev_pc"
+    },
+    {
+      "id": "M4",
+      "title": "Integrated application",
+      "packages": [
+        "H10",
+        "H12",
+        "H14",
+        "H15B",
+        "H15"
+      ],
+      "status": "queued"
+    },
+    {
+      "id": "M5",
+      "title": "Reliability and release verification",
+      "packages": [
+        "H17",
+        "DEVPC",
+        "H18",
+        "H19"
+      ],
+      "status": "external_and_operator_gates_held"
+    }
+  ],
+  "follow_up_backlog": [
+    "H07A",
+    "H09X",
+    "H10X",
+    "H16"
+  ],
+  "shared_integration_order": [
+    "H15A",
+    "H15B",
+    "H15"
+  ],
+  "live_board_sync": {
+    "synced_at_utc": "2026-11-01T07:30:00Z",
+    "board": "horizon-research-2026-10",
+    "card_id_mapping_source": "/home/ubuntu/.hermes/profiles/orchestrator/horizon-orchestration.json",
+    "accepted_source_only": {
+      "H01": "docs/horizon/evidence/h01-review.md",
+      "H02": "docs/horizon/evidence/h02-review.md",
+      "H03": "docs/horizon/evidence/h03-review.md",
+      "H04": "docs/horizon/evidence/h04-review.md",
+      "H05": "docs/horizon/evidence/h05-review.md",
+      "H06": "docs/horizon/evidence/h06-review.md",
+      "H07": "docs/horizon/evidence/h07-review.md",
+      "H08": "docs/horizon/evidence/h08-review.md",
+      "H09": "docs/horizon/evidence/h09-review.md",
+      "H11": "docs/horizon/evidence/h11-review.md",
+      "H12": "docs/horizon/evidence/h12-review.md",
+      "H13": "docs/horizon/evidence/h13-review.md",
+      "H15A": "docs/horizon/evidence/h15a-review.md"
+    },
+    "running": {
+      "H14": "t_5f43465d",
+      "H10": "t_5a93e235"
+    },
+    "held_follow_ups": {
+      "H07A": "t_c6b1da9e",
+      "H09X": "t_283b5559",
+      "H10X": "t_8dd9c856"
+    },
+    "deferred": [
+      "H16"
+    ],
+    "new_scoped_repair_2026_11_01": {
+      "H09_N1_economics_status_collision": {
+        "repair": "t_d218b310",
+        "review": "t_77356be1",
+        "provenance": "docs/horizon/evidence/h09-review.md finding N1 (non-blocking)"
+      }
+    },
+    "concurrency": "cap 2 worker lanes per 2026-11-01 continuation handoff (supersedes the 2026-10-31 cap-3 override)",
+    "superseded": "all per-package statuses dated before 2026-11-01 in this file were stale snapshot values; this sync is authoritative"
+  }
+}

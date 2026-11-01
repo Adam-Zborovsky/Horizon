@@ -1,9 +1,22 @@
+import 'dart:convert';
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:http/http.dart' as http;
+import '../../core/api/api_config.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/glass_card.dart';
+import '../auth/auth_repository.dart';
+import '../briefing/briefing_config_repository.dart';
+import '../positions/position_models.dart';
+import '../positions/position_repository.dart';
+import '../positions/widgets/position_badge.dart';
+import '../positions/widgets/position_editor.dart';
+import '../research/research_models.dart';
+import '../research/widgets/research_panel.dart';
 import '../stock/stock_repository.dart';
 import '../stock/opportunity_stats_provider.dart';
 import '../dashboard/watchlist_provider.dart';
@@ -79,33 +92,61 @@ class _DetailContent extends ConsumerWidget {
                 const SizedBox(height: 8),
                 Row(
                   children: [
-                    Text(
-                      '\$${stock.currentPrice.toStringAsFixed(2)}',
-                      style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                        fontSize: 42,
-                        letterSpacing: -2,
+                    // H15: 0.0 means "unavailable" (no structured model price
+                    // and no model-reported history). The heading never
+                    // fabricates "$0.00" — it states the unavailability.
+                    if (stock.currentPrice > 0)
+                      Text(
+                        '\$${stock.currentPrice.toStringAsFixed(2)}',
+                        style: Theme.of(context).textTheme.displayLarge?.copyWith(
+                          fontSize: 42,
+                          letterSpacing: -2,
+                        ),
+                      )
+                    else
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '—',
+                            style: Theme.of(context).textTheme.displayLarge?.copyWith(
+                              fontSize: 42,
+                              letterSpacing: -2,
+                              color: Colors.white24,
+                            ),
+                          ),
+                          const Text(
+                            'PRICE UNAVAILABLE',
+                            style: TextStyle(
+                              color: Colors.white24,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 1.5,
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
                     const SizedBox(width: 16),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: color.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: color.withValues(alpha: 0.2)),
-                      ),
-                      child: Text(
-                        '${stock.changePercent > 0 ? "+" : ""}${stock.changePercent.toStringAsFixed(2)}%',
-                        style: TextStyle(
-                          color: color,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
+                    if (stock.currentPrice > 0)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: color.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: color.withValues(alpha: 0.2)),
+                        ),
+                        child: Text(
+                          '${stock.changePercent > 0 ? "+" : ""}${stock.changePercent.toStringAsFixed(2)}%',
+                          style: TextStyle(
+                            color: color,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                          ),
                         ),
                       ),
-                    ),
                   ],
                 ),
                 const SizedBox(height: 30),
@@ -177,9 +218,9 @@ class _DetailContent extends ConsumerWidget {
                       const SizedBox(height: 16),
                       Text(
                         _getDisplayString(stock.analysis) ??
-                            (stock.source == StockSource.opportunity
-                                ? "AI discovery algorithm identified this as a high-potential target, but detailed reasoning is still being synthesized."
-                                : "No AI analysis available for this ticker today. Ticker is being tracked in your strategic watchlist."),
+                            // H15B: truthful unavailable copy — no synthetic
+                            // analysis is fabricated when the model sent none.
+                            'No analysis was provided for this ticker yet.',
                         style: Theme.of(
                           context,
                         ).textTheme.bodyLarge?.copyWith(height: 1.5),
@@ -274,6 +315,8 @@ class _DetailContent extends ConsumerWidget {
                 ],
                 const SizedBox(height: 30),
                 _OpportunityScoutStats(ticker: stock.ticker),
+                const SizedBox(height: 30),
+                _PositionResearchSection(stock: stock),
                 const SizedBox(height: 100),
               ],
             ),
@@ -315,6 +358,19 @@ class _DetailHeader extends ConsumerWidget {
               } else {
                 await ref.read(watchlistProvider.notifier).add(ticker);
               }
+            } on PositionTickerConflictException catch (conflict) {
+              // H15: a star removal refused by the backend (409
+              // POSITION_TICKER_CONFLICT — the ticker backs an active
+              // position) is surfaced bounded and explicitly, never
+              // silently swallowed into the generic failure copy.
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(conflict.message),
+                    behavior: SnackBarBehavior.floating,
+                  ),
+                );
+              }
             } catch (_) {
               if (context.mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -339,7 +395,27 @@ class _MainChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (data.isEmpty) return const SizedBox.shrink();
+    // H15B: without observed bars the chart slot is preserved but renders a
+    // truthful unavailable state — no synthetic candles are invented.
+    if (data.isEmpty) {
+      return Container(
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.03),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
+        ),
+        child: const Text(
+          'OBSERVED PRICE HISTORY UNAVAILABLE',
+          style: TextStyle(
+            color: Colors.white38,
+            fontSize: 11,
+            fontWeight: FontWeight.bold,
+            letterSpacing: 1.2,
+          ),
+        ),
+      );
+    }
 
     final minVal = data.reduce((a, b) => a < b ? a : b);
     final maxVal = data.reduce((a, b) => a > b ? a : b);
@@ -650,5 +726,518 @@ class _SourceBadge extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// H15B — owner-scoped position + grounded research wiring.
+// ---------------------------------------------------------------------------
+
+/// Owner-safe run-state projections from
+/// `GET /research/positions/:id/latest` (research.routes.js:61-80 /
+/// research.service.js getPositionResearchState). These are NOT full
+/// [ResearchRun] objects: last_success and latest_attempt arrive as separate
+/// narrow projections, so they are rendered as their own truthful rows
+/// instead of being reassembled into a run model that would invent fields.
+class RunSuccessView {
+  const RunSuccessView({
+    required this.runId,
+    required this.status,
+    this.assessmentId,
+    this.finishedAt,
+  });
+
+  final String runId;
+  final String status;
+  final String? assessmentId;
+  final String? finishedAt;
+
+  static RunSuccessView? fromWire(Object? wire) {
+    if (wire == null) return null;
+    if (wire is! Map<String, dynamic>) {
+      throw const FormatException('run_state.last_success: expected an '
+          'object or null');
+    }
+    return RunSuccessView(
+      runId: wire['run_id'] as String,
+      status: wire['status'] as String,
+      assessmentId: wire['assessment_id'] as String?,
+      finishedAt: wire['finished_at'] as String?,
+    );
+  }
+}
+
+class RunAttemptView {
+  const RunAttemptView({
+    required this.runId,
+    required this.status,
+    required this.stage,
+    this.startedAt,
+    this.finishedAt,
+    this.errorCode,
+    this.deadlineAt,
+  });
+
+  final String runId;
+  final String status;
+  final String stage;
+  final String? startedAt;
+  final String? finishedAt;
+  final String? errorCode;
+  final String? deadlineAt;
+
+  static RunAttemptView? fromWire(Object? wire) {
+    if (wire == null) return null;
+    if (wire is! Map<String, dynamic>) {
+      throw const FormatException('run_state.latest_attempt: expected an '
+          'object or null');
+    }
+    return RunAttemptView(
+      runId: wire['run_id'] as String,
+      status: wire['status'] as String,
+      stage: wire['stage'] as String,
+      startedAt: wire['started_at'] as String?,
+      finishedAt: wire['finished_at'] as String?,
+      errorCode: wire['error_code'] as String?,
+      deadlineAt: wire['deadline_at'] as String?,
+    );
+  }
+}
+
+/// Unwrapped research state for one position. The backend nests the contract
+/// assessment object flatly under `latest_assessment` (owner_id_internal
+/// stripped by toPublicAssessmentView); run state arrives as the narrow
+/// projections above.
+class PositionResearchState {
+  const PositionResearchState({
+    required this.positionId,
+    this.assessment,
+    this.lastSuccess,
+    this.latestAttempt,
+  });
+
+  final String positionId;
+  final ResearchAssessment? assessment;
+  final RunSuccessView? lastSuccess;
+  final RunAttemptView? latestAttempt;
+}
+
+/// H15B wire adapter for the owner-scoped research endpoints.
+///
+/// Wire reconciliation (parent-card constraint, traced against the actual
+/// backend — never assumed):
+/// - `GET /research/positions/:id/latest` answers
+///   `{position_id, latest_assessment, run_state: {last_success,
+///   latest_attempt}}`. H11's ResearchLatest historically expects a different
+///   shape and that file is read-only for this lane, so the unwrap happens
+///   HERE and the drift is reported for a scoped H11 repair instead of being
+///   silently repaired.
+/// - `POST /research/positions/:id/runs` answers `{run, idempotent_replay}`
+///   where the run wire RETAINS owner_id_internal (toPublicRunView strips
+///   only lease_nonce) — exactly what H11's strict ResearchRun.fromJson
+///   requires, so the full run parse reconciles with the real wire.
+/// - The evidence detail endpoint is not part of the mounted route surface,
+///   so evidence chips intentionally stay non-interactive plain text rather
+///   than a dead affordance.
+class ResearchWire {
+  ResearchWire({http.Client? client, AuthTokenProvider? tokenProvider})
+      : _client = client ?? http.Client(),
+        _tokenProvider = tokenProvider ?? _defaultTokenProvider;
+
+  final http.Client _client;
+  final AuthTokenProvider _tokenProvider;
+
+  static Future<String?> _defaultTokenProvider() => AuthRepository().getToken();
+
+  Future<dynamic> _sendJson(
+    String method,
+    String path, {
+    Map<String, String> extraHeaders = const {},
+  }) async {
+    final token = await _tokenProvider();
+    final request = http.Request(method, Uri.parse('${ApiConfig.baseUrl}$path'));
+    request.headers['Accept'] = 'application/json';
+    if (token != null) {
+      request.headers['Authorization'] = 'Bearer $token';
+    }
+    extraHeaders.forEach((key, value) => request.headers[key] = value);
+    final response =
+        await http.Response.fromStream(await _client.send(request));
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw ApiException.fromResponse(response.statusCode, response.body);
+    }
+    if (response.body.isEmpty) return null;
+    return jsonDecode(response.body);
+  }
+
+  /// Latest validated assessment plus owner-safe run-state projections;
+  /// null assessment when no run has produced one yet.
+  Future<PositionResearchState> latestState(String positionId) async {
+    final decoded = await _sendJson(
+      'GET',
+      '/research/positions/$positionId/latest',
+    );
+    if (decoded is! Map<String, dynamic>) {
+      throw const FormatException(
+          'research latest: expected an object response');
+    }
+    ResearchAssessment? assessment;
+    final assessmentJson = decoded['latest_assessment'];
+    if (assessmentJson != null) {
+      if (assessmentJson is! Map<String, dynamic>) {
+        throw const FormatException(
+            'research latest.latest_assessment: expected an object or null');
+      }
+      assessment = ResearchAssessment.fromJson(assessmentJson);
+    }
+    final runState = decoded['run_state'];
+    RunSuccessView? lastSuccess;
+    RunAttemptView? latestAttempt;
+    if (runState != null) {
+      if (runState is! Map<String, dynamic>) {
+        throw const FormatException(
+            'research latest.run_state: expected an object or null');
+      }
+      lastSuccess = RunSuccessView.fromWire(runState['last_success']);
+      latestAttempt = RunAttemptView.fromWire(runState['latest_attempt']);
+    }
+    return PositionResearchState(
+      positionId: positionId,
+      assessment: assessment,
+      lastSuccess: lastSuccess,
+      latestAttempt: latestAttempt,
+    );
+  }
+
+  /// Queues a manual research run. The idempotency key is contract-required;
+  /// duplicate keys return the persisted run, conflicting payloads a 409.
+  Future<ResearchRun> queueRun(
+    String positionId, {
+    required String idempotencyKey,
+  }) async {
+    if (idempotencyKey.isEmpty || idempotencyKey.length > 255) {
+      throw ArgumentError.value(
+          idempotencyKey, 'idempotencyKey', 'must be 1-255 characters');
+    }
+    final decoded = await _sendJson(
+      'POST',
+      '/research/positions/$positionId/runs',
+      extraHeaders: {'Idempotency-Key': idempotencyKey},
+    );
+    if (decoded is! Map<String, dynamic> ||
+        decoded['run'] is! Map<String, dynamic>) {
+      throw const FormatException(
+          'research run queue: expected a {run: ...} response');
+    }
+    return ResearchRun.fromJson(decoded['run'] as Map<String, dynamic>);
+  }
+
+  /// Cancels in-flight requests and releases the client.
+  void close() => _client.close();
+}
+
+/// Hand-written provider (no codegen — this file is a shared screen file, not
+/// a generated-part owner) for the research wire adapter. Overridable in
+/// integration tests with an injectable http.Client.
+final researchWireProvider = Provider<ResearchWire>((ref) {
+  return ResearchWire(tokenProvider: () async {
+    final auth = ref.read(authRepositoryProvider);
+    return auth.getToken();
+  });
+});
+
+/// H15B: connects the tracked position (H12 editor, H11 repository) and the
+/// grounded research panels (H14) into the stock detail flow. The chart slot
+/// above is preserved and stays independent — panels render with or without
+/// any chart data, never waiting for chart completion.
+class _PositionResearchSection extends ConsumerStatefulWidget {
+  final StockData stock;
+  const _PositionResearchSection({required this.stock});
+
+  @override
+  ConsumerState<_PositionResearchSection> createState() =>
+      _PositionResearchSectionState();
+}
+
+class _PositionResearchSectionState
+    extends ConsumerState<_PositionResearchSection> {
+  static final Random _random = Random.secure();
+
+  Position? _position;
+  PositionResearchState? _research;
+  ResearchRun? _queuedRun;
+  bool _loading = true;
+  bool _queueing = false;
+  String? _error;
+  String? _queueError;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      final repository = ref.read(positionRepositoryProvider);
+      final positions = await repository.getPositions();
+      final ticker = widget.stock.ticker.toUpperCase();
+      Position? match;
+      for (final position in positions) {
+        if (!position.archived &&
+            position.instrument.symbol.toUpperCase() == ticker) {
+          match = position;
+          break;
+        }
+      }
+      PositionResearchState? research;
+      if (match != null) {
+        research = await ref.read(researchWireProvider).latestState(match.id);
+      }
+      if (!mounted) return;
+      setState(() {
+        _position = match;
+        _research = research;
+        _loading = false;
+      });
+    } on Exception {
+      if (!mounted) return;
+      setState(() {
+        _error = 'Position and research state could not be loaded.';
+        _loading = false;
+      });
+    }
+  }
+
+  Future<void> _openEditor() async {
+    final position = _position;
+    if (position == null) return;
+    final repository = ref.read(positionRepositoryProvider);
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      builder: (sheetContext) {
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(sheetContext).viewInsets.bottom,
+          ),
+          child: SingleChildScrollView(
+            child: PositionEditor.edit(
+              initial: position,
+              // H12 accepted wiring: the editor saves through the real
+              // PositionRepository; it builds {expected_revision, changes}
+              // itself from initial.revision and surfaces 409
+              // REVISION_CONFLICT internally without silent retries.
+              onSave: (write) => repository.patchPosition(position.id, write),
+              onSaved: (saved) {
+                Navigator.of(sheetContext).pop();
+                if (!mounted) return;
+                setState(() => _position = saved);
+                _load();
+              },
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _queueRun() async {
+    final position = _position;
+    if (_queueing || position == null) return;
+    setState(() {
+      _queueing = true;
+      _queueError = null;
+    });
+    // One idempotency key per user intent (CONTRACTS §8); locally generated,
+    // no shared secret involved.
+    final key = 'manual-${DateTime.now().toUtc().millisecondsSinceEpoch}-'
+        '${_randomHex(8)}';
+    try {
+      final run = await ref
+          .read(researchWireProvider)
+          .queueRun(position.id, idempotencyKey: key);
+      if (!mounted) return;
+      setState(() {
+        _queuedRun = run;
+        _queueing = false;
+      });
+    } on ApiException catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _queueError =
+            'Research run could not be queued (${error.code}).';
+        _queueing = false;
+      });
+    }
+  }
+
+  String _randomHex(int bytes) => List.generate(bytes, (_) => _random.nextInt(256))
+      .map((byte) => byte.toRadixString(16).padLeft(2, '0'))
+      .join();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'POSITION & RESEARCH',
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: AppTheme.goldAmber,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 1.5,
+              ),
+        ),
+        const SizedBox(height: 12),
+        GlassCard(
+          padding: const EdgeInsets.all(20),
+          child: _buildBody(context),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildBody(BuildContext context) {
+    if (_loading) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(24),
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+    if (_error != null) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            _error!,
+            style: const TextStyle(color: Colors.white70, fontSize: 13),
+          ),
+          TextButton(
+            onPressed: _load,
+            child: const Text('RETRY'),
+          ),
+        ],
+      );
+    }
+    final position = _position;
+    if (position == null) {
+      // Truthful: a bare ticker is not a resolved instrument identity, so no
+      // position is invented here (CONTRACTS §1 — identity comes from a
+      // vetted provider resolution).
+      return Text(
+        'No tracked position for ${widget.stock.ticker}. Tracked positions '
+        'with a resolved instrument identity appear here.',
+        style: TextStyle(color: Colors.white.withValues(alpha: 0.54)),
+      );
+    }
+    final research = _research;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        PositionStateBadge(
+          state: position.state,
+          archived: position.archived,
+        ),
+        const SizedBox(height: 8),
+        PositionEconomicsLine(position: position),
+        const SizedBox(height: 12),
+        Align(
+          alignment: Alignment.centerRight,
+          child: OutlinedButton.icon(
+            onPressed: _openEditor,
+            style: OutlinedButton.styleFrom(
+              foregroundColor: AppTheme.goldAmber,
+              side: BorderSide(
+                color: AppTheme.goldAmber.withValues(alpha: 0.3),
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+            icon: const Icon(Icons.edit_outlined, size: 16),
+            label: const Text('Edit position'),
+          ),
+        ),
+        const SizedBox(height: 16),
+        ResearchPanel(
+          assessment: research?.assessment,
+          // A queued/running run surfaced honestly; evidence/snapshot views
+          // stay plain text (no dead affordances).
+          run: _queuedRun,
+        ),
+        const SizedBox(height: 16),
+        ..._runStateRows(research),
+        if (_queueError != null) ...[
+          const SizedBox(height: 8),
+          Text(
+            _queueError!,
+            style: const TextStyle(color: AppTheme.softCrimson, fontSize: 13),
+          ),
+        ],
+        const SizedBox(height: 12),
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton(
+            onPressed: _queueing ? null : _queueRun,
+            child: _queueing
+                ? const SizedBox(
+                    height: 16,
+                    width: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Text('RUN RESEARCH'),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Latest attempt versus last success, reported separately (CONTRACTS §8):
+  /// an existing success is never rewritten by a later failure, and a failed
+  /// attempt never hides the prior report.
+  List<Widget> _runStateRows(PositionResearchState? research) {
+    const mutedStyle = TextStyle(color: Colors.white54, fontSize: 13);
+    const baseStyle = TextStyle(color: Colors.white70, fontSize: 13);
+    final success = research?.lastSuccess;
+    final attempt = research?.latestAttempt;
+    if (success == null && attempt == null) {
+      return const [
+        Text('No successful research runs yet.', style: mutedStyle),
+        SizedBox(height: 4),
+        Text('No research attempts recorded yet.', style: mutedStyle),
+      ];
+    }
+    final rows = <Widget>[
+      if (success != null)
+        Text(
+          'Last successful report: ${success.status}'
+          '${success.finishedAt == null ? '' : ' · finished ${success.finishedAt}'}',
+          style: baseStyle,
+        )
+      else
+        const Text('No successful research runs yet.', style: mutedStyle),
+      const SizedBox(height: 4),
+      if (attempt != null)
+        Text(
+          'Latest attempt: ${attempt.status} · stage ${attempt.stage}',
+          style: baseStyle,
+        )
+      else
+        const Text('No research attempts recorded yet.', style: mutedStyle),
+      if (attempt?.errorCode != null)
+        Text(
+          'Error: ${attempt!.errorCode}',
+          style: const TextStyle(
+              color: AppTheme.softCrimson, fontSize: 13),
+        ),
+    ];
+    return rows;
   }
 }

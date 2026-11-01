@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:horizon/src/core/theme/app_theme.dart';
 import 'package:horizon/src/core/widgets/glass_card.dart';
+import 'package:horizon/src/features/briefing/briefing_config_repository.dart';
 import 'package:horizon/src/features/dashboard/watchlist_provider.dart';
 import 'package:horizon/src/features/stock/stock_search_provider.dart';
 
@@ -292,8 +293,7 @@ class _ManageWatchlistScreenState extends ConsumerState<ManageWatchlistScreen> {
                 return _WatchlistItem(
                   ticker: ticker,
                   name: ticker,
-                  onRemove: () async =>
-                      await ref.read(watchlistProvider.notifier).remove(ticker),
+                  onRemove: () => _removeWithConflictHandling(context, ticker),
                 );
               }, childCount: watchlist.length),
             ),
@@ -301,6 +301,42 @@ class _ManageWatchlistScreenState extends ConsumerState<ManageWatchlistScreen> {
         ],
       ),
     );
+  }
+
+  /// H15 watchlist/star compatibility: a removal refused by the backend
+  /// (409 POSITION_TICKER_CONFLICT — the ticker backs an active position)
+  /// is surfaced bounded and explicitly. The server's refusal message is
+  /// shown verbatim; nothing is removed, nothing is retried silently.
+  Future<void> _removeWithConflictHandling(
+    BuildContext context,
+    String ticker,
+  ) async {
+    try {
+      await ref.read(watchlistProvider.notifier).remove(ticker);
+    } on PositionTickerConflictException catch (conflict) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              conflict.blockedRemovals.isEmpty
+                  ? conflict.message
+                  : '${conflict.message} Blocked: '
+                      '${conflict.blockedRemovals.map((e) => e['ticker']).join(', ')}.',
+            ),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } catch (_) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Could not update watchlist'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
   }
 }
 

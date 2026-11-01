@@ -139,14 +139,26 @@ class _WearOpportunitiesScreenState extends State<WearOpportunitiesScreen> {
                                     ),
                                   ),
                                   const Spacer(),
-                                  Text(
-                                    '\$${stock.currentPrice.toStringAsFixed(2)}',
-                                    style: const TextStyle(
-                                      color: Colors.white70,
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.bold,
+                                  // H15: 0.0 means "unavailable" — no
+                                  // fabricated "$0.00" on the watch.
+                                  if (stock.currentPrice > 0)
+                                    Text(
+                                      '\$${stock.currentPrice.toStringAsFixed(2)}',
+                                      style: const TextStyle(
+                                        color: Colors.white70,
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    )
+                                  else
+                                    const Text(
+                                      '—',
+                                      style: TextStyle(
+                                        color: Colors.white24,
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                     ),
-                                  ),
                                 ],
                               ),
                               if (stock.analysis != null) ...[

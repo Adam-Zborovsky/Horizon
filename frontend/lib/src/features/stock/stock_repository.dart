@@ -1,4 +1,3 @@
-import 'dart:math';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../briefing/briefing_repository.dart';
@@ -32,32 +31,21 @@ abstract class StockData with _$StockData {
 
 @riverpod
 class StockRepository extends _$StockRepository {
-  double _extractPrice(String? text) {
-    if (text == null || text.isEmpty) return 0.0;
-    // Prioritize patterns with $ sign (handles $420.97 or ($420.97))
-    final regexDollar = RegExp(r'\$\s*(\d+(?:\.\d+)?)');
-    final matchDollar = regexDollar.firstMatch(text);
-    if (matchDollar != null) {
-      return double.tryParse(matchDollar.group(1) ?? '0') ?? 0.0;
-    }
-    // Then look for numbers that look like stock prices (XX.XX or XXX.XX)
-    final regexNum = RegExp(r'\b(\d{1,5}\.\d{2})\b');
-    final matchNum = regexNum.firstMatch(text);
-    if (matchNum != null) {
-      return double.tryParse(matchNum.group(1) ?? '0') ?? 0.0;
-    }
-    return 0.0;
+  // H15: authoritative prices are NEVER extracted from prose. No regex
+  // scraping of explanation/takeaway/analysis/potential_price_action — the
+  // only accepted sources are the model-reported structured fields
+  // (item.price, item.change, item.history). Anything else stays
+  // "unavailable" (price 0.0 / empty history) and renders truthfully
+  // downstream; the detail and Wear surfaces carry the unavailable state.
+
+  double _parseStructuredPrice(String? raw) {
+    if (raw == null || raw.isEmpty) return 0.0;
+    return double.tryParse(raw.replaceAll(RegExp(r'[^\d.]'), '')) ?? 0.0;
   }
 
-  double _extractChange(String? text) {
-    if (text == null || text.isEmpty) return 0.0;
-    // Handle % sign with optional sign (e.g., +2.5% or -1.2% or 5%)
-    final regexPercent = RegExp(r'([+-]?\d+(?:\.\d+)?)\s*%');
-    final matchPercent = regexPercent.firstMatch(text);
-    if (matchPercent != null) {
-      return double.tryParse(matchPercent.group(1) ?? '0') ?? 0.0;
-    }
-    return 0.0;
+  double _parseStructuredChange(String? raw) {
+    if (raw == null || raw.isEmpty) return 0.0;
+    return double.tryParse(raw.replaceAll(RegExp(r'[^\d.+-]'), '')) ?? 0.0;
   }
 
   @override
@@ -66,15 +54,8 @@ class StockRepository extends _$StockRepository {
     final config = await ref.watch(briefingConfigRepositoryProvider.future);
     
     final List<StockData> stocks = [];
-    final random = Random();
     final seen = <String>{};
     
-    final now = DateTime.now().toUtc();
-    bool isMarketClosed = now.weekday == DateTime.saturday || now.weekday == DateTime.sunday;
-    if (now.weekday == DateTime.monday && (now.hour < 14 || (now.hour == 14 && now.minute < 30))) {
-      isMarketClosed = true;
-    }
-
     // 1. Process items from briefing
     for (final entry in briefing.data.entries) {
       final categoryName = entry.key.toLowerCase();
@@ -90,22 +71,12 @@ class StockRepository extends _$StockRepository {
           // but for now let's just keep the first one found (usually market_analysis is first)
           if (seen.contains(ticker)) continue;
 
-          // Price extraction
-          double price = double.tryParse(item.price?.replaceAll(RegExp(r'[^\d.]'), '') ?? '0') ?? 0.0;
-          if (price == 0) {
-            price = _extractPrice(item.potentialPriceAction);
-            if (price == 0) price = _extractPrice(item.explanation);
-            if (price == 0) price = _extractPrice(item.takeaway);
-            if (price == 0) price = _extractPrice(item.analysis?.toString());
-          }
+          // H15: price comes only from the structured model-reported field;
+          // prose fields are never scraped. No value → 0.0 ("unavailable").
+          final price = _parseStructuredPrice(item.price);
 
-          // Change extraction
-          double change = double.tryParse(item.change?.replaceAll(RegExp(r'[^\d.+-]'), '') ?? '0') ?? 0.0;
-          if (change == 0) {
-            change = _extractChange(item.potentialPriceAction);
-            if (change == 0) change = _extractChange(item.explanation);
-            if (change == 0) change = _extractChange(item.takeaway);
-          }
+          // H15: change comes only from the structured model-reported field.
+          final change = _parseStructuredChange(item.change);
           
           final double sentiment = item.sentimentScore ?? 
               (() {
@@ -124,8 +95,11 @@ class StockRepository extends _$StockRepository {
                 return 0.0;
               })();
           
-          final List<double> history = item.history ?? _generateHistory(price > 0 ? price : 100.0, change, sentiment, random, isMarketClosed);
-          final finalPrice = price > 0 ? price : (history.isNotEmpty ? history.last : 100.0);
+          // H15B: no synthetic history fallback — only a model-reported
+          // history is carried. Missing history stays empty and the detail
+          // screen renders a truthful unavailable chart slot.
+          final List<double> history = item.history ?? const <double>[];
+          final finalPrice = price > 0 ? price : (history.isNotEmpty ? history.last : 0.0);
 
           // Analysis mapping logic
           String? analysisText;
@@ -163,15 +137,15 @@ class StockRepository extends _$StockRepository {
     for (final ticker in config.tickers) {
       final upperTicker = ticker.toUpperCase();
       if (!seen.contains(upperTicker)) {
-        final double price = 100.0; 
-        final List<double> history = _generateHistory(price, 0.0, 0.0, random, isMarketClosed);
-        
+        // H15B: no invented placeholder price/history for watchlist tickers
+        // without briefing data — price 0.0 and empty history mean
+        // "unavailable", rendered truthfully downstream.
         stocks.add(StockData(
           ticker: upperTicker,
           name: upperTicker,
-          currentPrice: price,
+          currentPrice: 0.0,
           changePercent: 0.0,
-          history: history,
+          history: const <double>[],
           sentiment: 0.0,
           source: StockSource.watchlist,
         ));
@@ -182,21 +156,5 @@ class StockRepository extends _$StockRepository {
     return stocks;
   }
 
-  List<double> _generateHistory(double currentPrice, double changePercent, double sentiment, Random random, bool isWeekend) {
-    if (currentPrice <= 0) return List.filled(15, 10.0);
-    final List<double> points = [];
-    double lastVal = currentPrice;
-    points.add(currentPrice);
-    final effectiveChange = changePercent == 0 ? (random.nextDouble() - 0.5) * 0.5 : changePercent;
-    for (int i = 0; i < 14; i++) {
-      final volatility = currentPrice * 0.012; 
-      final bias = (effectiveChange / 100) * (currentPrice / 10);
-      final noise = (random.nextDouble() - 0.5) * volatility;
-      final sentimentInfluence = sentiment * (currentPrice * 0.002);
-      lastVal = lastVal - bias + noise - sentimentInfluence;
-      if (lastVal < currentPrice * 0.7) lastVal = currentPrice * 0.7 + (random.nextDouble() * 5);
-      points.insert(0, lastVal);
-    }
-    return points;
-  }
+
 }

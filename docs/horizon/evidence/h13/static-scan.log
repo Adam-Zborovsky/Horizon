@@ -1,0 +1,6 @@
+# H13 static scan (host has no Dart/Flutter SDK: `which dart flutter` -> exit 1)
+# Balanced-delimiter scan of the three delivered Dart files; comments and
+# string literals stripped before counting. Output is <file> braces N parens N brackets N.
+frontend/lib/src/features/stock/widgets/chart_controller.dart braces 0 parens 0 brackets 0
+frontend/lib/src/features/stock/widgets/price_chart.dart braces 0 parens 0 brackets 0
+frontend/test/price_chart_test.dart braces 0 parens 0 brackets 0
