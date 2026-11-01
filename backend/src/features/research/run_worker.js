@@ -363,9 +363,144 @@ async function queueDailyUpdateRuns({
   return { queued, errors };
 }
 
+// ---------------------------------------------------------------------------
+// Advanced scheduler: leader lease + bounded tick (H10X)
+// ---------------------------------------------------------------------------
+
+// Single-process reference leader lease: one owner per key, compare-and-set on
+// a shared mutable record with an injected clock. Multi-replica deployments
+// substitute a Mongo-backed CAS lease (H15 production wiring); the scheduler
+// depends only on the tryAcquire/release contract, never on this concrete
+// store. A lease is re-acquirable by anyone once its TTL expires, so a crashed
+// leader is taken over rather than wedging leadership forever.
+function createInMemoryLeaderLease({ now = () => new Date() } = {}) {
+  const holders = new Map();
+  return Object.freeze({
+    async tryAcquire(key, ownerId, ttlMs) {
+      if (typeof key !== 'string' || key.length === 0 || key.length > 160) {
+        throw workerError('INVALID_INPUT', 'lease key must be a non-empty string');
+      }
+      if (typeof ownerId !== 'string' || ownerId.length === 0 || ownerId.length > 160) {
+        throw workerError('INVALID_INPUT', 'lease owner must be a non-empty string');
+      }
+      if (!Number.isSafeInteger(ttlMs) || ttlMs <= 0) {
+        throw workerError('INVALID_INPUT', 'lease ttl must be a positive integer of milliseconds');
+      }
+      const nowIso = now().toISOString();
+      const holder = holders.get(key);
+      if (holder && holder.owner !== ownerId && holder.expires_at > nowIso) {
+        return null; // a live peer owns the lease
+      }
+      const expiresAt = new Date(now().getTime() + ttlMs).toISOString();
+      holders.set(key, { owner: ownerId, expires_at: expiresAt });
+      return { key, owner: ownerId, expires_at: expiresAt };
+    },
+    async release(lease) {
+      if (!lease || typeof lease.key !== 'string' || typeof lease.owner !== 'string') return false;
+      const holder = holders.get(lease.key);
+      if (holder && holder.owner === lease.owner) {
+        holders.delete(lease.key);
+        return true;
+      }
+      return false;
+    },
+  });
+}
+
+// Advanced scheduler: leader-gated, bounded daily queueing + recovery sweep
+// (H10X; CONTRACTS §8 "advanced scheduling"). One replica per tick owns the
+// named leader lease, so competing replicas never double-queue or
+// double-sweep; the underlying persisted idempotency (queueRun key) and atomic
+// claims keep a single scheduler safe even across a lease race. A failed tick
+// is retried a bounded number of times on transient failure — no unbounded
+// retry/delay chain. This factory owns the logic only; cron/service wiring and
+// the Mongo-backed lease are integration-lane (H15) responsibility.
+function createResearchScheduler({
+  researchService,
+  positions = () => [],
+  leadership,
+  now = () => new Date(),
+  leaseKey = 'research-scheduler',
+  ownerId = 'research-scheduler-default',
+  leaseTtlMs = 60000,
+  maxTickRetries = 2,
+  recoverExpired = true,
+  queueDaily = true,
+  logger = null,
+} = {}) {
+  if (!researchService || typeof researchService.recoverAbandonedRuns !== 'function'
+    || typeof researchService.queueRun !== 'function') {
+    throw new TypeError('createResearchScheduler requires a research service with recovery and queue support');
+  }
+  if (typeof positions !== 'function') {
+    throw new TypeError('createResearchScheduler requires a positions provider function');
+  }
+  if (!leadership || typeof leadership.tryAcquire !== 'function'
+    || typeof leadership.release !== 'function') {
+    throw new TypeError('createResearchScheduler requires a leader lease store (tryAcquire/release)');
+  }
+  if (!Number.isSafeInteger(maxTickRetries) || maxTickRetries < 0 || maxTickRetries > 10) {
+    throw new TypeError('maxTickRetries must be an integer between 0 and 10');
+  }
+
+  function logTickFailure(attempt) {
+    if (logger && typeof logger.warn === 'function') {
+      // Codes only — never upstream payloads, prompts or credentials.
+      logger.warn(`research scheduler tick failed (attempt ${attempt + 1}/${maxTickRetries + 1})`);
+    }
+  }
+
+  // One tick: acquire leadership, sweep expired runs, queue due daily runs. A
+  // non-leader returns immediately with zero side effects. The lease is
+  // released in a finally so a failed tick does not wedge leadership; a hard
+  // crash leaves the lease to lapse by TTL and a peer takes over (bounded
+  // takeover, no competing owner).
+  async function runTick() {
+    const lease = await leadership.tryAcquire(leaseKey, ownerId, leaseTtlMs);
+    if (!lease) {
+      return { leader: false };
+    }
+    try {
+      const recovery = recoverExpired
+        ? await researchService.recoverAbandonedRuns()
+        : { stalled: 0, superseded: 0 };
+      let queued = [];
+      let errors = [];
+      if (queueDaily) {
+        const list = await positions();
+        const outcome = await queueDailyUpdateRuns({ researchService, positions: list, now });
+        queued = outcome.queued;
+        errors = outcome.errors;
+      }
+      return { leader: true, recovery, queued, errors };
+    } finally {
+      await leadership.release(lease);
+    }
+  }
+
+  // Bounded retry wrapper: retries a failed tick a fixed number of times, then
+  // surfaces the last error. No unbounded retry/delay chain (CONTRACTS §8).
+  async function runScheduledTick() {
+    let lastError = null;
+    for (let attempt = 0; attempt <= maxTickRetries; attempt += 1) {
+      try {
+        return await runTick();
+      } catch (error) {
+        lastError = error;
+        logTickFailure(attempt);
+      }
+    }
+    throw lastError;
+  }
+
+  return Object.freeze({ runTick, runScheduledTick });
+}
+
 module.exports = {
   TERMINAL_STATUSES,
   createRunWorker,
   queueDailyUpdateRuns,
   toStatusView,
+  createInMemoryLeaderLease,
+  createResearchScheduler,
 };

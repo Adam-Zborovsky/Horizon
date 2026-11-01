@@ -51,3 +51,33 @@ side; the test encoded a nonexistent node and over-forbade a legitimate edge.
 - Complete backend aggregate: 223/223 pass, exit 0.
 - `n8n-workflow.json` was not modified (SHA-256
   `58a837417801db663febc390406d110eadd8ea42033c40bc7817dcf2f3e77967`).
+
+## H10X follow-up (2026-11-01): poll counter re-keyed (H10 review F1)
+
+The H10 combined review (F1, non-blocking) found that the `poll_count` budget was
+**structurally present but operationally inert**: `Classify Poll Result` derived
+`poll_count` from `$('Normalize Execute Response').item.json`, a node that runs once
+at workflow start and never changes, so `poll_count` was recomputed as `0 + 1 = 1` on
+every iteration — the `Poll Budget Remaining?` gate (`poll_count < 60`) could never
+trip and `Mark Poll Timeout` was unreachable.
+
+H10X re-keyed the counter to the loop item. The running count is now carried on the
+item that flows through `Wait Between Polls` (the wait node passes its input through,
+and the `Poll Run Status` HTTP response never carries `poll_count` back); on the very
+first poll the count seeds from `Normalize Execute Response` (`poll_count: 0`). The
+counter now increments `1, 2, …` per poll, so the `poll_count < 60` budget is
+operational and `Mark Poll Timeout` is reachable.
+
+Accurate bound (layered, not a single mechanism):
+
+1. `Poll Budget Remaining?` — the `poll_count < 60` budget, now functional after the
+   H10X re-key (no unbounded poll spin).
+2. Node-side deadline → stall (H10 `run_worker` / H08 `recoverAbandonedRuns`) — a run
+   past its `deadline_at` is stalled or superseded, never polled forever.
+3. `Wait Between Polls` — a 30 s floor between polls.
+
+The earlier wording in this file ("bounded counter") is superseded by this note: before
+H10X the counter was inert and termination relied on (2) + (3) alone; after H10X the
+counter (1) is also enforced. The `n8n-workflow.json` graph (14 nodes / 16 edges, no
+self-loop, feeder sets unchanged) is preserved; only `Classify Poll Result`'s `jsCode`
+changed. Live publication remains operator-only.

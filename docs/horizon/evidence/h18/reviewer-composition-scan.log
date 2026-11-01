@@ -1,0 +1,37 @@
+# H18 reviewer composition/scan log
+# date: 2026-11-01T12:46:42Z
+
+## git baseline
+a9d2600c789a6d7b564fc3f0068eac1f91924a94
+28
+
+## aggregate
+365/365 pass exit 0 (see reviewer-aggregate-rerun.log)
+
+## wiring scan
+scenarios.js referenced by: contracts.js (constants only), scenarios.js — no route/service import (unwired as disclosed)
+backend/src/features/research/contracts.js backend/src/features/research/scenarios.js 
+outcome.service.js referenced by: self only — no route import (unwired as disclosed)
+
+tool_registry referenced by: automation.routes.js, research.service.js
+backend/src/features/research/automation.routes.js backend/src/features/research/research.service.js 
+createInMemoryLeaderLease referenced by: run_worker.js only; scheduler.js: 0 references
+0
+
+## lease nonce chain
+87:      lease_nonce: plain.lease_nonce ?? null,
+480:      lease_nonce: null,
+553:      lease_nonce: leaseNonce,
+182:    if (runId !== run.id || typeof nonce !== 'string' || !constantTimeEquals(nonce, run.lease_nonce)) {
+
+## legacy route auth (H03/H05 rollout)
+23:function rejectOwnerSpoofing(req, res, next) {
+34:  automationMiddleware = createDefaultAutomationMiddleware(),
+44:    automationMiddleware({ requiredScopes: ['briefing:write'], requireOwner: true }),
+45:    rejectOwnerSpoofing,
+55:    automationMiddleware({ requiredScopes: ['briefing:read'], requireOwner: true }),
+56:    rejectOwnerSpoofing,
+
+## secret scan
+0
+0 matches in n8n-workflow.json

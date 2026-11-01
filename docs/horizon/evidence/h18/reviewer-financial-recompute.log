@@ -1,0 +1,78 @@
+fixture_kind: deterministic_metric_reference | contract_version: 1
+MIN_MATURE_OBSERVATIONS = 10
+
+== 1. H07 metrics.profitAndLoss — every committed pnl_case ==
+  PASS  matching_currency_and_basis percent_pl  [got 0.19900497512437812]
+  PASS  matching_currency_and_basis absolute_pl  [got 100]
+  PASS  matching_currency_and_basis currency
+  PASS  zero_pl_same_cost percent_pl  [got 0]
+  PASS  zero_pl_same_cost absolute_pl  [got 0]
+  PASS  zero_pl_same_cost currency
+  PASS  fractional_quantity percent_pl  [got 0.25]
+  PASS  fractional_quantity absolute_pl  [got 125]
+  PASS  fractional_quantity currency
+  PASS  currency_mismatch_unavailable  [got unavailable/currency_mismatch (no numbers emitted: true)]
+  PASS  adjustment_basis_mismatch_unavailable  [got unavailable/adjustment_basis_mismatch (no numbers emitted: true)]
+
+== 2. H04 computeProfitLoss (BigInt scale-12, round-8) — representative cases ==
+  available: {"status":"available","percent":"19.90049751","absolute":{"amount":"100","currency":"USD"},"fees_included":false,"dividends_included":false,"label":"user cost reference, not market support or fair value"}
+  PASS  H04 status available
+  PASS  H04 absolute 100 USD (trailing zeros trimmed)
+  PASS  H04 percent 19.90049751 (8dp)  [got 19.90049751]
+  PASS  H04%/100 ~ H07 percent_pl (<=1e-8)  [H04 19.90049751% vs H07 0.19900497512437812]
+  PASS  H04 zero P/L exact
+  PASS  H04 fractional qty absolute 125 / percent 25  [{"status":"available","percent":"25","absolute":{"amount":"125","currency":"USD"},"fees_included":false,"dividends_included":false,"label":"user cost reference, not market support or fair value"}]
+  loss: {"status":"available","percent":"-16.59751037","absolute":{"amount":"-100","currency":"USD"},"fees_included":false,"dividends_included":false,"label":"user cost reference, not market support or fair value"}
+  PASS  H04 loss absolute -100 / percent -16.59751037
+  PASS  H04 currency_mismatch blocks, no numbers
+  PASS  H04 split_basis_unreconciled blocks + explanation
+  PASS  H04 unknown_cost blocks
+  PASS  H04 position_not_owned blocks
+  PASS  H04 no quantity -> percent only, absolute null
+  PASS  H04 honesty labels (fees/dividends excluded; not fair value)
+
+== 3. composeEconomics (H07 path into assessments) ==
+  available: {"status":"unavailable","reason":"economics_input_invalid"}
+  FAIL  econ available (same vocabulary both sides)
+  FAIL  econ percent_pl bit-identical to H07 direct call  [got undefined]
+  FAIL  econ absolute 100  [got undefined]
+  FAIL  econ currency_mismatch
+  FAIL  econ adjustment_basis_mismatch
+  PASS  econ missing_current_price
+  PASS  econ missing_average_cost
+  PASS  econ state_without_executed_economics
+  PASS  econ invalid input -> unavailable (never throws, never fabricates)
+
+== 4. SEAM PROBE: real provider basis string vs position basis ==
+  position COST_BASES: raw_purchase|split_reconciled; yahoo provider emits raw_ohlc_unadjusted; H04 mapper expects raw|split_adjusted
+  composeEconomics(raw_purchase vs raw_ohlc_unadjusted): {"status":"unavailable","reason":"economics_input_invalid"}
+  FAIL  seam: REAL provider string vs REAL position default -> unavailable (fail-closed, no fabricated number)
+  H04 computeProfitLoss(raw_purchase vs raw_ohlc_unadjusted): {"status":"unavailable","reason":"split_basis_unreconciled","explanation":"cost basis is raw_purchase; current price basis is raw_ohlc_unadjusted"}
+  PASS  seam: H04 with REAL provider string -> split_basis_unreconciled (fail-closed)
+
+== 5. computeScorecard — no averaging over missing data ==
+  PASS  immature -> insufficient_observations
+  PASS  immature -> hit_rate null (no premature average)
+  PASS  immature -> scored 9
+  PASS  edge_claim null + calibrated_probability_metrics null
+  PASS  mature (9/10) -> hit_rate exactly 0.9
+  PASS  mature -> status available
+  PASS  is_calibrated_probability false
+  PASS  insufficient_evidence -> unscored bucket, hit_rate unchanged 0.9
+  PASS  grounding 2/2
+  PASS  coverage 0/1 (fail in total)
+  PASS  continuity unknown excluded from total
+  PASS  never-observed dimension stays 0/0 (no average invented)
+  PASS  per-assessment rows declare unknown
+  PASS  quality aggregate exposes raw counts only (no rate field)
+
+== 6. Calendar horizons (metrics delegate; feed H14 panel dates) ==
+  PASS  2026-01-31 +1mo -> 2026-02-28  [got 2026-02-28]
+  PASS  2024-01-31 +1mo -> 2024-02-29  [got 2024-02-29]
+  PASS  2026-01-31 +3mo -> 2026-04-30  [got 2026-04-30]
+  PASS  2026-05-31 +1mo -> 2026-06-30  [got 2026-06-30]
+  PASS  2026-11-30 +3mo -> 2027-02-28  [got 2027-02-28]
+  outlookHorizons(2026-01-31): ["1:2026-02-28","2:2026-03-31","3:2026-04-30"]
+  PASS  three horizons 1/2/3, clamped targets  [["2026-02-28","2026-03-31","2026-04-30"]]
+
+==== 55 checks, 6 failures ====

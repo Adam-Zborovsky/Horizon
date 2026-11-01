@@ -5,6 +5,7 @@ const ResearchAssessmentModel = require('./research_assessment.model');
 const ResearchSnapshotModel = require('./research_snapshot.model');
 const ThesisCheckpointModel = require('./thesis_state.model');
 const { researchRunSchema, CONTRACT_VERSION } = require('./contracts');
+const { STAGES, STAGE_ORDER, validateStage } = require('./tool_registry');
 
 const RUN_KINDS = ResearchRunModel.RUN_KINDS;
 const DEFAULT_DEADLINE_SECONDS = 900;
@@ -796,6 +797,144 @@ class ResearchService {
       }
     }
     return { stalled, superseded };
+  }
+
+  // -- Generalized stage replay / recovery (H09X) ------------------------------
+
+  // Persists a validated pipeline-stage artifact and advances the run's stage
+  // monotonically forward. Replaying an already-recorded stage with an
+  // identical artifact is idempotent (no re-execution, no re-charge); a
+  // different artifact is a conflict. Immutable input references
+  // (run_input_ref / input_snapshot_id / deadline_at / position_revision) are
+  // never touched. Stage artifacts live under run_result_ref.stage_artifacts
+  // only while the run is running; terminal transitions replace run_result_ref.
+  async advanceStage({ run_id, stage, artifact } = {}) {
+    assertOwnerScopedId(run_id, 'run_id');
+    if (!validateStage(stage)) {
+      throw serviceError('INVALID_STAGE', `stage must be one of ${STAGES.join(', ')}`);
+    }
+    if (!isPlainObject(artifact)) {
+      throw serviceError('INVALID_STAGE_ARTIFACT', 'artifact must be a plain JSON object');
+    }
+    const run = await this.runRepository.findById(run_id);
+    if (!run) throw serviceError('RUN_NOT_FOUND', `Run not found: ${run_id}`);
+    if (run.status !== 'running') {
+      throw serviceError('INVALID_RUN_TRANSITION', `Run ${run_id} is ${run.status}; stages advance on running runs only`);
+    }
+    const nowIso = this.now().toISOString();
+    if (nowIso > run.deadline_at) {
+      throw serviceError('RUN_DEADLINE_EXCEEDED', `Run ${run_id} passed its deadline at ${run.deadline_at}`);
+    }
+    const currentIndex = validateStage(run.stage) ? STAGE_ORDER[run.stage] : -1;
+    const targetIndex = STAGE_ORDER[stage];
+    if (targetIndex < currentIndex) {
+      throw serviceError('STAGE_OUT_OF_ORDER', `Stage ${stage} precedes current stage ${run.stage}`);
+    }
+    const existing = (run.run_result_ref && run.run_result_ref.stage_artifacts) || {};
+    const digest = payloadDigest(artifact);
+    if (existing[stage]) {
+      if (existing[stage].digest !== digest) {
+        throw serviceError('STAGE_REPLAY_CONFLICT', `Stage ${stage} already recorded a different artifact`);
+      }
+      return {
+        run: this.#runView(run),
+        replayed: true,
+        stage,
+        artifact: structuredClone(existing[stage].artifact),
+        recorded_at: existing[stage].recorded_at,
+      };
+    }
+    const updated = await this.runRepository.updateIfStatus(run_id, ['running'], {
+      stage,
+      run_result_ref: {
+        ...(run.run_result_ref ?? null),
+        stage_artifacts: {
+          ...existing,
+          [stage]: { artifact: structuredClone(artifact), digest, recorded_at: nowIso },
+        },
+      },
+    });
+    if (!updated) {
+      throw serviceError('INVALID_RUN_TRANSITION', `Run ${run_id} changed state concurrently`);
+    }
+    return {
+      run: this.#runView(updated),
+      replayed: false,
+      stage,
+      artifact: structuredClone(artifact),
+      recorded_at: nowIso,
+    };
+  }
+
+  // Reads a persisted stage artifact without re-executing anything. Returns
+  // {replayed:true, artifact, recorded_at} when the stage was already
+  // recorded, {replayed:false} otherwise. Never mutates the run.
+  async replayStage({ run_id, stage } = {}) {
+    assertOwnerScopedId(run_id, 'run_id');
+    if (!validateStage(stage)) {
+      throw serviceError('INVALID_STAGE', `stage must be one of ${STAGES.join(', ')}`);
+    }
+    const run = await this.runRepository.findById(run_id);
+    if (!run) throw serviceError('RUN_NOT_FOUND', `Run not found: ${run_id}`);
+    const artifacts = (run.run_result_ref && run.run_result_ref.stage_artifacts) || {};
+    const record = artifacts[stage];
+    if (record) {
+      return {
+        replayed: true,
+        stage,
+        artifact: structuredClone(record.artifact),
+        recorded_at: record.recorded_at,
+        run: this.#runView(run),
+      };
+    }
+    return { replayed: false, stage, artifact: null, recorded_at: null, run: this.#runView(run) };
+  }
+
+  // Generalized resumable recovery. A running run within its deadline is
+  // reported resumable with its persisted stage artifacts and its immutable
+  // input references exposed for a safe resume — nothing is re-executed and no
+  // model call is re-charged. A running run past its deadline is handed to the
+  // existing recovery sweep (stalled/superseded), never silently resumed.
+  async recoverIncompleteRun({ run_id } = {}) {
+    assertOwnerScopedId(run_id, 'run_id');
+    const run = await this.runRepository.findById(run_id);
+    if (!run) throw serviceError('RUN_NOT_FOUND', `Run not found: ${run_id}`);
+    const nowIso = this.now().toISOString();
+    const lastStage = validateStage(run.stage) ? run.stage : null;
+    if (run.status === 'running' && nowIso > run.deadline_at) {
+      await this.recoverAbandonedRuns();
+      const refreshed = await this.runRepository.findById(run_id);
+      return {
+        resumable: false,
+        recovered: true,
+        run: this.#runView(refreshed ?? run),
+        last_stage: validateStage(refreshed?.stage) ? refreshed.stage : null,
+        stage_artifacts: (refreshed?.run_result_ref && refreshed.run_result_ref.stage_artifacts) || {},
+      };
+    }
+    if (run.status !== 'running') {
+      return {
+        resumable: false,
+        recovered: false,
+        run: this.#runView(run),
+        last_stage: lastStage,
+        stage_artifacts: (run.run_result_ref && run.run_result_ref.stage_artifacts) || {},
+      };
+    }
+    return {
+      resumable: true,
+      recovered: false,
+      run: this.#runView(run),
+      last_stage: lastStage,
+      stage_artifacts: structuredClone((run.run_result_ref && run.run_result_ref.stage_artifacts) || {}),
+      immutable: {
+        input_snapshot_id: run.input_snapshot_id,
+        run_input_ref: structuredClone(run.run_input_ref),
+        deadline_at: run.deadline_at,
+        position_revision: run.position_revision,
+        created_at: run.created_at,
+      },
+    };
   }
 
   // -- Owner-scoped read state -------------------------------------------------

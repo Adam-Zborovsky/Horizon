@@ -1,0 +1,51 @@
+# H10X independent review — rerun log (reviewer zai/glm-5.3-flash, 2026-11-01)
+All commands executed by the reviewer in /home/ubuntu/apps/Horizon. Placeholder env only; no .env read, no secrets.
+
+## 1. SHA-256 of the four H10X paths
+0d17393c4cab3437f428d5c9ca4c1e1a576af55902be50053cb2e848d3efc488  backend/src/features/research/run_worker.js
+8bf6742e80589b9da2c11b1f30f5afde33337739596c5d0087670743ee7585a5  n8n-workflow.json
+dc2a359dbccd812d887010cab81e83d5969c8bac710b654723b30bb110ad60a2  backend/test/research-scheduler.test.cjs
+2bb46ec05e0580fae110a6cea33b948c649613a3d9b49cb447b8ae45cdc1a6f6  docs/horizon/evidence/h10/poll-loop-adjudication.md
+19497 backend/src/features/research/run_worker.js
+15110 n8n-workflow.json
+15884 backend/test/research-scheduler.test.cjs
+ 4614 docs/horizon/evidence/h10/poll-loop-adjudication.md
+55105 total
+exit=0
+
+## 2. n8n-workflow.json diff line counts (expect 1 added / 1 removed: Classify Poll Result jsCode)
+added=1 removed=1
+
+## 3. scheduler.js baseline untouched (empty diff expected)
+exit=0
+
+## 4. git diff --check
+exit=0
+
+## 5. Scheduler suite rerun (cwd backend/)
+v22.22.2
+exit=0
+# tests 8
+# pass 8
+# fail 0
+
+## 6. Scheduler + workflow structural suite
+exit=0
+# tests 33
+# pass 33
+# fail 0
+
+## 7. Full backend aggregate (placeholder env)
+exit=0
+# tests 365
+# pass 365
+# fail 0
+
+## 8. Red-first reproduction vs HEAD run_worker.js (temp tree, no source edits)
+exit=1
+# tests 8
+# pass 1
+# fail 7
+  error: 'createInMemoryLeaderLease is not a function'
+passing test in red run:
+ok 1 - createResearchScheduler requires a service with recovery and queue support

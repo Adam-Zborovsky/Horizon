@@ -1,0 +1,232 @@
+TAP version 13
+# Subtest: registry exposes exactly the ten typed tool names from SPEC §4
+ok 1 - registry exposes exactly the ten typed tool names from SPEC §4
+  ---
+  duration_ms: 2.265862
+  type: 'test'
+  ...
+# Subtest: stage enum is frozen and matches the contract stage vocabulary
+ok 2 - stage enum is frozen and matches the contract stage vocabulary
+  ---
+  duration_ms: 0.567846
+  type: 'test'
+  ...
+# Subtest: per-stage tool allowlists match the SPEC §4 table
+ok 3 - per-stage tool allowlists match the SPEC §4 table
+  ---
+  duration_ms: 0.502484
+  type: 'test'
+  ...
+# Subtest: get_position_context is synthesis-only; validate_research_result is reviewer/delivery-only
+ok 4 - get_position_context is synthesis-only; validate_research_result is reviewer/delivery-only
+  ---
+  duration_ms: 0.189482
+  type: 'test'
+  ...
+# Subtest: budgets are named frozen constants with the contract defaults
+ok 5 - budgets are named frozen constants with the contract defaults
+  ---
+  duration_ms: 0.502044
+  type: 'test'
+  ...
+# Subtest: validateToolRequest accepts a well-formed analyst read
+ok 6 - validateToolRequest accepts a well-formed analyst read
+  ---
+  duration_ms: 0.568326
+  type: 'test'
+  ...
+# Subtest: validateToolRequest rejects an unknown tool name
+ok 7 - validateToolRequest rejects an unknown tool name
+  ---
+  duration_ms: 0.228363
+  type: 'test'
+  ...
+# Subtest: validateToolRequest rejects a non-enum stage
+ok 8 - validateToolRequest rejects a non-enum stage
+  ---
+  duration_ms: 0.209922
+  type: 'test'
+  ...
+# Subtest: validateToolRequest rejects a tool invoked outside its allowed stage
+ok 9 - validateToolRequest rejects a tool invoked outside its allowed stage
+  ---
+  duration_ms: 0.810768
+  type: 'test'
+  ...
+# Subtest: validateToolRequest rejects a synthesis-only tool from the analyst stage
+ok 10 - validateToolRequest rejects a synthesis-only tool from the analyst stage
+  ---
+  duration_ms: 0.840009
+  type: 'test'
+  ...
+# Subtest: validateToolRequest rejects owner/url/command keys at the request top level
+ok 11 - validateToolRequest rejects owner/url/command keys at the request top level
+  ---
+  duration_ms: 0.574686
+  type: 'test'
+  ...
+# Subtest: validateToolRequest rejects forbidden argument keys (owner_id/url/command/code/sql)
+ok 12 - validateToolRequest rejects forbidden argument keys (owner_id/url/command/code/sql)
+  ---
+  duration_ms: 0.622967
+  type: 'test'
+  ...
+# Subtest: validateToolRequest rejects non-object arguments and a missing request_id
+ok 13 - validateToolRequest rejects non-object arguments and a missing request_id
+  ---
+  duration_ms: 0.203762
+  type: 'test'
+  ...
+# Subtest: validateStage is strict about the enum
+ok 14 - validateStage is strict about the enum
+  ---
+  duration_ms: 0.124441
+  type: 'test'
+  ...
+# Subtest: executor resolves a tool and reports response bytes and call count
+ok 15 - executor resolves a tool and reports response bytes and call count
+  ---
+  duration_ms: 0.582525
+  type: 'test'
+  ...
+# Subtest: executor enforces the per-stage call budget and records exhaustion
+ok 16 - executor enforces the per-stage call budget and records exhaustion
+  ---
+  duration_ms: 0.247722
+  type: 'test'
+  ...
+# Subtest: executor enforces the response-size budget
+ok 17 - executor enforces the response-size budget
+  ---
+  duration_ms: 0.286323
+  type: 'test'
+  ...
+# Subtest: executor replays an identical request_id without re-charging the call budget
+ok 18 - executor replays an identical request_id without re-charging the call budget
+  ---
+  duration_ms: 0.234762
+  type: 'test'
+  ...
+# Subtest: executor fails closed on an unregistered tool resolver
+ok 19 - executor fails closed on an unregistered tool resolver
+  ---
+  duration_ms: 0.167682
+  type: 'test'
+  ...
+# Subtest: advanceStage persists the artifact; replayStage returns it idempotently
+ok 20 - advanceStage persists the artifact; replayStage returns it idempotently
+  ---
+  duration_ms: 2.120741
+  type: 'test'
+  ...
+# Subtest: advanceStage is idempotent for an identical artifact and conflicts for a different one
+ok 21 - advanceStage is idempotent for an identical artifact and conflicts for a different one
+  ---
+  duration_ms: 0.99109
+  type: 'test'
+  ...
+# Subtest: advanceStage rejects a backward stage transition
+ok 22 - advanceStage rejects a backward stage transition
+  ---
+  duration_ms: 0.495445
+  type: 'test'
+  ...
+# Subtest: advanceStage rejects a non-running run, an invalid stage, and a bad artifact
+ok 23 - advanceStage rejects a non-running run, an invalid stage, and a bad artifact
+  ---
+  duration_ms: 0.788367
+  type: 'test'
+  ...
+# Subtest: advanceStage fails closed past the run deadline
+ok 24 - advanceStage fails closed past the run deadline
+  ---
+  duration_ms: 0.323483
+  type: 'test'
+  ...
+# Subtest: recoverIncompleteRun preserves immutable references and deadlines without re-execution
+ok 25 - recoverIncompleteRun preserves immutable references and deadlines without re-execution
+  ---
+  duration_ms: 0.759808
+  type: 'test'
+  ...
+# Subtest: recoverIncompleteRun marks an expired running run as stalled (not resumable)
+ok 26 - recoverIncompleteRun marks an expired running run as stalled (not resumable)
+  ---
+  duration_ms: 0.517005
+  type: 'test'
+  ...
+# Subtest: POST /runs/:runId/stages/:stage records a validated artifact and replays it
+ok 27 - POST /runs/:runId/stages/:stage records a validated artifact and replays it
+  ---
+  duration_ms: 115.035249
+  type: 'test'
+  ...
+# Subtest: stage endpoint returns 404 for a cross-owner run
+ok 28 - stage endpoint returns 404 for a cross-owner run
+  ---
+  duration_ms: 18.536142
+  type: 'test'
+  ...
+# Subtest: stage endpoint rejects a wrong lease nonce
+ok 29 - stage endpoint rejects a wrong lease nonce
+  ---
+  duration_ms: 9.883378
+  type: 'test'
+  ...
+# Subtest: stage endpoint enforces the research:stages scope
+ok 30 - stage endpoint enforces the research:stages scope
+  ---
+  duration_ms: 32.980004
+  type: 'test'
+  ...
+# Subtest: POST /runs/:runId/tools returns a bounded read result
+ok 31 - POST /runs/:runId/tools returns a bounded read result
+  ---
+  duration_ms: 17.020807
+  type: 'test'
+  ...
+# Subtest: tools endpoint rejects an unknown tool with 400
+ok 32 - tools endpoint rejects an unknown tool with 400
+  ---
+  duration_ms: 7.721675
+  type: 'test'
+  ...
+# Subtest: tools endpoint rejects a synthesis-only tool from the analyst stage with 403
+ok 33 - tools endpoint rejects a synthesis-only tool from the analyst stage with 403
+  ---
+  duration_ms: 7.790876
+  type: 'test'
+  ...
+# Subtest: tools endpoint rejects owner_id supplied in arguments with 400
+ok 34 - tools endpoint rejects owner_id supplied in arguments with 400
+  ---
+  duration_ms: 17.423971
+  type: 'test'
+  ...
+# Subtest: tools endpoint returns 429 when the stage call budget is exhausted
+ok 35 - tools endpoint returns 429 when the stage call budget is exhausted
+  ---
+  duration_ms: 13.925696
+  type: 'test'
+  ...
+# Subtest: tools endpoint fails closed (503) when no tool runtime is configured
+ok 36 - tools endpoint fails closed (503) when no tool runtime is configured
+  ---
+  duration_ms: 7.039869
+  type: 'test'
+  ...
+# Subtest: tools endpoint rejects an expired run lease with 409
+ok 37 - tools endpoint rejects an expired run lease with 409
+  ---
+  duration_ms: 7.379032
+  type: 'test'
+  ...
+1..37
+# tests 37
+# suites 0
+# pass 37
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 974.259606

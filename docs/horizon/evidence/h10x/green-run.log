@@ -1,0 +1,58 @@
+TAP version 13
+# Subtest: createResearchScheduler requires a service with recovery and queue support
+ok 1 - createResearchScheduler requires a service with recovery and queue support
+  ---
+  duration_ms: 1.595656
+  type: 'test'
+  ...
+# Subtest: leader lease: exactly one replica runs the tick while the other backs off
+ok 2 - leader lease: exactly one replica runs the tick while the other backs off
+  ---
+  duration_ms: 1.165411
+  type: 'test'
+  ...
+# Subtest: non-leader tick performs zero recovery or queue side effects
+ok 3 - non-leader tick performs zero recovery or queue side effects
+  ---
+  duration_ms: 0.349763
+  type: 'test'
+  ...
+# Subtest: process restart: an expired leader lease is taken over and abandoned runs are recovered
+ok 4 - process restart: an expired leader lease is taken over and abandoned runs are recovered
+  ---
+  duration_ms: 7.966358
+  type: 'test'
+  ...
+# Subtest: in-memory leader lease is re-acquirable only after TTL expiry
+ok 5 - in-memory leader lease is re-acquirable only after TTL expiry
+  ---
+  duration_ms: 0.321603
+  type: 'test'
+  ...
+# Subtest: scheduler queues one daily run per position and replays idempotently across ticks
+ok 6 - scheduler queues one daily run per position and replays idempotently across ticks
+  ---
+  duration_ms: 1.532575
+  type: 'test'
+  ...
+# Subtest: bounded retry: a transient tick failure is retried up to maxTickRetries then succeeds
+ok 7 - bounded retry: a transient tick failure is retried up to maxTickRetries then succeeds
+  ---
+  duration_ms: 0.573486
+  type: 'test'
+  ...
+# Subtest: bounded retry: gives up after maxTickRetries and surfaces the last error
+ok 8 - bounded retry: gives up after maxTickRetries and surfaces the last error
+  ---
+  duration_ms: 0.837369
+  type: 'test'
+  ...
+1..8
+# tests 8
+# suites 0
+# pass 8
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 434.371895

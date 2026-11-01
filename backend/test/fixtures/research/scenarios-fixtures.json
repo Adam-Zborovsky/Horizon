@@ -1,0 +1,69 @@
+{
+  "fixture_kind": "deterministic_scenario_reference",
+  "contract_version": 1,
+  "fixture_purpose": "Hand-checked deterministic reference values for conditional-scenario and volatility-reference projection bounds. All anchor prices, relative shifts and volatility figures are synthetic arithmetic samples: not observed market data, not user positions, and not calibrated forecasts. Bounds were computed and cross-checked independently of the implementation (offline IEEE-754 double arithmetic) before the tests were written.",
+  "identity": {
+    "id": "proj-cond-1",
+    "assessment_id": "asm-1",
+    "instrument_id": "inst-1",
+    "evidence_snapshot_id": "snap-1",
+    "anchor_time": "2024-03-15T16:00:00.000Z",
+    "anchor_price_metric_id": "metric-anchor-price",
+    "target_session_date": "2024-06-14",
+    "currency": "USD",
+    "adjustment_basis": "split_adjusted",
+    "valid_until": "2024-06-14T16:00:00.000Z"
+  },
+  "conditional_bounds": [
+    {
+      "name": "full_three_bound",
+      "anchor_price": 100.0,
+      "lower_shift": -0.10,
+      "central_shift": 0.02,
+      "upper_shift": 0.15,
+      "expected": { "lower": 90.0, "central": 102.0, "upper": 114.99999999999999 }
+    },
+    {
+      "name": "band_no_central",
+      "anchor_price": 100.0,
+      "lower_shift": -0.25,
+      "central_shift": null,
+      "upper_shift": 0.30,
+      "expected": { "lower": 75.0, "central": null, "upper": 130.0 }
+    },
+    {
+      "name": "fractional_anchor",
+      "anchor_price": 42.5,
+      "lower_shift": -0.05,
+      "central_shift": null,
+      "upper_shift": 0.05,
+      "expected": { "lower": 40.375, "central": null, "upper": 44.625 }
+    }
+  ],
+  "volatility_bounds": [
+    {
+      "name": "three_month",
+      "anchor_price": 100.0,
+      "annualized_volatility": 0.20,
+      "horizon_months": 3,
+      "z_multiple": 1.0,
+      "expected": { "lower": 90.0, "central": null, "upper": 110.00000000000001 }
+    },
+    {
+      "name": "one_month",
+      "anchor_price": 250.0,
+      "annualized_volatility": 0.30,
+      "horizon_months": 1,
+      "z_multiple": 1.0,
+      "expected": { "lower": 228.34936490538905, "central": null, "upper": 271.65063509461095 }
+    },
+    {
+      "name": "three_month_high_vol",
+      "anchor_price": 100.0,
+      "annualized_volatility": 1.5,
+      "horizon_months": 3,
+      "z_multiple": 1.0,
+      "expected": { "lower": 25.0, "central": null, "upper": 175.0 }
+    }
+  ]
+}

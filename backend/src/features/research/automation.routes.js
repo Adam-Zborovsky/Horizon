@@ -21,10 +21,12 @@
 //                                                  duplicate / 409 conflict /
 //                                                  422 invalid researched result
 
+const crypto = require('node:crypto');
 const express = require('express');
 
 const ResearchRunModel = require('./research_run.model');
 const { toStatusView } = require('./run_worker');
+const { validateToolRequest } = require('./tool_registry');
 
 const DEFAULT_QUEUED_LIMIT = 25;
 const MAX_QUEUED_LIMIT = 100;
@@ -53,7 +55,33 @@ const ERROR_STATUS = Object.freeze({
   automation_lease_expired: 409,
   automation_replay_conflict: 409,
   automation_run_invalid: 409,
+  // 409 stage/tool conflicts (H09X)
+  INVALID_STAGE: 400,
+  INVALID_STAGE_ARTIFACT: 400,
+  STAGE_OUT_OF_ORDER: 409,
+  STAGE_REPLAY_CONFLICT: 409,
+  RUN_NOT_RUNNING: 409,
+  RUNTIME_NOT_CONFIGURED: 503,
 });
+
+// Tool-request validation issue -> HTTP status (CONTRACTS §9 error table).
+const TOOL_ISSUE_STATUS = Object.freeze({
+  UNKNOWN_TOOL: 400,
+  INVALID_STAGE: 400,
+  INVALID_ARGUMENTS: 400,
+  UNEXPECTED_FIELD: 400,
+  FORBIDDEN_ARGUMENT: 400,
+  INVALID_REQUEST_ID: 400,
+  TOOL_NOT_ALLOWED_IN_STAGE: 403,
+  SYNTHESIS_ONLY_STAGE: 403,
+});
+
+function constantTimeEquals(left, right) {
+  if (typeof left !== 'string' || typeof right !== 'string') return false;
+  const leftBuffer = Buffer.from(left);
+  const rightBuffer = Buffer.from(right);
+  return leftBuffer.length === rightBuffer.length && crypto.timingSafeEqual(leftBuffer, rightBuffer);
+}
 
 function statusForError(error) {
   return ERROR_STATUS[error && error.code] || null;
@@ -100,6 +128,8 @@ function createAutomationRouter({
   listQueuedRuns,
   now = () => new Date(),
   queuedLimit = DEFAULT_QUEUED_LIMIT,
+  toolExecutor = null,
+  resolveToolContext = null,
 } = {}) {
   if (!researchService || typeof researchService.recordRunResult !== 'function') {
     throw new TypeError('createAutomationRouter requires a research service');
@@ -134,6 +164,26 @@ function createAutomationRouter({
       return null;
     }
     return run;
+  }
+
+  // H09X lease-bound stage/tool authorization. Stage and tool requests carry the
+  // same run lease nonce as delivery (CONTRACTS §9): the caller must present the
+  // current lease nonce for the exact run, and an expired lease is rejected so a
+  // stale caller can never replay or re-charge work past its window.
+  function authorizeRunLease(req, run) {
+    const leaseExpiresAt = run.lease_expires_at ? new Date(run.lease_expires_at) : null;
+    if (!leaseExpiresAt || Number.isNaN(leaseExpiresAt.getTime()) || leaseExpiresAt.getTime() <= now().getTime()) {
+      const error = new Error('Run lease expired');
+      error.code = 'automation_lease_expired';
+      throw error;
+    }
+    const runId = req.get('x-horizon-run-id');
+    const nonce = req.get('x-horizon-run-nonce');
+    if (runId !== run.id || typeof nonce !== 'string' || !constantTimeEquals(nonce, run.lease_nonce)) {
+      const error = new Error('Run lease nonce denied');
+      error.code = 'automation_nonce_denied';
+      throw error;
+    }
   }
 
   // -- Trigger: bounded claimable batch --------------------------------------
@@ -274,6 +324,74 @@ function createAutomationRouter({
         return next(error);
       }
     } catch (error) {
+      return next(error);
+    }
+  });
+
+  // -- Stage replay: record/replay a validated pipeline-stage artifact -------
+  // (H09X held follow-up, now released). The stage is an enum, never arbitrary
+  // code or a model name. Recording an already-recorded stage with an identical
+  // artifact is idempotent — no re-execution, no model re-charge — and a
+  // different artifact is a conflict. Immutable input references and deadlines
+  // are preserved by the service, never rewritten here.
+  router.post('/runs/:runId/stages/:stage', automationMiddleware({ requiredScopes: ['research:stages'], requireOwner: true }), async (req, res, next) => {
+    try {
+      const run = await loadOwnedRun(req, res);
+      if (!run) return undefined;
+      authorizeRunLease(req, run);
+      const recorded = await researchService.advanceStage({
+        run_id: run.id,
+        stage: req.params.stage,
+        artifact: req.body && req.body.artifact,
+      });
+      return res.status(200).json({
+        run_id: run.id,
+        replayed: recorded.replayed,
+        stage: recorded.stage,
+        artifact: recorded.artifact,
+        recorded_at: recorded.recorded_at,
+      });
+    } catch (error) {
+      const mapped = statusForError(error);
+      if (mapped) return sendError(res, mapped, error.code);
+      return next(error);
+    }
+  });
+
+  // -- Tools: server-owned allowlisted tools bound to run/instrument/cutoff -----
+  // (H09X). The request body may carry ONLY tool_name/arguments/stage/request_id
+  // (CONTRACTS §9); it is validated against the server-owned typed registry, then
+  // executed by an injected resolver that enforces the per-stage call budget, the
+  // per-result response-size cap and idempotent retries. No arbitrary URL,
+  // command, code, owner id or raw database query is ever accepted.
+  router.post('/runs/:runId/tools', automationMiddleware({ requiredScopes: ['research:tools'], requireOwner: true }), async (req, res, next) => {
+    try {
+      const run = await loadOwnedRun(req, res);
+      if (!run) return undefined;
+      authorizeRunLease(req, run);
+      if (!toolExecutor || typeof toolExecutor.execute !== 'function' || typeof resolveToolContext !== 'function') {
+        return sendError(res, 503, 'RUNTIME_NOT_CONFIGURED');
+      }
+      const verdict = validateToolRequest(req.body);
+      if (!verdict.ok) {
+        return sendError(res, TOOL_ISSUE_STATUS[verdict.issue_code] ?? 400, verdict.issue_code);
+      }
+      const boundContext = await resolveToolContext(run);
+      const outcome = await toolExecutor.execute({
+        run_id: run.id,
+        stage: verdict.stage,
+        tool: verdict.tool,
+        arguments: verdict.arguments,
+        request_id: verdict.request_id,
+        boundContext,
+      });
+      if (!outcome.ok) {
+        return sendError(res, outcome.status ?? 500, outcome.code);
+      }
+      return res.status(200).json(outcome);
+    } catch (error) {
+      const mapped = statusForError(error);
+      if (mapped) return sendError(res, mapped, error.code);
       return next(error);
     }
   });

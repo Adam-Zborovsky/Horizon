@@ -1,0 +1,13 @@
+== 3 (rerun). composeEconomics — money amounts as bounded decimal STRINGS (H07 contract) ==
+  available: {"status":"available","currency":"USD","average_cost":50.25,"current_price":60.25,"quantity":10,"absolute_pl":100,"percent_pl":0.19900497512437812,"excluded_adjustments":["fees","dividends"]}
+  PASS  econ available (matching vocabulary + string amounts)
+  PASS  econ percent_pl bit-identical to H07 direct  [got 0.19900497512437812]
+  PASS  econ absolute_pl 100  [got 100]
+  PASS  econ currency_mismatch  [{"status":"unavailable","reason":"currency_mismatch"}]
+  PASS  econ adjustment_basis_mismatch
+  PASS  econ missing_current_price
+== 4 (rerun). SEAM PROBE: REAL provider basis vs REAL position basis ==
+  composeEconomics(raw_purchase vs raw_ohlc_unadjusted): {"status":"unavailable","reason":"adjustment_basis_mismatch"}
+  PASS  seam: fail-closed unavailable with reason, no numbers
+
+==== 7 checks, 0 failures ====
