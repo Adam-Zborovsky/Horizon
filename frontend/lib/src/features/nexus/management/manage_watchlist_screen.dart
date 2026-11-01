@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:horizon/src/core/theme/app_theme.dart';
 import 'package:horizon/src/core/widgets/glass_card.dart';
 import 'package:horizon/src/features/briefing/briefing_config_repository.dart';
@@ -48,6 +49,18 @@ class _ManageWatchlistScreenState extends ConsumerState<ManageWatchlistScreen> {
     });
   }
 
+  Future<void> _addAndOpenTicker(String rawTicker) async {
+    final symbol = rawTicker.trim().toUpperCase();
+    if (symbol.isEmpty) return;
+
+    _searchController.clear();
+    if (!ref.read(watchlistProvider).contains(symbol)) {
+      await ref.read(watchlistProvider.notifier).add(symbol);
+    }
+    if (!mounted) return;
+    context.push('/stock/${Uri.encodeComponent(symbol)}?openPosition=true');
+  }
+
   @override
   Widget build(BuildContext context) {
     final watchlist = ref.watch(watchlistProvider);
@@ -60,8 +73,7 @@ class _ManageWatchlistScreenState extends ConsumerState<ManageWatchlistScreen> {
             controller: _searchController,
             onSubmitted: (val) async {
               if (val.isNotEmpty) {
-                await ref.read(watchlistProvider.notifier).add(val);
-                _searchController.clear();
+                await _addAndOpenTicker(val);
               }
             },
           ),
@@ -96,12 +108,7 @@ class _ManageWatchlistScreenState extends ConsumerState<ManageWatchlistScreen> {
                             vertical: 10,
                           ),
                           child: GestureDetector(
-                            onTap: () async {
-                              await ref
-                                  .read(watchlistProvider.notifier)
-                                  .add(_searchQuery);
-                              _searchController.clear();
-                            },
+                            onTap: () => _addAndOpenTicker(_searchQuery),
                             child: Container(
                               padding: const EdgeInsets.all(16),
                               decoration: BoxDecoration(
@@ -161,14 +168,7 @@ class _ManageWatchlistScreenState extends ConsumerState<ManageWatchlistScreen> {
                             vertical: 4,
                           ),
                           child: GestureDetector(
-                            onTap: isAdded
-                                ? null
-                                : () async {
-                                    await ref
-                                        .read(watchlistProvider.notifier)
-                                        .add(result.symbol);
-                                    _searchController.clear();
-                                  },
+                            onTap: () => _addAndOpenTicker(result.symbol),
                             child: Container(
                               padding: const EdgeInsets.all(12),
                               decoration: BoxDecoration(
@@ -293,6 +293,9 @@ class _ManageWatchlistScreenState extends ConsumerState<ManageWatchlistScreen> {
                 return _WatchlistItem(
                   ticker: ticker,
                   name: ticker,
+                  onTap: () => context.push(
+                    '/stock/${Uri.encodeComponent(ticker)}',
+                  ),
                   onRemove: () => _removeWithConflictHandling(context, ticker),
                 );
               }, childCount: watchlist.length),
@@ -412,11 +415,13 @@ class _SliverSearchHeader extends StatelessWidget {
 class _WatchlistItem extends StatelessWidget {
   final String ticker;
   final String name;
+  final VoidCallback? onTap;
   final VoidCallback onRemove;
 
   const _WatchlistItem({
     required this.ticker,
     required this.name,
+    this.onTap,
     required this.onRemove,
   });
 
@@ -424,41 +429,44 @@ class _WatchlistItem extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 6),
-      child: GlassCard(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-        child: Row(
-          children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  ticker,
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                    fontFamily: 'Montserrat',
+      child: GestureDetector(
+        onTap: onTap,
+        child: GlassCard(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          child: Row(
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    ticker,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                      fontFamily: 'Montserrat',
+                    ),
                   ),
-                ),
-                Text(
-                  name,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.white.withValues(alpha: 0.3),
+                  Text(
+                    name,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.white.withValues(alpha: 0.3),
+                    ),
                   ),
-                ),
-              ],
-            ),
-            const Spacer(),
-            IconButton(
-              onPressed: onRemove,
-              icon: const Icon(
-                Icons.remove_circle_outline_rounded,
-                color: AppTheme.softCrimson,
-                size: 22,
+                ],
               ),
-            ),
-          ],
+              const Spacer(),
+              IconButton(
+                onPressed: onRemove,
+                icon: const Icon(
+                  Icons.remove_circle_outline_rounded,
+                  color: AppTheme.softCrimson,
+                  size: 22,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

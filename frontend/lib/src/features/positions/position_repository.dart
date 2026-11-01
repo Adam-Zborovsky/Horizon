@@ -173,10 +173,8 @@ class PositionRepository {
 
 @riverpod
 PositionRepository positionRepository(Ref ref) {
+  final auth = ref.watch(authRepositoryProvider);
   return PositionRepository(
-    tokenProvider: () async {
-      final auth = ref.read(authRepositoryProvider);
-      return auth.getToken();
-    },
+    tokenProvider: auth.getToken,
   );
 }

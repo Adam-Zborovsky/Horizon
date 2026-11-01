@@ -23,16 +23,38 @@ import '../dashboard/watchlist_provider.dart';
 
 class StockDetailScreen extends ConsumerWidget {
   final String ticker;
-  const StockDetailScreen({super.key, required this.ticker});
+  final bool autoOpenPositionEditor;
+
+  const StockDetailScreen({
+    super.key,
+    required this.ticker,
+    this.autoOpenPositionEditor = false,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final stocksAsync = ref.watch(stockRepositoryProvider);
+    final watchlist = ref.watch(watchlistProvider);
+    final upperTicker = ticker.toUpperCase();
 
     return Scaffold(
       body: stocksAsync.when(
         data: (stocks) {
-          final stock = stocks.where((s) => s.ticker == ticker).firstOrNull;
+          final stock =
+              stocks
+                  .where((s) => s.ticker.toUpperCase() == upperTicker)
+                  .firstOrNull ??
+              (autoOpenPositionEditor || watchlist.contains(upperTicker)
+                  ? StockData(
+                      ticker: upperTicker,
+                      name: upperTicker,
+                      currentPrice: 0.0,
+                      changePercent: 0.0,
+                      history: const <double>[],
+                      sentiment: 0.0,
+                      source: StockSource.watchlist,
+                    )
+                  : null);
           if (stock == null) {
             return Center(
               child: Text(
@@ -41,7 +63,10 @@ class StockDetailScreen extends ConsumerWidget {
               ),
             );
           }
-          return _DetailContent(stock: stock);
+          return _DetailContent(
+            stock: stock,
+            autoOpenPositionEditor: autoOpenPositionEditor,
+          );
         },
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (err, stack) => Center(child: Text('Error: $err')),
@@ -52,7 +77,12 @@ class StockDetailScreen extends ConsumerWidget {
 
 class _DetailContent extends ConsumerWidget {
   final StockData stock;
-  const _DetailContent({required this.stock});
+  final bool autoOpenPositionEditor;
+
+  const _DetailContent({
+    required this.stock,
+    this.autoOpenPositionEditor = false,
+  });
 
   String? _getDisplayString(dynamic value) {
     if (value == null) return null;
@@ -316,7 +346,10 @@ class _DetailContent extends ConsumerWidget {
                 const SizedBox(height: 30),
                 _OpportunityScoutStats(ticker: stock.ticker),
                 const SizedBox(height: 30),
-                _PositionResearchSection(stock: stock),
+                _PositionResearchSection(
+                  stock: stock,
+                  autoOpenEditor: autoOpenPositionEditor,
+                ),
                 const SizedBox(height: 100),
               ],
             ),
@@ -940,10 +973,8 @@ class ResearchWire {
 /// a generated-part owner) for the research wire adapter. Overridable in
 /// integration tests with an injectable http.Client.
 final researchWireProvider = Provider<ResearchWire>((ref) {
-  return ResearchWire(tokenProvider: () async {
-    final auth = ref.read(authRepositoryProvider);
-    return auth.getToken();
-  });
+  final auth = ref.watch(authRepositoryProvider);
+  return ResearchWire(tokenProvider: auth.getToken);
 });
 
 /// H15B: connects the tracked position (H12 editor, H11 repository) and the
@@ -952,7 +983,12 @@ final researchWireProvider = Provider<ResearchWire>((ref) {
 /// any chart data, never waiting for chart completion.
 class _PositionResearchSection extends ConsumerStatefulWidget {
   final StockData stock;
-  const _PositionResearchSection({required this.stock});
+  final bool autoOpenEditor;
+
+  const _PositionResearchSection({
+    required this.stock,
+    this.autoOpenEditor = false,
+  });
 
   @override
   ConsumerState<_PositionResearchSection> createState() =>
@@ -968,6 +1004,7 @@ class _PositionResearchSectionState
   ResearchRun? _queuedRun;
   bool _loading = true;
   bool _queueing = false;
+  bool _autoOpened = false;
   String? _error;
   String? _queueError;
 
@@ -1004,6 +1041,7 @@ class _PositionResearchSectionState
         _research = research;
         _loading = false;
       });
+      _maybeAutoOpenEditor();
     } on Exception {
       if (!mounted) return;
       setState(() {
@@ -1013,32 +1051,116 @@ class _PositionResearchSectionState
     }
   }
 
+  void _maybeAutoOpenEditor() {
+    if (!widget.autoOpenEditor || _autoOpened) return;
+    _autoOpened = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
+      try {
+        await Scrollable.ensureVisible(
+          context,
+          duration: const Duration(milliseconds: 550),
+          curve: Curves.easeOutCubic,
+          alignment: 0.08,
+        );
+      } catch (_) {}
+      if (!mounted) return;
+      await _openEditor();
+    });
+  }
+
   Future<void> _openEditor() async {
     final position = _position;
-    if (position == null) return;
-    final repository = ref.read(positionRepositoryProvider);
+    final upperTicker = widget.stock.ticker.toUpperCase();
+    final fallbackInstrument = PositionInstrument(
+      instrumentId: 'legacy-ticker-$upperTicker',
+      symbol: upperTicker,
+      exchange: null,
+      currency: null,
+      providerSymbol: upperTicker,
+    );
+
     await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
+      backgroundColor: Colors.transparent,
       builder: (sheetContext) {
+        final mediaQuery = MediaQuery.of(sheetContext);
         return Padding(
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(sheetContext).viewInsets.bottom,
-          ),
-          child: SingleChildScrollView(
-            child: PositionEditor.edit(
-              initial: position,
-              // H12 accepted wiring: the editor saves through the real
-              // PositionRepository; it builds {expected_revision, changes}
-              // itself from initial.revision and surfaces 409
-              // REVISION_CONFLICT internally without silent retries.
-              onSave: (write) => repository.patchPosition(position.id, write),
-              onSaved: (saved) {
-                Navigator.of(sheetContext).pop();
-                if (!mounted) return;
-                setState(() => _position = saved);
-                _load();
-              },
+          padding: EdgeInsets.only(bottom: mediaQuery.viewInsets.bottom),
+          child: Container(
+            constraints: BoxConstraints(
+              maxHeight: mediaQuery.size.height * 0.90,
+            ),
+            decoration: BoxDecoration(
+              color: AppTheme.obsidian,
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(28),
+              ),
+              border: Border(
+                top: BorderSide(color: Colors.white.withValues(alpha: 0.12)),
+                left: BorderSide(color: Colors.white.withValues(alpha: 0.06)),
+                right: BorderSide(color: Colors.white.withValues(alpha: 0.06)),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.65),
+                  blurRadius: 30,
+                  offset: const Offset(0, -8),
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const SizedBox(height: 12),
+                Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.white24,
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                ),
+                Flexible(
+                  child: SingleChildScrollView(
+                    child: position != null
+                        ? PositionEditor.edit(
+                            initial: position,
+                            // H12 accepted wiring: the editor saves through the real
+                            // PositionRepository; it builds {expected_revision, changes}
+                            // itself from initial.revision and surfaces 409
+                            // REVISION_CONFLICT internally without silent retries.
+                            onSave: (write) => ref
+                                .read(positionRepositoryProvider)
+                                .patchPosition(position.id, write),
+                            onConflict: () {
+                              Navigator.of(sheetContext).pop();
+                              if (mounted) _load();
+                            },
+                            onSaved: (saved) {
+                              Navigator.of(sheetContext).pop();
+                              if (!mounted) return;
+                              setState(() => _position = saved);
+                              _load();
+                            },
+                          )
+                        : PositionEditor.create(
+                            instrument: fallbackInstrument,
+                            onSave: (write) => ref
+                                .read(positionRepositoryProvider)
+                                .addPosition(write),
+                            onSaved: (saved) {
+                              Navigator.of(sheetContext).pop();
+                              if (!mounted) return;
+                              setState(() => _position = saved);
+                              _load();
+                            },
+                          ),
+                  ),
+                ),
+              ],
             ),
           ),
         );
@@ -1131,10 +1253,33 @@ class _PositionResearchSectionState
       // Truthful: a bare ticker is not a resolved instrument identity, so no
       // position is invented here (CONTRACTS §1 — identity comes from a
       // vetted provider resolution).
-      return Text(
-        'No tracked position for ${widget.stock.ticker}. Tracked positions '
-        'with a resolved instrument identity appear here.',
-        style: TextStyle(color: Colors.white.withValues(alpha: 0.54)),
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'No tracked position for ${widget.stock.ticker}. Tracked positions '
+            'with a resolved instrument identity appear here.',
+            style: TextStyle(color: Colors.white.withValues(alpha: 0.54)),
+          ),
+          const SizedBox(height: 12),
+          Align(
+            alignment: Alignment.centerRight,
+            child: OutlinedButton.icon(
+              onPressed: _openEditor,
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppTheme.goldAmber,
+                side: BorderSide(
+                  color: AppTheme.goldAmber.withValues(alpha: 0.3),
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              icon: const Icon(Icons.edit_outlined, size: 16),
+              label: const Text('Edit position'),
+            ),
+          ),
+        ],
       );
     }
     final research = _research;

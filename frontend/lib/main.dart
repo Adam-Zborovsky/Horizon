@@ -121,7 +121,12 @@ final _routerProvider = Provider<GoRouter>((ref) {
         parentNavigatorKey: _rootNavigatorKey,
         builder: (context, state) {
           final ticker = state.pathParameters['ticker']!;
-          return StockDetailScreen(ticker: ticker);
+          final openPosition =
+              state.uri.queryParameters['openPosition'] == 'true';
+          return StockDetailScreen(
+            ticker: ticker,
+            autoOpenPositionEditor: openPosition,
+          );
         },
       ),
     ],

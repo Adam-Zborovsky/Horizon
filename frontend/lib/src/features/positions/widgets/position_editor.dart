@@ -38,6 +38,11 @@ final RegExp _isoCurrencyRe = RegExp(r'^[A-Z]{3}$');
 
 const _buttonMinSize = Size(64, 48); // ≥ 48dp touch targets
 
+const _goldAmber = Color(0xFFFFB800);
+const _obsidian = Color(0xFF0C0C0C);
+const _charcoalBlack = Color(0xFF161618);
+const _softCrimson = Color(0xFFFF4B5C);
+
 /// Async persistence delegate. Implementations should map transport failures
 /// to the H11 [ApiException] (409 REVISION_CONFLICT is handled distinctly).
 typedef PositionSaveCallback = Future<Position> Function(PositionWrite write);
@@ -63,6 +68,7 @@ class PositionEditor extends StatefulWidget {
     this.onConflict,
     this.initial,
     this.instrument,
+    this.padding = const EdgeInsets.fromLTRB(24, 20, 24, 28),
   }) : assert(
           (initial == null) != (instrument == null),
           'Provide either initial (edit mode) or instrument (create mode).',
@@ -77,12 +83,14 @@ class PositionEditor extends StatefulWidget {
     required PositionSaveCallback onSave,
     PositionSavedCallback? onSaved,
     PositionConflictCallback? onConflict,
+    EdgeInsetsGeometry padding = const EdgeInsets.fromLTRB(24, 20, 24, 28),
   }) : this._(
           key: key,
           instrument: instrument,
           onSave: onSave,
           onSaved: onSaved,
           onConflict: onConflict,
+          padding: padding,
         );
 
   /// Edit mode: classify a legacy record, edit an owned position, or archive.
@@ -92,12 +100,14 @@ class PositionEditor extends StatefulWidget {
     required PositionSaveCallback onSave,
     PositionSavedCallback? onSaved,
     PositionConflictCallback? onConflict,
+    EdgeInsetsGeometry padding = const EdgeInsets.fromLTRB(24, 20, 24, 28),
   }) : this._(
           key: key,
           initial: initial,
           onSave: onSave,
           onSaved: onSaved,
           onConflict: onConflict,
+          padding: padding,
         );
 
   final Position? initial;
@@ -105,6 +115,7 @@ class PositionEditor extends StatefulWidget {
   final PositionSaveCallback onSave;
   final PositionSavedCallback? onSaved;
   final PositionConflictCallback? onConflict;
+  final EdgeInsetsGeometry padding;
 
   @override
   State<PositionEditor> createState() => _PositionEditorState();
@@ -141,8 +152,11 @@ class _PositionEditorState extends State<PositionEditor> {
   void initState() {
     super.initState();
     final initial = widget.initial;
-    _targetState =
-        initial == null ? PositionState.candidate : (initial.state == PositionState.legacyUnclassified ? null : initial.state);
+    _targetState = initial == null
+        ? PositionState.candidate
+        : (initial.state == PositionState.legacyUnclassified
+            ? null
+            : initial.state);
     _horizon = initial?.preferredHorizonMonths ?? 3;
     _archived = initial?.archived ?? false;
     _amountController =
@@ -154,8 +168,8 @@ class _PositionEditorState extends State<PositionEditor> {
     _openedOnController = TextEditingController(text: initial?.openedOn ?? '');
     _thesisController =
         TextEditingController(text: initial?.originalThesis ?? '');
-    _conditionsController =
-        TextEditingController(text: (initial?.reviewConditions ?? []).join('\n'));
+    _conditionsController = TextEditingController(
+        text: (initial?.reviewConditions ?? []).join('\n'));
     // The currency-mismatch banner is derived from live controller text, so
     // controller edits must rebuild this widget.
     for (final controller in [_amountController, _currencyController]) {
@@ -198,7 +212,8 @@ class _PositionEditorState extends State<PositionEditor> {
     }
 
     final targetState = _targetState ?? initial.state;
-    final clearEconomics = _economicsCleared || targetState == PositionState.candidate;
+    final clearEconomics =
+        _economicsCleared || targetState == PositionState.candidate;
     return PositionWrite(
       instrument: initial.instrument,
       state: targetState,
@@ -226,7 +241,7 @@ class _PositionEditorState extends State<PositionEditor> {
   MoneyAmount? _moneyOrNull() {
     final amount = _amountController.text.trim();
     final currency = _currencyController.text.trim();
-    if (amount.isEmpty && currency.isEmpty) return null;
+    if (amount.isEmpty || currency.isEmpty) return null;
     return MoneyAmount(amount: amount, currency: currency);
   }
 
@@ -269,6 +284,16 @@ class _PositionEditorState extends State<PositionEditor> {
         _apiError = error;
         _submitting = false;
       });
+    } on Object catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _apiError = ApiException(
+          0,
+          code: 'REQUEST_FAILED',
+          message: error.toString(),
+        );
+        _submitting = false;
+      });
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
@@ -288,17 +313,46 @@ class _PositionEditorState extends State<PositionEditor> {
     final result = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: Text(title),
-        content: Text(body),
+        backgroundColor: _charcoalBlack,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+        ),
+        title: Text(
+          title,
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            fontSize: 18,
+          ),
+        ),
+        content: Text(
+          body,
+          style: TextStyle(
+            color: Colors.white.withValues(alpha: 0.72),
+            height: 1.45,
+          ),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(false),
+            style: TextButton.styleFrom(foregroundColor: Colors.white60),
             child: const Text('Cancel'),
           ),
           FilledButton(
             key: const Key('position-editor-confirm'),
+            style: FilledButton.styleFrom(
+              backgroundColor: _goldAmber,
+              foregroundColor: _obsidian,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
             onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: const Text('Confirm'),
+            child: const Text(
+              'Confirm',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
           ),
         ],
       ),
@@ -411,7 +465,7 @@ class _PositionEditorState extends State<PositionEditor> {
   }
 
   // ---------------------------------------------------------------------------
-  // Build
+  // Build & Styling
   // ---------------------------------------------------------------------------
 
   bool get _currencyMismatch {
@@ -423,65 +477,172 @@ class _PositionEditorState extends State<PositionEditor> {
     return costCurrency != instrumentCurrency;
   }
 
+  InputDecoration _inputDecoration({
+    required String labelText,
+    String? hintText,
+  }) {
+    return InputDecoration(
+      labelText: labelText,
+      hintText: hintText,
+      alignLabelWithHint: true,
+      filled: true,
+      fillColor: Colors.white.withValues(alpha: 0.04),
+      labelStyle: const TextStyle(color: Colors.white60, fontSize: 13),
+      floatingLabelStyle: const TextStyle(
+        color: _goldAmber,
+        fontSize: 12,
+        fontWeight: FontWeight.w600,
+      ),
+      hintStyle: TextStyle(
+        color: Colors.white.withValues(alpha: 0.25),
+        fontSize: 13,
+      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.12)),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: _goldAmber, width: 1.4),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: _softCrimson, width: 1.2),
+      ),
+      focusedErrorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: _softCrimson, width: 1.5),
+      ),
+      errorMaxLines: 2,
+    );
+  }
+
+  Widget _buildSectionCard({required Widget child}) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: _charcoalBlack,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+      ),
+      child: child,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Form(
-      key: _formKey,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          _buildHeader(context),
-          const SizedBox(height: 12),
-          if (_isCreate) _buildCreateStateSection(context),
-          if (!_isCreate && _targetState == null) _buildClassifySection(context),
-          if (_showEconomics) ...[
-            _buildEconomicsSection(context),
-            const SizedBox(height: 12),
+    final isLegacyRecord =
+        !_isCreate && widget.initial?.state == PositionState.legacyUnclassified;
+
+    return Padding(
+      padding: widget.padding,
+      child: Form(
+        key: _formKey,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _buildHeader(context),
+            const SizedBox(height: 16),
+            if (_isCreate) ...[
+              _buildCreateStateSection(context),
+              const SizedBox(height: 14),
+            ],
+            if (isLegacyRecord) ...[
+              _buildClassifySection(context),
+              const SizedBox(height: 14),
+            ],
+            if (_showEconomics) ...[
+              _buildEconomicsSection(context),
+              const SizedBox(height: 14),
+            ],
+            _buildDetailsSection(context),
+            if (!_isCreate) ...[
+              const SizedBox(height: 14),
+              _buildDangerSection(context),
+            ],
+            const SizedBox(height: 20),
+            if (_apiError != null)
+              _buildErrorPanel(theme)
+            else ...[
+              FilledButton(
+                key: const Key('position-editor-save'),
+                style: FilledButton.styleFrom(
+                  minimumSize: _buttonMinSize,
+                  backgroundColor: _goldAmber,
+                  foregroundColor: _obsidian,
+                  disabledBackgroundColor: Colors.white.withValues(alpha: 0.08),
+                  disabledForegroundColor: Colors.white38,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  textStyle: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 15,
+                    letterSpacing: 0.3,
+                  ),
+                ),
+                onPressed: _targetState == null || _submitting ? null : _save,
+                child: _submitting
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: _obsidian,
+                        ),
+                      )
+                    : const Text('Save position'),
+              ),
+            ],
           ],
-          _buildDetailsSection(context),
-          if (!_isCreate) ...[
-            const SizedBox(height: 12),
-            _buildDangerSection(context),
-          ],
-          const SizedBox(height: 16),
-          if (_apiError != null)
-            _buildErrorPanel(theme)
-          else ...[
-            FilledButton(
-              key: const Key('position-editor-save'),
-              style: FilledButton.styleFrom(minimumSize: _buttonMinSize),
-              onPressed: _targetState == null || _submitting ? null : _save,
-              child: _submitting
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Text('Save position'),
-            ),
-          ],
-        ],
+        ),
       ),
     );
   }
 
   Widget _buildHeader(BuildContext context) {
     final theme = Theme.of(context);
-    return Column(
+    final route = ModalRoute.of(context);
+    final showClose = route is PopupRoute && (Navigator.maybeOf(context)?.canPop() ?? false);
+
+    return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          '${_instrument.symbol}'
-          '${_instrument.exchange == null ? '' : ' · ${_instrument.exchange}'}'
-          '${_instrument.currency == null ? '' : ' · ${_instrument.currency}'}',
-          style: theme.textTheme.titleLarge,
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                '${_instrument.symbol}'
+                '${_instrument.exchange == null ? '' : ' · ${_instrument.exchange}'}'
+                '${_instrument.currency == null ? '' : ' · ${_instrument.currency}'}',
+                style: theme.textTheme.titleLarge?.copyWith(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                  letterSpacing: 0.3,
+                ),
+              ),
+              const SizedBox(height: 8),
+              PositionStateBadge(
+                state: _targetState ?? PositionState.legacyUnclassified,
+                archived: _archived,
+              ),
+            ],
+          ),
         ),
-        const SizedBox(height: 6),
-        PositionStateBadge(
-          state: _targetState ?? PositionState.legacyUnclassified,
-          archived: _archived,
-        ),
+        if (showClose)
+          IconButton(
+            onPressed: () => Navigator.of(context).maybePop(),
+            style: IconButton.styleFrom(
+              backgroundColor: Colors.white.withValues(alpha: 0.06),
+              foregroundColor: Colors.white70,
+            ),
+            icon: const Icon(Icons.close_rounded, size: 20),
+            tooltip: 'Close',
+          ),
       ],
     );
   }
@@ -491,162 +652,226 @@ class _PositionEditorState extends State<PositionEditor> {
       header: true,
       child: Padding(
         padding: const EdgeInsets.only(bottom: 8),
-        child: Text(text, style: Theme.of(context).textTheme.titleMedium),
+        child: Text(
+          text,
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                color: Colors.white,
+                fontWeight: FontWeight.w700,
+                fontSize: 15,
+              ),
+        ),
       ),
     );
   }
 
   Widget _buildCreateStateSection(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildSectionHeader(context, 'New candidate'),
-        Text(
-          'A candidate is a watchlist idea. No cost, quantity or open date is '
-          'recorded here — marking it as owned later is a separate, explicit '
-          'step.',
-          style: Theme.of(context).textTheme.bodyMedium,
-        ),
-        const SizedBox(height: 8),
-        OutlinedButton.icon(
-          key: const Key('position-editor-transition-owned'),
-          style: OutlinedButton.styleFrom(minimumSize: _buttonMinSize),
-          onPressed: _targetState == PositionState.owned ? null : _transitionToOwned,
-          icon: const Icon(Icons.shopping_bag_outlined),
-          label: const Text('I now own this…'),
-        ),
-      ],
+    final isOwned = _targetState == PositionState.owned;
+    return _buildSectionCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildSectionHeader(context, 'New candidate'),
+          Text(
+            'A candidate is a watchlist idea. No cost, quantity or open date is '
+            'recorded here — marking it as owned later is a separate, explicit '
+            'step.',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: Colors.white60,
+                  height: 1.45,
+                ),
+          ),
+          const SizedBox(height: 12),
+          OutlinedButton.icon(
+            key: const Key('position-editor-transition-owned'),
+            style: OutlinedButton.styleFrom(
+              minimumSize: _buttonMinSize,
+              foregroundColor: isOwned ? Colors.white38 : _goldAmber,
+              side: BorderSide(
+                color: isOwned
+                    ? Colors.white.withValues(alpha: 0.1)
+                    : _goldAmber.withValues(alpha: 0.45),
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            onPressed: isOwned ? null : _transitionToOwned,
+            icon: const Icon(Icons.shopping_bag_outlined, size: 18),
+            label: const Text('I now own this…'),
+          ),
+        ],
+      ),
     );
   }
 
   Widget _buildClassifySection(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildSectionHeader(context, 'Classify this legacy ticker'),
-        Text(
-          'This record was imported without economics. Nothing about cost or '
-          'ownership is inferred from it — choose what it actually is.',
-          style: Theme.of(context).textTheme.bodyMedium,
+    final isCandidateSelected = _targetState == PositionState.candidate;
+    final isOwnedSelected = _targetState == PositionState.owned;
+
+    ButtonStyle classifyButtonStyle(bool selected) {
+      return OutlinedButton.styleFrom(
+        minimumSize: _buttonMinSize,
+        backgroundColor: selected
+            ? _goldAmber.withValues(alpha: 0.16)
+            : Colors.white.withValues(alpha: 0.03),
+        foregroundColor: selected ? _goldAmber : Colors.white,
+        side: BorderSide(
+          color: selected
+              ? _goldAmber
+              : _goldAmber.withValues(alpha: 0.35),
+          width: selected ? 1.5 : 1.0,
         ),
-        const SizedBox(height: 8),
-        Row(
-          children: [
-            Expanded(
-              child: OutlinedButton(
-                key: const Key('position-editor-classify-candidate'),
-                style: OutlinedButton.styleFrom(minimumSize: _buttonMinSize),
-                onPressed: () => _classify(PositionState.candidate),
-                child: const Text('Track as candidate'),
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: OutlinedButton(
-                key: const Key('position-editor-classify-owned'),
-                style: OutlinedButton.styleFrom(minimumSize: _buttonMinSize),
-                onPressed: () => _classify(PositionState.owned),
-                child: const Text('I own this'),
-              ),
-            ),
-          ],
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
         ),
-      ],
+        textStyle: const TextStyle(
+          fontWeight: FontWeight.w600,
+          fontSize: 13,
+        ),
+      );
+    }
+
+    return _buildSectionCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildSectionHeader(context, 'Classify this legacy ticker'),
+          Text(
+            'This record was imported without economics. Nothing about cost or '
+            'ownership is inferred from it — choose what it actually is.',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: Colors.white60,
+                  height: 1.45,
+                ),
+          ),
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  key: const Key('position-editor-classify-candidate'),
+                  style: classifyButtonStyle(isCandidateSelected),
+                  onPressed: () => _classify(PositionState.candidate),
+                  child: const Text('Track as candidate'),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: OutlinedButton(
+                  key: const Key('position-editor-classify-owned'),
+                  style: classifyButtonStyle(isOwnedSelected),
+                  onPressed: () => _classify(PositionState.owned),
+                  child: const Text('I own this'),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 
   Widget _buildEconomicsSection(BuildContext context) {
     final mismatch = _currencyMismatch;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildSectionHeader(context, 'Executed economics'),
-        Text(
-          'Unknown is OK. Leave a field empty if you do not know it — it is '
-          'never guessed, and research continues without it. Candidate ideas '
-          'never carry these values.',
-          style: Theme.of(context).textTheme.bodyMedium,
-        ),
-        const SizedBox(height: 8),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              flex: 3,
-              child: TextFormField(
-                controller: _amountController,
-                decoration: const InputDecoration(
-                  labelText: 'Average cost',
-                  hintText: 'e.g. 310.50',
+    return _buildSectionCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildSectionHeader(context, 'Executed economics'),
+          Text(
+            'Unknown is OK. Leave a field empty if you do not know it — it is '
+            'never guessed, and research continues without it. Candidate ideas '
+            'never carry these values.',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: Colors.white60,
+                  height: 1.45,
                 ),
-                keyboardType:
-                    const TextInputType.numberWithOptions(decimal: true),
-                // No rewriting input formatter: what the user typed is what
-                // gets validated. Invalid input must surface as a visible
-                // error, never be silently stripped into a valid value.
-                validator: _validateAmount,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              flex: 2,
-              child: TextFormField(
-                controller: _currencyController,
-                decoration: const InputDecoration(
-                  labelText: 'Currency',
-                  hintText: 'USD',
-                ),
-                textCapitalization: TextCapitalization.characters,
-                inputFormatters: [
-                  FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z]')),
-                  LengthLimitingTextInputFormatter(3),
-                ],
-                validator: _validateCurrency,
-              ),
-            ),
-          ],
-        ),
-        if (mismatch)
-          Padding(
-            padding: const EdgeInsets.only(top: 8),
-            child: _mismatchBanner(context),
           ),
-        const SizedBox(height: 8),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: TextFormField(
-                controller: _quantityController,
-                decoration: const InputDecoration(
-                  labelText: 'Quantity',
-                  hintText: 'e.g. 12.5',
+          const SizedBox(height: 14),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                flex: 3,
+                child: TextFormField(
+                  controller: _amountController,
+                  style: const TextStyle(color: Colors.white),
+                  decoration: _inputDecoration(
+                    labelText: 'Average cost',
+                    hintText: 'e.g. 310.50',
+                  ),
+                  keyboardType:
+                      const TextInputType.numberWithOptions(decimal: true),
+                  // No rewriting input formatter: what the user typed is what
+                  // gets validated. Invalid input must surface as a visible
+                  // error, never be silently stripped into a valid value.
+                  validator: _validateAmount,
                 ),
-                keyboardType:
-                    const TextInputType.numberWithOptions(decimal: true),
-                // Same rule as the cost field: no silent input rewriting.
-                validator: _validateQuantity,
               ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: TextFormField(
-                controller: _openedOnController,
-                decoration: const InputDecoration(
-                  labelText: 'Opened on',
-                  hintText: 'YYYY-MM-DD',
+              const SizedBox(width: 10),
+              Expanded(
+                flex: 2,
+                child: TextFormField(
+                  controller: _currencyController,
+                  style: const TextStyle(color: Colors.white),
+                  decoration: _inputDecoration(
+                    labelText: 'Currency',
+                    hintText: 'USD',
+                  ),
+                  textCapitalization: TextCapitalization.characters,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z]')),
+                    LengthLimitingTextInputFormatter(3),
+                  ],
+                  validator: _validateCurrency,
                 ),
-                keyboardType: TextInputType.datetime,
-                inputFormatters: [
-                  FilteringTextInputFormatter.allow(RegExp(r'[0-9-]')),
-                  LengthLimitingTextInputFormatter(10),
-                ],
-                validator: _validateOpenedOn,
               ),
+            ],
+          ),
+          if (mismatch)
+            Padding(
+              padding: const EdgeInsets.only(top: 10),
+              child: _mismatchBanner(context),
             ),
-          ],
-        ),
-      ],
+          const SizedBox(height: 12),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: TextFormField(
+                  controller: _quantityController,
+                  style: const TextStyle(color: Colors.white),
+                  decoration: _inputDecoration(
+                    labelText: 'Quantity',
+                    hintText: 'e.g. 12.5',
+                  ),
+                  keyboardType:
+                      const TextInputType.numberWithOptions(decimal: true),
+                  // Same rule as the cost field: no silent input rewriting.
+                  validator: _validateQuantity,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: TextFormField(
+                  controller: _openedOnController,
+                  style: const TextStyle(color: Colors.white),
+                  decoration: _inputDecoration(
+                    labelText: 'Opened on',
+                    hintText: 'YYYY-MM-DD',
+                  ),
+                  keyboardType: TextInputType.datetime,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.allow(RegExp(r'[0-9-]')),
+                    LengthLimitingTextInputFormatter(10),
+                  ],
+                  validator: _validateOpenedOn,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 
@@ -670,79 +895,142 @@ class _PositionEditorState extends State<PositionEditor> {
   }
 
   Widget _buildDetailsSection(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildSectionHeader(context, 'Details'),
-        TextFormField(
-          controller: _thesisController,
-          decoration: const InputDecoration(
-            labelText: 'Original thesis',
-            hintText: 'Why this instrument? (optional)',
+    return _buildSectionCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildSectionHeader(context, 'Details'),
+          const SizedBox(height: 4),
+          TextFormField(
+            controller: _thesisController,
+            style: const TextStyle(color: Colors.white, height: 1.4),
+            decoration: _inputDecoration(
+              labelText: 'Original thesis',
+              hintText: 'Why this instrument? (optional)',
+            ),
+            maxLines: 3,
+            maxLength: _maxThesisLength,
+            buildCounter: (_,
+                    {required currentLength,
+                    required maxLength,
+                    required isFocused}) =>
+                null,
           ),
-          maxLines: 3,
-          maxLength: _maxThesisLength,
-          buildCounter: (_,
-                  {required currentLength,
-                  required maxLength,
-                  required isFocused}) =>
-              null,
-        ),
-        const SizedBox(height: 8),
-        TextFormField(
-          controller: _conditionsController,
-          decoration: const InputDecoration(
-            labelText: 'Review conditions',
-            hintText: 'One condition per line (optional)',
+          const SizedBox(height: 12),
+          TextFormField(
+            controller: _conditionsController,
+            style: const TextStyle(color: Colors.white, height: 1.4),
+            decoration: _inputDecoration(
+              labelText: 'Review conditions',
+              hintText: 'One condition per line (optional)',
+            ),
+            maxLines: 3,
+            validator: _validateConditions,
           ),
-          maxLines: 3,
-          validator: _validateConditions,
-        ),
-        const SizedBox(height: 12),
-        Semantics(
-          header: true,
-          child: Text('Review horizon',
-              style: Theme.of(context).textTheme.titleMedium),
-        ),
-        const SizedBox(height: 4),
-        SegmentedButton<int>(
-          segments: const [
-            ButtonSegment(value: 1, label: Text('1 mo')),
-            ButtonSegment(value: 2, label: Text('2 mo')),
-            ButtonSegment(value: 3, label: Text('3 mo')),
-          ],
-          selected: {_horizon},
-          onSelectionChanged: (selection) =>
-              setState(() => _horizon = selection.first),
-        ),
-      ],
+          const SizedBox(height: 16),
+          Semantics(
+            header: true,
+            child: Text(
+              'Review horizon',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 14,
+                  ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          SizedBox(
+            width: double.infinity,
+            child: SegmentedButton<int>(
+              style: SegmentedButton.styleFrom(
+                backgroundColor: Colors.white.withValues(alpha: 0.03),
+                foregroundColor: Colors.white70,
+                selectedBackgroundColor: _goldAmber.withValues(alpha: 0.18),
+                selectedForegroundColor: _goldAmber,
+                side: BorderSide(color: Colors.white.withValues(alpha: 0.14)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                padding: const EdgeInsets.symmetric(vertical: 10),
+              ),
+              segments: const [
+                ButtonSegment(value: 1, label: Text('1 mo')),
+                ButtonSegment(value: 2, label: Text('2 mo')),
+                ButtonSegment(value: 3, label: Text('3 mo')),
+              ],
+              selected: {_horizon},
+              onSelectionChanged: (selection) =>
+                  setState(() => _horizon = selection.first),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
   Widget _buildDangerSection(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildSectionHeader(context, 'Lifecycle'),
-        if (widget.initial?.state == PositionState.owned &&
-            _targetState == PositionState.owned) ...[
+    return _buildSectionCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildSectionHeader(context, 'Lifecycle'),
+          if (widget.initial?.state == PositionState.candidate &&
+              _targetState == PositionState.candidate) ...[
+            OutlinedButton.icon(
+              key: const Key('position-editor-transition-owned'),
+              style: OutlinedButton.styleFrom(
+                minimumSize: _buttonMinSize,
+                foregroundColor: _goldAmber,
+                side: BorderSide(color: _goldAmber.withValues(alpha: 0.45)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              onPressed: _submitting ? null : _transitionToOwned,
+              icon: const Icon(Icons.shopping_bag_outlined, size: 18),
+              label: const Text('I now own this…'),
+            ),
+            const SizedBox(height: 10),
+          ],
+          if (widget.initial?.state == PositionState.owned &&
+              _targetState == PositionState.owned) ...[
+            OutlinedButton.icon(
+              key: const Key('position-editor-transition-candidate'),
+              style: OutlinedButton.styleFrom(
+                minimumSize: _buttonMinSize,
+                foregroundColor: Colors.white70,
+                side: BorderSide(color: Colors.white.withValues(alpha: 0.18)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              onPressed: _submitting ? null : _transitionToCandidate,
+              icon: const Icon(Icons.undo, size: 18),
+              label: const Text('No longer owned…'),
+            ),
+            const SizedBox(height: 10),
+          ],
           OutlinedButton.icon(
-            key: const Key('position-editor-transition-candidate'),
-            style: OutlinedButton.styleFrom(minimumSize: _buttonMinSize),
-            onPressed: _submitting ? null : _transitionToCandidate,
-            icon: const Icon(Icons.undo),
-            label: const Text('No longer owned…'),
+            key: const Key('position-editor-archive'),
+            style: OutlinedButton.styleFrom(
+              minimumSize: _buttonMinSize,
+              foregroundColor: _archived ? Colors.white38 : _goldAmber,
+              side: BorderSide(
+                color: _archived
+                    ? Colors.white.withValues(alpha: 0.1)
+                    : _goldAmber.withValues(alpha: 0.35),
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            onPressed: _archived || _submitting ? null : _archive,
+            icon: const Icon(Icons.archive_outlined, size: 18),
+            label: const Text(_archivedText),
           ),
-          const SizedBox(height: 8),
         ],
-        OutlinedButton.icon(
-          key: const Key('position-editor-archive'),
-          style: OutlinedButton.styleFrom(minimumSize: _buttonMinSize),
-          onPressed: _archived || _submitting ? null : _archive,
-          icon: const Icon(Icons.archive_outlined),
-          label: const Text(_archivedText),
-        ),
-      ],
+      ),
     );
   }
 
@@ -758,10 +1046,13 @@ class _PositionEditorState extends State<PositionEditor> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Container(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
               color: theme.colorScheme.errorContainer.withValues(alpha: 0.35),
               borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: theme.colorScheme.error.withValues(alpha: 0.4),
+              ),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -780,24 +1071,22 @@ class _PositionEditorState extends State<PositionEditor> {
               ],
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 10),
           Row(
             children: [
               Expanded(
                 child: FilledButton.tonal(
                   key: const Key('position-editor-reload'),
-                  style:
-                      FilledButton.styleFrom(minimumSize: _buttonMinSize),
+                  style: FilledButton.styleFrom(minimumSize: _buttonMinSize),
                   onPressed: widget.onConflict,
                   child: const Text('Reload position'),
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 10),
               Expanded(
                 child: OutlinedButton(
                   key: const Key('position-editor-retry'),
-                  style:
-                      OutlinedButton.styleFrom(minimumSize: _buttonMinSize),
+                  style: OutlinedButton.styleFrom(minimumSize: _buttonMinSize),
                   onPressed: _submitting ? null : _retry,
                   child: const Text('Retry anyway'),
                 ),
@@ -812,20 +1101,30 @@ class _PositionEditorState extends State<PositionEditor> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Container(
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
             color: theme.colorScheme.errorContainer.withValues(alpha: 0.35),
             borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: theme.colorScheme.error.withValues(alpha: 0.4),
+            ),
           ),
           child: Text(
             'Could not save: ${error.message ?? error.code}',
             style: theme.textTheme.bodyMedium,
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 10),
         OutlinedButton(
           key: const Key('position-editor-retry'),
-          style: OutlinedButton.styleFrom(minimumSize: _buttonMinSize),
+          style: OutlinedButton.styleFrom(
+            minimumSize: _buttonMinSize,
+            foregroundColor: _goldAmber,
+            side: BorderSide(color: _goldAmber.withValues(alpha: 0.4)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
           onPressed: _submitting ? null : _retry,
           child: const Text('Retry'),
         ),
