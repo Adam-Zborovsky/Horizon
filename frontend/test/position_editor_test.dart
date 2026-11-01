@@ -189,8 +189,11 @@ void main() {
       await tester.tap(find.byKey(const Key('position-editor-confirm')));
       await tester.pumpAndSettle();
 
-      // Now the economics inputs exist, prefilled empty (unknown allowed).
+      // Now the economics inputs exist, prefilled empty (unknown allowed),
+      // and currency is fixed to US Dollars rather than an open text field.
       expect(_field('Average cost'), findsOneWidget);
+      expect(_field('Currency'), findsNothing);
+      expect(find.textContaining('US Dollars'), findsOneWidget);
       expect(spy.writes, isEmpty);
     });
   });
@@ -253,14 +256,12 @@ void main() {
       await tester.tap(find.byKey(const Key('position-editor-classify-owned')));
       await tester.pumpAndSettle();
       await tester.enterText(_field('Average cost'), '0');
-      await tester.enterText(_field('Currency'), 'usd');
       await tester.tap(find.byKey(const Key('position-editor-save')));
       await tester.pumpAndSettle();
 
       // Nothing was saved; the problems are visible text, not silent repair.
       expect(spy.writes, isEmpty);
       expect(find.textContaining('positive'), findsWidgets);
-      expect(find.textContaining('ISO'), findsWidgets);
     });
 
     testWidgets('classify as owned with valid economics emits them',
@@ -271,7 +272,6 @@ void main() {
       await tester.tap(find.byKey(const Key('position-editor-classify-owned')));
       await tester.pumpAndSettle();
       await tester.enterText(_field('Average cost'), '287.25');
-      await tester.enterText(_field('Currency'), 'USD');
       await tester.enterText(_field('Quantity'), '12.5');
       await tester.enterText(_field('Opened on'), '2026-03-02');
       await tester.tap(find.byKey(const Key('position-editor-save')));
@@ -293,7 +293,6 @@ void main() {
 
       expect(_field('Average cost'), findsOneWidget);
       await tester.enterText(_field('Average cost'), '305');
-      await tester.enterText(_field('Currency'), 'USD');
       await tester.enterText(_field('Quantity'), '15');
       await tester.tap(find.text('1 mo'));
       await tester.pumpAndSettle();
@@ -315,7 +314,6 @@ void main() {
       await _pump(tester, PositionEditor.edit(initial: _owned, onSave: spy));
 
       await tester.enterText(_field('Average cost'), '-5');
-      await tester.enterText(_field('Currency'), 'USD');
       await tester.enterText(_field('Quantity'), 'abc');
       await tester.tap(find.byKey(const Key('position-editor-save')));
       await tester.pumpAndSettle();
@@ -327,10 +325,18 @@ void main() {
     testWidgets('currency mismatch with the instrument is visible',
         (tester) async {
       final spy = _SaveSpy();
-      await _pump(tester, PositionEditor.edit(initial: _owned, onSave: spy));
+      final ilsOwned = _position({
+        'instrument': {
+          'instrument_id': 'prov-abc-123',
+          'symbol': 'MSFT',
+          'exchange': 'TASE',
+          'currency': 'ILS',
+          'provider_symbol': 'MSFT',
+        },
+      });
+      await _pump(tester, PositionEditor.edit(initial: ilsOwned, onSave: spy));
 
       await tester.enterText(_field('Average cost'), '1000');
-      await tester.enterText(_field('Currency'), 'ILS');
       await tester.pumpAndSettle();
 
       expect(
@@ -402,7 +408,6 @@ void main() {
       await _pump(tester, PositionEditor.edit(initial: _owned, onSave: spy));
 
       await tester.enterText(_field('Average cost'), '305');
-      await tester.enterText(_field('Currency'), 'USD');
       await tester.tap(find.byKey(const Key('position-editor-save')));
       await tester.pumpAndSettle();
 
@@ -420,7 +425,6 @@ void main() {
       await _pump(tester, PositionEditor.edit(initial: _owned, onSave: spy));
 
       await tester.enterText(_field('Average cost'), '305');
-      await tester.enterText(_field('Currency'), 'USD');
       await tester.tap(find.byKey(const Key('position-editor-save')));
       await tester.pumpAndSettle();
 

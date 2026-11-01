@@ -34,7 +34,7 @@ const _maxThesisLength = 4000; // frontend parse limit (see position_models.dart
 const _maxConditions = 20;
 const _maxConditionLength = 500;
 
-final RegExp _isoCurrencyRe = RegExp(r'^[A-Z]{3}$');
+const _defaultCurrency = 'USD';
 
 const _buttonMinSize = Size(64, 48); // ≥ 48dp touch targets
 
@@ -125,7 +125,6 @@ class _PositionEditorState extends State<PositionEditor> {
   final _formKey = GlobalKey<FormState>();
 
   late final TextEditingController _amountController;
-  late final TextEditingController _currencyController;
   late final TextEditingController _quantityController;
   late final TextEditingController _openedOnController;
   late final TextEditingController _thesisController;
@@ -161,8 +160,6 @@ class _PositionEditorState extends State<PositionEditor> {
     _archived = initial?.archived ?? false;
     _amountController =
         TextEditingController(text: initial?.averageCost?.amount ?? '');
-    _currencyController =
-        TextEditingController(text: initial?.averageCost?.currency ?? '');
     _quantityController =
         TextEditingController(text: initial?.quantity ?? '');
     _openedOnController = TextEditingController(text: initial?.openedOn ?? '');
@@ -172,9 +169,7 @@ class _PositionEditorState extends State<PositionEditor> {
         text: (initial?.reviewConditions ?? []).join('\n'));
     // The currency-mismatch banner is derived from live controller text, so
     // controller edits must rebuild this widget.
-    for (final controller in [_amountController, _currencyController]) {
-      controller.addListener(_onEconomicsTextChanged);
-    }
+    _amountController.addListener(_onEconomicsTextChanged);
   }
 
   void _onEconomicsTextChanged() {
@@ -184,7 +179,6 @@ class _PositionEditorState extends State<PositionEditor> {
   @override
   void dispose() {
     _amountController.dispose();
-    _currencyController.dispose();
     _quantityController.dispose();
     _openedOnController.dispose();
     _thesisController.dispose();
@@ -240,9 +234,8 @@ class _PositionEditorState extends State<PositionEditor> {
 
   MoneyAmount? _moneyOrNull() {
     final amount = _amountController.text.trim();
-    final currency = _currencyController.text.trim();
-    if (amount.isEmpty || currency.isEmpty) return null;
-    return MoneyAmount(amount: amount, currency: currency);
+    if (amount.isEmpty) return null;
+    return MoneyAmount(amount: amount, currency: _defaultCurrency);
   }
 
   String? _dateOrNull() {
@@ -421,20 +414,6 @@ class _PositionEditorState extends State<PositionEditor> {
     return null;
   }
 
-  String? _validateCurrency(String? value) {
-    final text = value?.trim() ?? '';
-    if (text.isEmpty) {
-      if (_amountController.text.trim().isNotEmpty) {
-        return 'Required when a cost is entered.';
-      }
-      return null;
-    }
-    if (!_isoCurrencyRe.hasMatch(text)) {
-      return 'Enter a 3-letter ISO 4217 currency code (e.g. USD).';
-    }
-    return null;
-  }
-
   String? _validateQuantity(String? value) {
     final text = value?.trim() ?? '';
     if (text.isEmpty) return null;
@@ -470,11 +449,11 @@ class _PositionEditorState extends State<PositionEditor> {
 
   bool get _currencyMismatch {
     final instrumentCurrency = _instrument.currency;
-    final costCurrency = _currencyController.text.trim();
     if (!_showEconomics) return false;
-    if (instrumentCurrency == null || costCurrency.isEmpty) return false;
-    if (!_isoCurrencyRe.hasMatch(costCurrency)) return false;
-    return costCurrency != instrumentCurrency;
+    if (instrumentCurrency == null || _amountController.text.trim().isEmpty) {
+      return false;
+    }
+    return _defaultCurrency != instrumentCurrency;
   }
 
   InputDecoration _inputDecoration({
@@ -811,19 +790,34 @@ class _PositionEditorState extends State<PositionEditor> {
               const SizedBox(width: 10),
               Expanded(
                 flex: 2,
-                child: TextFormField(
-                  controller: _currencyController,
-                  style: const TextStyle(color: Colors.white),
+                child: InputDecorator(
                   decoration: _inputDecoration(
                     labelText: 'Currency',
-                    hintText: 'USD',
                   ),
-                  textCapitalization: TextCapitalization.characters,
-                  inputFormatters: [
-                    FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z]')),
-                    LengthLimitingTextInputFormatter(3),
-                  ],
-                  validator: _validateCurrency,
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        '\$ USD',
+                        style: TextStyle(
+                          color: _goldAmber,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 14,
+                        ),
+                      ),
+                      SizedBox(width: 6),
+                      Flexible(
+                        child: Text(
+                          'US Dollars',
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: Colors.white60,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ],
@@ -885,7 +879,7 @@ class _PositionEditorState extends State<PositionEditor> {
         border: Border.all(color: theme.colorScheme.error.withValues(alpha: 0.5)),
       ),
       child: Text(
-        'Cost currency ${_currencyController.text.trim()} differs from the '
+        'Cost currency $_defaultCurrency differs from the '
         'instrument currency (${_instrument.currency}). Comparable '
         'profit/loss is unavailable until a sourced FX conversion is '
         'implemented — nothing is converted silently.',
