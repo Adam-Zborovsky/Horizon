@@ -200,18 +200,49 @@ const startServer = async () => {
     deadlineSeconds: 900,
   });
 
-  // The automation surface stays UNMOUNTED until the operator provisions the
-  // model client identity (CONTRACTS §9: fail closed, never weaken auth).
-  // When provisioning lands, wire it in one step:
-  //   const { router } = composeAutomationSurface({
-  //     modelClient, inputProvider,
-  //     runRepository: services.runRepository,
-  //     assessmentRepository: createMongooseAssessmentRepository(),
-  //     researchSnapshotRepository: createMongooseResearchSnapshotRepository(),
-  //     checkpointRepository: createMongooseCheckpointRepository(),
-  //     automation: { token, scopes, ownerId },
-  //   });
-  if (env.AUTOMATION_SERVICE_TOKEN) {
+  // Compose the H10 automation surface: agent runtime + bounded run worker +
+  // automation router over ONE shared runs store, guarded by the scoped
+  // automation identity (never a user JWT). Every dependency is required and
+  // validated — a missing model client, input provider, runs store or scoped
+  // identity throws instead of mounting a weakened surface.
+  // The surface mounts ONLY when the operator provisions all of:
+  // RESEARCH_LLM_BASE_URL / RESEARCH_LLM_API_KEY / RESEARCH_LLM_MODEL
+  // (model client identity) AND AUTOMATION_SERVICE_TOKEN / _SCOPES /
+  // _OWNER_ID. Partial provisioning stays unmounted (fail closed).
+  let automationRouter = null;
+  if (env.AUTOMATION_SERVICE_TOKEN && env.RESEARCH_LLM_API_KEY && env.RESEARCH_LLM_BASE_URL && env.RESEARCH_LLM_MODEL) {
+    const { createOpenAICompatibleModelClient } = require('./features/research/model_client');
+    const { createMongooseRunInputProvider } = require('./features/research/run_inputs');
+    const PositionModel = require('./features/positions/position.model');
+    const ResearchAssessmentModel = require('./features/research/research_assessment.model');
+    const automationScopes = String(env.AUTOMATION_SERVICE_SCOPES || '')
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean);
+    const modelClient = createOpenAICompatibleModelClient({
+      baseUrl: env.RESEARCH_LLM_BASE_URL,
+      apiKey: env.RESEARCH_LLM_API_KEY,
+      model: env.RESEARCH_LLM_MODEL,
+    });
+    ({ router: automationRouter } = composeAutomationSurface({
+      modelClient,
+      inputProvider: createMongooseRunInputProvider({
+        positionModel: PositionModel,
+        assessmentModel: ResearchAssessmentModel,
+      }),
+      runRepository: services.runRepository,
+      assessmentRepository: createMongooseAssessmentRepository(),
+      researchSnapshotRepository: createMongooseResearchSnapshotRepository(),
+      checkpointRepository: createMongooseCheckpointRepository(),
+      automation: {
+        token: env.AUTOMATION_SERVICE_TOKEN,
+        scopes: automationScopes,
+        ownerId: env.AUTOMATION_OWNER_ID,
+        expiresAt: env.AUTOMATION_SERVICE_TOKEN_EXPIRES_AT ?? null,
+      },
+    }));
+    console.log(`🔌 Automation surface composed (model: ${env.RESEARCH_LLM_MODEL}; scopes: ${automationScopes.join(' ')})`);
+  } else if (env.AUTOMATION_SERVICE_TOKEN) {
     console.warn('⏳ AUTOMATION_SERVICE_TOKEN is configured, but no model client identity is provisioned; /automation/research stays unmounted (fail closed).');
   }
 
@@ -224,6 +255,7 @@ const startServer = async () => {
   const expressApp = app.createApp({
     positionService: services.positionService,
     researchService: services.researchService,
+    automationRouter,
   });
   const PORT = env.PORT;
   expressApp.listen(PORT, () => {
