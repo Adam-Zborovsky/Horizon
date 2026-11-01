@@ -137,10 +137,8 @@ class ResearchRepository {
 
 @riverpod
 ResearchRepository researchRepository(Ref ref) {
+  final auth = ref.watch(authRepositoryProvider);
   return ResearchRepository(
-    tokenProvider: () async {
-      final auth = ref.read(authRepositoryProvider);
-      return auth.getToken();
-    },
+    tokenProvider: auth.getToken,
   );
 }

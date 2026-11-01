@@ -4,7 +4,7 @@ FROM ghcr.io/cirruslabs/flutter:stable AS build
 WORKDIR /app
 COPY . .
 RUN flutter pub get
-RUN flutter build web
+RUN flutter build web --pwa-strategy=none
 
 # Stage 2: Serve with Nginx
 FROM nginx:alpine

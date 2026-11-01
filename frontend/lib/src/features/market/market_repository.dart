@@ -84,10 +84,8 @@ class MarketRepository {
 
 @riverpod
 MarketRepository marketRepository(Ref ref) {
+  final auth = ref.watch(authRepositoryProvider);
   return MarketRepository(
-    tokenProvider: () async {
-      final auth = ref.read(authRepositoryProvider);
-      return auth.getToken();
-    },
+    tokenProvider: auth.getToken,
   );
 }
