@@ -46,7 +46,17 @@ function toPublicAssessmentView(assessment) {
   return view;
 }
 
-function createResearchRouter({ researchService, authenticate = null } = {}) {
+async function defaultPositionLookup(positionId, ownerId) {
+  try {
+    const PositionModel = require('../positions/position.model');
+    if (!PositionModel || typeof PositionModel.findOne !== 'function') return null;
+    return await PositionModel.findOne({ _id: String(positionId), owner_id: String(ownerId) }).lean();
+  } catch (_) {
+    return null;
+  }
+}
+
+function createResearchRouter({ researchService, positionLookup = defaultPositionLookup, onRunQueued = null, authenticate = null } = {}) {
   if (!researchService
     || typeof researchService.queueRun !== 'function'
     || typeof researchService.getRun !== 'function'
@@ -103,16 +113,46 @@ function createResearchRouter({ researchService, authenticate = null } = {}) {
           code: 'MISSING_IDEMPOTENCY_KEY',
         }));
       }
+      const ownerId = String(req.user?._id || '');
       const body = req.body || {};
+      let positionRevision = body.position_revision;
+      let instrumentId = body.instrument_id;
+      let runKind = body.run_kind || 'manual_refresh';
+      let requestPayload = body.request_payload;
+
+      const lookup = typeof positionLookup === 'function' ? positionLookup : defaultPositionLookup;
+      if ((!instrumentId || positionRevision == null) && typeof lookup === 'function') {
+        const position = await lookup(req.params.id, ownerId);
+        if (position) {
+          if (!instrumentId && position.instrument && position.instrument.instrument_id) {
+            instrumentId = position.instrument.instrument_id;
+          }
+          if (positionRevision == null && position.revision != null) {
+            positionRevision = position.revision;
+          }
+        }
+      }
+
+      if (!requestPayload) {
+        requestPayload = { trigger: 'manual' };
+      }
+
       const { run, idempotent_replay: idempotentReplay } = await researchService.queueRun({
-        owner_id: String(req.user?._id || ''),
+        owner_id: ownerId,
         position_id: req.params.id,
-        position_revision: body.position_revision,
-        run_kind: body.run_kind,
+        position_revision: positionRevision,
+        run_kind: runKind,
         idempotency_key: idempotencyKey,
-        instrument_id: body.instrument_id,
-        request_payload: body.request_payload,
+        instrument_id: instrumentId,
+        request_payload: requestPayload,
       });
+
+      if (!idempotentReplay && typeof onRunQueued === 'function') {
+        Promise.resolve().then(() => onRunQueued(run)).catch((err) => {
+          console.warn(`research onRunQueued failed for run ${run.id}:`, err?.message || err);
+        });
+      }
+
       // 202 for both first queue and persisted replay: same key + same request
       // returns the same run either way (CONTRACTS §8).
       return res.status(202).json({ run: toPublicRunView(run), idempotent_replay: idempotentReplay });

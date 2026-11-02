@@ -12,7 +12,15 @@
 // the configured base URL.
 
 const DEFAULT_TIMEOUT_MS = 120000;
-const DEFAULT_MAX_OUTPUT_TOKENS = 4096;
+const DEFAULT_MAX_OUTPUT_TOKENS = Number(process.env.RESEARCH_LLM_MAX_OUTPUT_TOKENS) || 16384;
+
+function sanitizeJsonText(text) {
+  let cleaned = text.trim();
+  if (cleaned.startsWith('```')) {
+    cleaned = cleaned.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim();
+  }
+  return cleaned;
+}
 
 function deadlineTimeoutMs(deadlineAt, now = () => new Date(), timeoutMs = DEFAULT_TIMEOUT_MS) {
   if (typeof deadlineAt !== 'string') return timeoutMs;
@@ -81,6 +89,7 @@ function createOpenAICompatibleModelClient({
             messages,
             temperature,
             max_tokens: maxOutputTokens,
+            reasoning_effort: process.env.RESEARCH_LLM_REASONING_EFFORT || 'low',
             response_format: { type: 'json_object' },
           }),
           signal: controller.signal,
@@ -111,9 +120,12 @@ function createOpenAICompatibleModelClient({
     }
     let output;
     try {
-      output = JSON.parse(text);
+      output = JSON.parse(sanitizeJsonText(text));
     } catch (error) {
-      throw Object.assign(new Error('model response was not parseable JSON'), { code: 'MODEL_CLIENT_FAILED' });
+      if (payload?.choices?.[0]?.finish_reason === 'length') {
+        throw Object.assign(new Error('model response was truncated (max_tokens reached)'), { code: 'MODEL_CLIENT_FAILED' });
+      }
+      throw Object.assign(new Error(`model response was not parseable JSON: ${error.message}`), { code: 'MODEL_CLIENT_FAILED' });
     }
     return {
       output,

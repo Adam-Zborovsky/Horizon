@@ -226,6 +226,18 @@ function createResearchAgentRuntime({ modelClient, now, idFactory, isExchangeSes
       if (coverageStatus !== 'available' && isPlainObject(output)) {
         output = { ...output, missing_data: dedupe([...(Array.isArray(output.missing_data) ? output.missing_data : []), ...context.coverage.gaps]) };
       }
+      if (isPlainObject(output)) {
+        if (isPlainObject(output.recommendation) && typeof output.recommendation.action === 'string') {
+          output.recommendation.action = output.recommendation.action.toLowerCase();
+        }
+        if (Array.isArray(output.outlooks)) {
+          for (const o of output.outlooks) {
+            if (isPlainObject(o) && typeof o.direction === 'string') {
+              o.direction = o.direction.toLowerCase();
+            }
+          }
+        }
+      }
 
       const verdict = validator.validateSynthesisOutput(output, context);
       if (verdict.ok) {

@@ -222,17 +222,55 @@ function buildMarketSynthesisContext({
 
 const MODEL_OUTPUT_CONTRACT = Object.freeze({
   market_thesis: {
-    business_assessment: '{summary, claims: [{text, evidence_ids, metric_ids, claim_type}]}',
-    price_technical_assessment: '{summary, claims: [...]}',
-    valuation_assessment: '{summary, claims: [...]}',
-    rationale: '[claim...]',
-    counterevidence: '[claim...]  (required, non-empty)',
+    business_assessment: {
+      summary: 'string',
+      claims: [{ text: 'string', evidence_ids: ['id...'], metric_ids: ['id...'], claim_type: 'observed | interpretation | assumption' }],
+    },
+    price_technical_assessment: {
+      summary: 'string',
+      claims: [{ text: 'string', evidence_ids: ['id...'], metric_ids: ['id...'], claim_type: 'observed | interpretation | assumption' }],
+    },
+    valuation_assessment: {
+      summary: 'string',
+      claims: [{ text: 'string', evidence_ids: ['id...'], metric_ids: ['id...'], claim_type: 'observed | interpretation | assumption' }],
+    },
+    rationale: [{ text: 'string', evidence_ids: ['id...'], metric_ids: ['id...'], claim_type: 'observed | interpretation | assumption' }],
+    counterevidence: [{ text: 'string', evidence_ids: ['id...'], metric_ids: ['id...'], claim_type: 'observed | interpretation | assumption' }],
   },
-  recommendation: '{action, horizon_months (1|2|3), headline, rationale, countercase, invalidation_conditions, evidence_quality, predictive_uncertainty}',
-  outlooks: 'exactly three entries, horizon_months 1, 2 and 3; each {horizon_months, direction, base_case, upside_case, downside_case, catalysts, invalidators, data_limitations}; do NOT invent dates',
+  recommendation: {
+    action: 'hold | hold_no_add | add | reduce | exit | insufficient_evidence (for owned position) OR buy | wait | avoid | insufficient_evidence (for candidate position). All lowercase!',
+    horizon_months: 1,
+    headline: 'string',
+    rationale: [{ text: 'string', evidence_ids: ['id...'], metric_ids: ['id...'], claim_type: 'observed | interpretation | assumption' }],
+    countercase: [{ text: 'string', evidence_ids: ['id...'], metric_ids: ['id...'], claim_type: 'observed | interpretation | assumption' }],
+    invalidation_conditions: [{ text: 'string', evidence_ids: ['id...'], metric_ids: ['id...'], claim_type: 'observed | interpretation | assumption' }],
+    evidence_quality: 'string',
+    predictive_uncertainty: 'string',
+  },
+  outlooks: [
+    {
+      horizon_months: 1,
+      direction: 'positive | negative | mixed | insufficient_evidence',
+      base_case: [{ text: 'string', evidence_ids: ['id...'], metric_ids: ['id...'], claim_type: 'observed | interpretation | assumption' }],
+      upside_case: [{ text: 'string', evidence_ids: ['id...'], metric_ids: ['id...'], claim_type: 'observed | interpretation | assumption' }],
+      downside_case: [{ text: 'string', evidence_ids: ['id...'], metric_ids: ['id...'], claim_type: 'observed | interpretation | assumption' }],
+      catalysts: [{ text: 'string', evidence_ids: ['id...'], metric_ids: ['id...'], claim_type: 'observed | interpretation | assumption' }],
+      invalidators: [{ text: 'string', evidence_ids: ['id...'], metric_ids: ['id...'], claim_type: 'observed | interpretation | assumption' }],
+      data_limitations: ['string...'],
+    },
+  ],
   changes_since_previous: '{previous_assessment_id, previous_session_as_of, missing_report_sessions, thesis_changes, checkpoint_change_ids} or null (must be null only when no prior report exists)',
-  checkpoints: '[{kind, metric_id?, fixed_level?, condition, status, reason}] optional',
-  missing_data: '[string...] (required non-empty when coverage is partial)',
+  checkpoints: [
+    {
+      kind: 'business_condition | fixed_observed_level | rolling_indicator',
+      condition: 'string',
+      status: 'active | triggered | retired',
+      reason: 'string',
+      metric_id: 'optional, required only for rolling_indicator',
+      fixed_level: 0,
+    },
+  ],
+  missing_data: ['string...'],
   numeric_projection: 'always omit — null is composed server-side (H07A held)',
 });
 
@@ -246,6 +284,9 @@ function renderSynthesisSystemPrompt() {
     '- Never state unregistered numbers in observed claims: dates, quarter labels and horizon labels are not prices; any other numeral must be a cited metric value.',
     '- Never reference the owner\'s entry price, position size, or any personal economics. They are not in your context and must not be guessed.',
     '- The recommendation action must be compatible with the provided position state.',
+    '- Recommendation action must be exact lowercase (for owned: hold, hold_no_add, add, reduce, exit, insufficient_evidence).',
+    '- Outlook direction must be lowercase (positive, negative, mixed, insufficient_evidence).',
+    '- Every claim item in claims, rationale, counterevidence, countercase, invalidation_conditions, base_case, upside_case, downside_case, catalysts, and invalidators MUST be an object { text, evidence_ids: [], metric_ids: [], claim_type: "observed" | "interpretation" | "assumption" }.',
     '- Produce exactly three outlooks (1, 2 and 3 month). The server computes their calendar dates; never invent dates. Make the horizons materially distinct, never an identical copy.',
     '- Always provide the strongest counterevidence/countercase. No forced confidence, no forced hold bias.',
     '- When coverage is partial, say what is missing in missing_data. Distinguish "no material change" from "missing data".',

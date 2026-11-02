@@ -220,7 +220,9 @@ function createMongooseRunInputProvider({
     }
 
     const coverageStatus = bars.length === 0 ? 'unavailable' : (gaps.length > 0 ? 'partial' : 'available');
-    const snapshotId = `snapshot-${claimedRun.id}`;
+    const snapshotId = claimedRun.input_snapshot_id
+      || (claimedRun.run_input_ref && claimedRun.run_input_ref.snapshot_id)
+      || `snapshot-${claimedRun.id}`;
     const snapshot = {
       snapshot_id: snapshotId,
       instrument_id: instrument.instrument_id,

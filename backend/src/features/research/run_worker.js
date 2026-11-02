@@ -93,10 +93,10 @@ function createRunWorker({
   // share the same claim + pipeline instead of racing the persisted claim.
   const inflight = new Map();
 
-  function logWarning(code, runId) {
+  function logWarning(code, runId, detail = '') {
     if (logger && typeof logger.warn === 'function') {
       // Codes only — never upstream payloads, prompts or credentials.
-      logger.warn(`run_worker: run ${runId} failed with ${code}`);
+      logger.warn(`run_worker: run ${runId} failed with ${code}${detail ? ` (${detail})` : ''}`);
     }
   }
 
@@ -201,7 +201,7 @@ function createRunWorker({
     });
 
     if (envelope.status === 'failed') {
-      logWarning(envelope.error_code || 'PIPELINE_FAILED', runId);
+      logWarning(envelope.error_code || 'PIPELINE_FAILED', runId, envelope.client_error);
       return completeFailure(runId, envelope.error_code || 'PIPELINE_FAILED');
     }
 

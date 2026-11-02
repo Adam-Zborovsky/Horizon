@@ -20,6 +20,7 @@ function createApp({
   researchService = null,
   researchRouter = null,
   automationRouter = null,
+  runWorker = null,
   authenticate = null,
   instrumentResolver = null,
   jsonLimit = '1mb',
@@ -66,7 +67,11 @@ function createApp({
   }
 
   const effectiveResearchRouter = researchRouter
-    || (researchService ? createResearchRouter({ researchService, authenticate }) : null);
+    || (researchService ? createResearchRouter({
+        researchService,
+        onRunQueued: runWorker ? (run) => runWorker.startRun({ run_id: run.id }) : null,
+        authenticate,
+      }) : null);
   if (effectiveResearchRouter) {
     app.use(`${env.API_PREFIX}/research`, effectiveResearchRouter);
   }

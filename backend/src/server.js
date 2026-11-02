@@ -134,7 +134,7 @@ function composeAutomationSurface({
     assessmentRepository,
     researchSnapshotRepository,
     checkpointRepository,
-    evidenceSnapshotLookup,
+    evidenceSnapshotLookup: evidenceSnapshotLookup || createMongooseEvidenceSnapshotLookup(),
     now,
     deadlineSeconds,
     ...(leaseSeconds !== undefined ? { leaseSeconds } : {}),
@@ -210,6 +210,7 @@ const startServer = async () => {
   // (model client identity) AND AUTOMATION_SERVICE_TOKEN / _SCOPES /
   // _OWNER_ID. Partial provisioning stays unmounted (fail closed).
   let automationRouter = null;
+  let runWorker = null;
   if (env.AUTOMATION_SERVICE_TOKEN && env.RESEARCH_LLM_API_KEY && env.RESEARCH_LLM_BASE_URL && env.RESEARCH_LLM_MODEL) {
     const { createOpenAICompatibleModelClient } = require('./features/research/model_client');
     const { createMongooseRunInputProvider } = require('./features/research/run_inputs');
@@ -224,7 +225,7 @@ const startServer = async () => {
       apiKey: env.RESEARCH_LLM_API_KEY,
       model: env.RESEARCH_LLM_MODEL,
     });
-    ({ router: automationRouter } = composeAutomationSurface({
+    ({ router: automationRouter, worker: runWorker } = composeAutomationSurface({
       modelClient,
       inputProvider: createMongooseRunInputProvider({
         positionModel: PositionModel,
@@ -256,6 +257,7 @@ const startServer = async () => {
     positionService: services.positionService,
     researchService: services.researchService,
     automationRouter,
+    runWorker,
   });
   const PORT = env.PORT;
   expressApp.listen(PORT, () => {
