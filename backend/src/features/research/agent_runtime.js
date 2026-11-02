@@ -223,6 +223,32 @@ function createResearchAgentRuntime({ modelClient, now, idFactory, isExchangeSes
       if (!context.prior && isPlainObject(output)) {
         output = { ...output, changes_since_previous: null };
       }
+      if (context.prior && isPlainObject(output)) {
+        const changes = isPlainObject(output.changes_since_previous) ? output.changes_since_previous : {};
+        const priorCheckpointIds = new Set((context.prior.checkpoints ?? []).map((cp) => cp.id));
+        const filteredCheckpointChangeIds = (Array.isArray(changes.checkpoint_change_ids) ? changes.checkpoint_change_ids : [])
+          .filter((id) => priorCheckpointIds.has(id));
+        const normalizedThesisChanges = (Array.isArray(changes.thesis_changes) ? changes.thesis_changes : []).map((tc) => {
+          if (!isPlainObject(tc)) return tc;
+          return {
+            ...tc,
+            status: typeof tc.status === 'string' ? tc.status.toLowerCase() : tc.status,
+            evidence_ids: Array.isArray(tc.evidence_ids) ? tc.evidence_ids : [],
+          };
+        });
+
+        output = {
+          ...output,
+          changes_since_previous: {
+            ...changes,
+            previous_assessment_id: context.prior.assessment_id,
+            previous_session_as_of: context.prior.session_as_of ?? null,
+            missing_report_sessions: Array.isArray(changes.missing_report_sessions) ? changes.missing_report_sessions : [],
+            thesis_changes: normalizedThesisChanges,
+            checkpoint_change_ids: filteredCheckpointChangeIds,
+          },
+        };
+      }
       if (coverageStatus !== 'available' && isPlainObject(output)) {
         output = { ...output, missing_data: dedupe([...(Array.isArray(output.missing_data) ? output.missing_data : []), ...context.coverage.gaps]) };
       }
