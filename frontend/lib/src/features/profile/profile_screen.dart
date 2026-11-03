@@ -251,7 +251,19 @@ class ProfileScreen extends ConsumerWidget {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 50),
+                    const SizedBox(height: 24),
+                    Center(
+                      child: Text(
+                        'v2.4.2 | HORIZON TERMINAL',
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.25),
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 3,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 30),
                   ],
                 ),
               ),

@@ -1050,8 +1050,20 @@ class _PositionResearchSectionState
     } on Object catch (e, st) {
       debugPrint('Failed to load position & research state: $e\n$st');
       if (!mounted) return;
+      final String message;
+      if (e is ApiException) {
+        if (e.statusCode == 401) {
+          message = 'Session expired (401). Please log out and back in.';
+        } else {
+          message = 'Server returned HTTP ${e.statusCode}: ${e.message ?? e.code}';
+        }
+      } else if (e is FormatException) {
+        message = 'Format error: ${e.message}';
+      } else {
+        message = 'Position and research state could not be loaded ($e)';
+      }
       setState(() {
-        _error = 'Position and research state could not be loaded.';
+        _error = message;
         _loading = false;
       });
     }

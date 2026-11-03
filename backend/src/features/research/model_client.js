@@ -16,9 +16,18 @@ const DEFAULT_MAX_OUTPUT_TOKENS = Number(process.env.RESEARCH_LLM_MAX_OUTPUT_TOK
 
 function sanitizeJsonText(text) {
   let cleaned = text.trim();
-  if (cleaned.startsWith('```')) {
-    cleaned = cleaned.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim();
+  const fenceMatch = cleaned.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
+  if (fenceMatch) {
+    cleaned = fenceMatch[1].trim();
+  } else {
+    const firstBrace = cleaned.indexOf('{');
+    const lastBrace = cleaned.lastIndexOf('}');
+    if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+      cleaned = cleaned.substring(firstBrace, lastBrace + 1).trim();
+    }
   }
+  // Remove trailing commas before } or ]
+  cleaned = cleaned.replace(/,\s*([\]}])/g, '$1');
   return cleaned;
 }
 
