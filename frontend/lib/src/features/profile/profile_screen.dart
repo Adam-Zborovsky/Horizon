@@ -254,7 +254,7 @@ class ProfileScreen extends ConsumerWidget {
                     const SizedBox(height: 24),
                     Center(
                       child: Text(
-                        'v2.4.2 | HORIZON TERMINAL',
+                        'v2.4.3 | HORIZON TERMINAL',
                         style: TextStyle(
                           color: Colors.white.withValues(alpha: 0.25),
                           fontSize: 10,

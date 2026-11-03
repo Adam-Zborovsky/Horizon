@@ -1463,15 +1463,20 @@ abstract class ResearchLatest with _$ResearchLatest {
     if (runStateJson is! Map<String, dynamic>) {
       throw ContractFormatException('Field "run_state": expected an object');
     }
+    ResearchAssessment? parsedAssessment;
+    if (latestAssessment != null) {
+      try {
+        final payload = latestAssessment['assessment'] is Map<String, dynamic>
+            ? Map<String, dynamic>.from(latestAssessment['assessment'] as Map)
+            : latestAssessment;
+        parsedAssessment = ResearchAssessment.fromJson(payload);
+      } catch (_) {
+        parsedAssessment = ResearchAssessment.fromJson(latestAssessment);
+      }
+    }
     return ResearchLatest(
       positionId: positionId,
-      latestAssessment: latestAssessment == null
-          ? null
-          : ResearchAssessment.fromJson(
-              latestAssessment['assessment'] is Map<String, dynamic>
-                  ? Map<String, dynamic>.from(
-                      latestAssessment['assessment'] as Map)
-                  : latestAssessment),
+      latestAssessment: parsedAssessment,
       lastSuccess: runStateJson['last_success'] == null
           ? null
           : ResearchLastSuccess.fromJson(_optionalObject(

@@ -921,10 +921,14 @@ class ResearchWire {
         throw const FormatException(
             'research latest.latest_assessment: expected an object or null');
       }
-      final payload = assessmentJson['assessment'] is Map<String, dynamic>
-          ? Map<String, dynamic>.from(assessmentJson['assessment'] as Map)
-          : assessmentJson;
-      assessment = ResearchAssessment.fromJson(payload);
+      try {
+        final payload = assessmentJson['assessment'] is Map<String, dynamic>
+            ? Map<String, dynamic>.from(assessmentJson['assessment'] as Map)
+            : assessmentJson;
+        assessment = ResearchAssessment.fromJson(payload);
+      } catch (e1) {
+        assessment = ResearchAssessment.fromJson(assessmentJson);
+      }
     }
     final runState = decoded['run_state'];
     RunSuccessView? lastSuccess;
