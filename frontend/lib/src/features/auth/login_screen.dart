@@ -244,7 +244,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
                   const SizedBox(height: 48),
                   Text(
-                    'v2.4.0 | HORIZON TERMINAL',
+                    'v2.4.1 | HORIZON TERMINAL',
                     style: GoogleFonts.spaceMono(
                       fontSize: 10,
                       color: Colors.white.withValues(alpha: 0.2),
