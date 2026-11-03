@@ -41,7 +41,10 @@ function toPublicRunView(run) {
 
 function toPublicAssessmentView(assessment) {
   if (!assessment) return assessment;
-  const view = { ...assessment };
+  const view = {
+    ...(assessment.assessment || {}),
+    ...assessment,
+  };
   delete view.owner_id_internal;
   return view;
 }

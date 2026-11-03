@@ -921,7 +921,10 @@ class ResearchWire {
         throw const FormatException(
             'research latest.latest_assessment: expected an object or null');
       }
-      assessment = ResearchAssessment.fromJson(assessmentJson);
+      final payload = assessmentJson['assessment'] is Map<String, dynamic>
+          ? Map<String, dynamic>.from(assessmentJson['assessment'] as Map)
+          : assessmentJson;
+      assessment = ResearchAssessment.fromJson(payload);
     }
     final runState = decoded['run_state'];
     RunSuccessView? lastSuccess;
@@ -1044,7 +1047,8 @@ class _PositionResearchSectionState
         _loading = false;
       });
       _maybeAutoOpenEditor();
-    } on Object {
+    } on Object catch (e, st) {
+      debugPrint('Failed to load position & research state: $e\n$st');
       if (!mounted) return;
       setState(() {
         _error = 'Position and research state could not be loaded.';

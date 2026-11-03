@@ -1467,7 +1467,11 @@ abstract class ResearchLatest with _$ResearchLatest {
       positionId: positionId,
       latestAssessment: latestAssessment == null
           ? null
-          : ResearchAssessment.fromJson(latestAssessment),
+          : ResearchAssessment.fromJson(
+              latestAssessment['assessment'] is Map<String, dynamic>
+                  ? Map<String, dynamic>.from(
+                      latestAssessment['assessment'] as Map)
+                  : latestAssessment),
       lastSuccess: runStateJson['last_success'] == null
           ? null
           : ResearchLastSuccess.fromJson(_optionalObject(

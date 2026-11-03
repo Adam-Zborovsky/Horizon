@@ -77,7 +77,7 @@ function createOpenAICompatibleModelClient({
     // (CONTRACTS §8): transient 429/5xx get one retry with short backoff.
     const retryStatuses = new Set([429, 500, 502, 503]);
     try {
-      for (let attempt = 1; attempt <= 2; attempt += 1) {
+      for (let attempt = 1; attempt <= 4; attempt += 1) {
         response = await fetchImpl(endpoint, {
           method: 'POST',
           headers: {
@@ -94,8 +94,9 @@ function createOpenAICompatibleModelClient({
           }),
           signal: controller.signal,
         });
-        if (!retryStatuses.has(response.status) || attempt === 2) break;
-        await new Promise((resolve) => setTimeout(resolve, 2000 * attempt));
+        if (!retryStatuses.has(response.status) || attempt === 4) break;
+        const delayMs = Math.min(10000, 2000 * Math.pow(2, attempt - 1));
+        await new Promise((resolve) => setTimeout(resolve, delayMs));
       }
     } catch (error) {
       throw Object.assign(new Error(`model transport failed: ${error.name === 'AbortError' ? 'timeout' : error.message}`), { code: 'MODEL_CLIENT_FAILED' });
