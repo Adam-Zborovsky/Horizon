@@ -226,6 +226,18 @@ class ProfileScreen extends ConsumerWidget {
                             }
                           },
                         ),
+                        _SettingsItem(
+                          icon: Icons.info_outline_rounded,
+                          title: 'App Version',
+                          trailing: const Text(
+                            'v2.4.3',
+                            style: TextStyle(
+                              color: AppTheme.goldAmber,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ),
                       ],
                     ),
                     const SizedBox(height: 40),
@@ -252,14 +264,17 @@ class ProfileScreen extends ConsumerWidget {
                       ),
                     ),
                     const SizedBox(height: 24),
-                    Center(
-                      child: Text(
-                        'v2.4.3 | HORIZON TERMINAL',
-                        style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.25),
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 3,
+                    SafeArea(
+                      top: false,
+                      child: Center(
+                        child: Text(
+                          'v2.4.3 | HORIZON TERMINAL',
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.6),
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 2,
+                          ),
                         ),
                       ),
                     ),
