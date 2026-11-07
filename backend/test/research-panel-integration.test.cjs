@@ -96,7 +96,10 @@ function makePositionRepository(seed = []) {
       docs.set(doc.id, structuredClone(doc));
       return structuredClone(doc);
     },
-    async update(doc) {
+    async updateIfCurrent(doc, expectedRevision) {
+      const current = docs.get(doc.id);
+      if (!current || current.owner_id !== doc.owner_id
+        || current.revision !== expectedRevision || current.publication_guard) return null;
       docs.set(doc.id, structuredClone(doc));
       return structuredClone(doc);
     },
@@ -512,7 +515,9 @@ test('H15B: owner B cannot see, change or research owner A position (indistingui
     assert.equal(crossLatest.body.run_state.last_success, null);
     assert.equal(crossLatest.body.run_state.latest_attempt, null);
 
-    // A run queued by owner B for the same position id is scoped to B.
+    // A route position belongs only to its authenticated owner. The denial is
+    // indistinguishable from a missing position and cannot create a B-owned
+    // run bound to A's position/revision/instrument.
     const crossRun = await api(baseUrl, 'POST', `/api/v1/research/positions/${candidate.id}/runs`, {
       token: 'token-owner-b',
       body: {
@@ -523,9 +528,9 @@ test('H15B: owner B cannot see, change or research owner A position (indistingui
       },
       headers: { 'idempotency-key': 'key-cross-owner' },
     });
-    assert.equal(crossRun.status, 202);
-    assert.equal(crossRun.body.run.owner_id_internal, OWNER_B);
-    assert.notEqual(crossRun.body.run.id, candidate.id);
+    assert.equal(crossRun.status, 404);
+    assert.equal(crossRun.body.code, 'NOT_FOUND');
+    assert.equal(services.runRepository.records.length, 0);
 
     // Anonymous requests are rejected on both mounts.
     assert.equal((await api(baseUrl, 'GET', '/api/v1/positions', { token: null })).status, 401);

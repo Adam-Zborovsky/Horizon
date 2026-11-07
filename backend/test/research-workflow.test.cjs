@@ -36,6 +36,7 @@ const {
 const {
   createRunWorker,
   queueDailyUpdateRuns,
+  safeValidationDiagnostics,
   toStatusView,
 } = require('../src/features/research/run_worker');
 
@@ -384,6 +385,7 @@ function createHarness({
   deferredModel = false,
   deadlineSeconds = 900,
   inputProviderOverride,
+  logger = null,
 } = {}) {
   const clock = { iso: startIso };
   const repos = {
@@ -427,6 +429,7 @@ function createHarness({
     inputProvider,
     runLookup: (runId) => repos.runRepository.findById(runId),
     now: () => new Date(clock.iso),
+    logger,
   });
   return {
     service,
@@ -967,6 +970,34 @@ test('synthesis validation failures are bounded to the H09 budget and end in a f
   assert.equal(outcome.run.status, 'failed');
   assert.equal(outcome.run.error_code, 'SYNTHESIS_VALIDATION_FAILED');
   assert.equal(harness.modelClient.calls.length, 2, 'at most two synthesis/repair attempts (CONTRACTS §8)');
+});
+
+test('worker logs safe canonical field diagnostics without model content or arbitrary paths', async () => {
+  const warnings = [];
+  const bad = validSynthesis();
+  const secret = 'MODEL_SECRET_MUST_NOT_APPEAR';
+  bad.recommendation.headline = secret.repeat(200);
+  const harness = createHarness({
+    modelOutputs: [bad, bad],
+    logger: { warn: (message) => warnings.push(message) },
+  });
+  const { run } = await harness.queueRun();
+  const outcome = await harness.worker.executeRun({ run_id: run.id });
+  assert.equal(outcome.run.status, 'failed');
+  assert.equal(outcome.run.error_code, 'SYNTHESIS_VALIDATION_FAILED');
+  assert.equal(warnings.length, 1);
+  assert.match(warnings[0], /SCHEMA_INVALID/);
+  assert.match(warnings[0], /recommendation\.headline/);
+  assert.equal(warnings[0].includes(secret), false);
+  assert.deepEqual(safeValidationDiagnostics([
+    { code: 'SCHEMA_INVALID', path: 'recommendation.headline', message: secret },
+    { code: 'SCHEMA_INVALID', path: 'outlooks.0.base_case.0.text', message: secret },
+    { code: 'SCHEMA_INVALID', path: 'arbitrary.model.supplied.path', message: secret },
+    { code: 'MODEL_SUPPLIED_CODE', path: 'recommendation.headline', message: secret },
+  ]), [
+    { code: 'SCHEMA_INVALID', path: 'recommendation.headline' },
+    { code: 'SCHEMA_INVALID', path: 'outlooks[0].base_case[0].text' },
+  ]);
 });
 
 test('status view never carries the lease nonce or owner internals', () => {

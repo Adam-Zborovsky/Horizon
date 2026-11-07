@@ -83,7 +83,7 @@ class EvidenceService {
     secProvider,
     newsProvider,
     evidenceRepository,
-    instrumentResolver = async () => null,
+    instrumentNormalizer = (instrument) => instrument,
     now = () => new Date(),
     snapshotIdFactory = () => `snapshot-evidence-${crypto.randomUUID()}`,
   } = {}) {
@@ -101,44 +101,62 @@ class EvidenceService {
     this.secProvider = secProvider;
     this.newsProvider = newsProvider;
     this.evidenceRepository = evidenceRepository;
-    this.instrumentResolver = instrumentResolver;
+    if (typeof instrumentNormalizer !== 'function') {
+      throw new TypeError('EvidenceService instrumentNormalizer must be a function');
+    }
+    this.instrumentNormalizer = instrumentNormalizer;
     this.now = now;
     this.snapshotIdFactory = snapshotIdFactory;
   }
 
   async gatherEvidence({
-    instrumentId,
+    instrument,
     sessionAsOf,
     cutoffAt,
     options = {},
   } = {}) {
-    const instrument = await this.instrumentResolver(instrumentId);
-    if (!instrument) {
-      throw serviceError('INSTRUMENT_NOT_FOUND', `Instrument not found: ${instrumentId}`);
+    // Identity is supplied exclusively by the server-owned position that
+    // queued this run. Do not resolve an arbitrary instrument_id here: an ID
+    // can collide across owners and may originate in a client request.
+    if (!instrument || typeof instrument !== 'object'
+      || typeof instrument.instrument_id !== 'string' || instrument.instrument_id.length === 0) {
+      throw serviceError('INSTRUMENT_CONTEXT_REQUIRED', 'A server-bound instrument context is required');
+    }
+    const normalizedInstrument = await this.instrumentNormalizer(instrument);
+    if (!normalizedInstrument || normalizedInstrument.instrument_id !== instrument.instrument_id) {
+      throw serviceError('INSTRUMENT_CONTEXT_INVALID', 'Server-bound instrument context is invalid');
     }
 
     const effectiveCutoff = normalizeCutoffAt(cutoffAt, this.now);
 
     // 1. Fetch from registered primary evidence providers
     let secItems = [];
+    let secAvailabilityGap = null;
     try {
-      secItems = await this.secProvider.fetchEvidence(instrument, { cutoffAt: effectiveCutoff });
+      secItems = await this.secProvider.fetchEvidence(normalizedInstrument, { cutoffAt: effectiveCutoff });
     } catch (error) {
       secItems = [];
+      // Provider errors are intentionally reduced to stable coverage labels;
+      // do not copy network details into model-visible evidence.
+      if (error?.code === 'CIK_NOT_FOUND' || error?.code === 'TICKER_MISSING') secAvailabilityGap = 'sec_cik_mapping_unavailable';
+      else if (error?.code === 'PROVIDER_TIMEOUT') secAvailabilityGap = 'sec_provider_timeout';
+      else secAvailabilityGap = 'sec_provider_unavailable';
     }
 
     let newsItems = [];
     try {
-      newsItems = await this.newsProvider.fetchNews(instrument, { cutoffAt: effectiveCutoff });
+      newsItems = await this.newsProvider.fetchNews(normalizedInstrument, { cutoffAt: effectiveCutoff });
     } catch (error) {
       newsItems = [];
     }
 
     // 2. Strict point-in-time cutoff check on all gathered items
-    const combined = [...secItems, ...newsItems].filter((item) => {
+    const allProviderItems = [...secItems, ...newsItems];
+    const combined = allProviderItems.filter((item) => {
       const itemAvailability = item.available_at || item.published_at;
       return !effectiveCutoff || !itemAvailability || itemAvailability <= effectiveCutoff;
     });
+    const excludedPostCutoff = combined.length !== allProviderItems.length;
 
     // 3. Schema validation on every item
     const validatedItems = [];
@@ -155,10 +173,16 @@ class EvidenceService {
       return timeComp !== 0 ? timeComp : a.id.localeCompare(b.id);
     });
 
-    // 5. Explicit Lean-Source Gaps & Coverage Evaluation
-    const secCount = secItems.length;
-    const newsCount = newsItems.length;
+    // 5. Explicit Lean-Source Gaps & Coverage Evaluation. Count only items
+    // that survived the exact cutoff and schema validation; raw provider
+    // counts could otherwise falsely advertise coverage from future evidence.
+    const secCount = validatedItems.filter((item) => item.kind === 'filing' || item.source_name === 'SEC EDGAR').length;
+    const newsCount = validatedItems.filter((item) => item.kind === 'news' || item.kind === 'company_ir').length;
     const gaps = [...LEAN_SOURCE_GAPS];
+    if (this.secProvider.availabilityGap) gaps.push(this.secProvider.availabilityGap);
+    if (this.newsProvider.availabilityGap) gaps.push(this.newsProvider.availabilityGap);
+    if (secAvailabilityGap) gaps.push(secAvailabilityGap);
+    if (excludedPostCutoff) gaps.push('post_cutoff_evidence_excluded');
 
     let coverageStatus = 'unavailable';
     if (secCount > 0 && newsCount > 0) {
@@ -198,7 +222,7 @@ class EvidenceService {
     const snapshot = {
       id: snapshotId,
       snapshot_id: snapshotId,
-      instrument_id: instrument.instrument_id,
+      instrument_id: normalizedInstrument.instrument_id,
       cutoff_at: effectiveCutoff,
       session_as_of: sessionAsOf,
       market_snapshot_ids: options.marketSnapshotIds || [],

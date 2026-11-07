@@ -73,6 +73,16 @@ const instrumentSchema = new mongoose.Schema({
   provider_symbol: { type: String, default: null, immutable: true },
 }, { _id: false });
 
+// Durable, fail-closed mutex for publication of an assessment for one exact
+// position revision. It deliberately has no expiry: a timed unlock could let
+// a delayed publisher insert after a newer position edit.
+const publicationGuardSchema = new mongoose.Schema({
+  token: { type: String, required: true, immutable: true },
+  assessment_id: { type: String, required: true, immutable: true },
+  position_revision: { type: Number, required: true, min: 1, immutable: true },
+  acquired_at: { type: Date, required: true, immutable: true },
+}, { _id: false });
+
 const positionSchema = new mongoose.Schema({
   // Opaque string identifiers per CONTRACTS §1: pos-<uuid> from the service
   // idFactory and deterministic legacy-mig-* migration ids. Must remain a
@@ -129,6 +139,8 @@ const positionSchema = new mongoose.Schema({
   risk_context: { type: mongoose.Schema.Types.Mixed, default: null },
   archived: { type: Boolean, default: false, index: true },
   revision: { type: Number, min: 1, default: 1 },
+  // Internal synchronization state; never exposed by position serialization.
+  publication_guard: { type: publicationGuardSchema, default: null, select: false },
 }, {
   timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' },
   strict: 'throw',

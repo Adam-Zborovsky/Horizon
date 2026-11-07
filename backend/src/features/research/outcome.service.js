@@ -248,7 +248,7 @@ function createMongooseForecastRepository(model = ForecastLedgerEntryModel) {
       const updated = await model.findOneAndUpdate(
         { ledger_id: ledgerId, status: 'pending' },
         { $set: { status: 'settled', realized_outcome: realizedOutcome, settled_at: new Date(settledAt) } },
-        { new: true },
+        { returnDocument: 'after' },
       ).lean();
       return fromDoc(updated);
     },

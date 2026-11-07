@@ -118,23 +118,35 @@ function createResearchRouter({ researchService, positionLookup = defaultPositio
       }
       const ownerId = String(req.user?._id || '');
       const body = req.body || {};
-      let positionRevision = body.position_revision;
-      let instrumentId = body.instrument_id;
-      let runKind = body.run_kind || 'manual_refresh';
+      const suppliedPositionRevision = body.position_revision;
+      const suppliedInstrumentId = body.instrument_id;
+      const runKind = body.run_kind || 'manual_refresh';
       let requestPayload = body.request_payload;
 
+      // The route path is not authority for a position. Always resolve it in
+      // the authenticated owner's scope, even when the client supplied a
+      // plausible revision/instrument pair. This prevents an owner from
+      // binding a run to another owner's position and prevents stale or
+      // substituted client values from becoming immutable run inputs.
       const lookup = typeof positionLookup === 'function' ? positionLookup : defaultPositionLookup;
-      if ((!instrumentId || positionRevision == null) && typeof lookup === 'function') {
-        const position = await lookup(req.params.id, ownerId);
-        if (position) {
-          if (!instrumentId && position.instrument && position.instrument.instrument_id) {
-            instrumentId = position.instrument.instrument_id;
-          }
-          if (positionRevision == null && position.revision != null) {
-            positionRevision = position.revision;
-          }
-        }
+      const position = await lookup(req.params.id, ownerId);
+      if (!position) {
+        throw Object.assign(new Error('Position not found'), { code: 'NOT_FOUND' });
       }
+      const resolvedRevision = position.revision;
+      const resolvedInstrumentId = position.instrument?.instrument_id;
+      if (suppliedPositionRevision != null && suppliedPositionRevision !== resolvedRevision) {
+        throw Object.assign(new Error('position_revision does not match the current position'), {
+          code: 'REVISION_CONFLICT',
+        });
+      }
+      if (suppliedInstrumentId != null && suppliedInstrumentId !== resolvedInstrumentId) {
+        throw Object.assign(new Error('instrument_id does not match the position instrument'), {
+          code: 'INVALID_INPUT',
+        });
+      }
+      const positionRevision = resolvedRevision;
+      const instrumentId = resolvedInstrumentId;
 
       if (!requestPayload) {
         requestPayload = { trigger: 'manual' };

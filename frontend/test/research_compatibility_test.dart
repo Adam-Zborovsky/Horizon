@@ -51,6 +51,7 @@ import 'package:horizon/src/features/briefing/briefing_config_repository.dart';
 import 'package:horizon/src/features/briefing/briefing_model.dart';
 import 'package:horizon/src/features/briefing/briefing_repository.dart';
 import 'package:horizon/src/features/dashboard/watchlist_provider.dart';
+import 'package:horizon/src/features/market/market_repository.dart';
 import 'package:horizon/src/features/positions/position_repository.dart';
 import 'package:horizon/src/features/stock/stock_detail_screen.dart';
 import 'package:horizon/src/features/stock/stock_repository.dart';
@@ -259,6 +260,14 @@ Future<void> _pumpDetail(
           ),
           positionRepositoryProvider.overrideWith(
             (ref) => PositionRepository(
+              client: transport,
+              tokenProvider: () async => 'test-token',
+            ),
+          ),
+          // StockDetailScreen resolves chart identity through this provider;
+          // use the same local transport so compatibility tests stay offline.
+          marketRepositoryProvider.overrideWith(
+            (ref) => MarketRepository(
               client: transport,
               tokenProvider: () async => 'test-token',
             ),

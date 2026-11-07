@@ -66,7 +66,7 @@ test('EvidenceService constructor validates required dependencies', () => {
 });
 
 test('SEC adapter: enforces official SEC URL allowlist and rejects arbitrary or untrusted URLs', async () => {
-  const adapter = new SecEvidenceAdapter({
+  const adapter = new SecEvidenceAdapter({ userAgent: 'HorizonResearch test@example.com',
     userAgent: 'HorizonResearch test@horizon.local',
   });
 
@@ -102,7 +102,7 @@ test('SEC adapter: enforces fair-access User-Agent header and handles timeouts s
     };
   };
 
-  const adapter = new SecEvidenceAdapter({
+  const adapter = new SecEvidenceAdapter({ userAgent: 'HorizonResearch test@example.com',
     fetch: mockFetch,
     userAgent: 'HorizonResearch contact@horizon.app',
     timeoutMs: 1000,
@@ -115,7 +115,7 @@ test('SEC adapter: enforces fair-access User-Agent header and handles timeouts s
   const stalledFetch = async (url, options) => new Promise((resolve) => {
     // never resolves to trigger abort
   });
-  const timeoutAdapter = new SecEvidenceAdapter({
+  const timeoutAdapter = new SecEvidenceAdapter({ userAgent: 'HorizonResearch test@example.com',
     fetch: stalledFetch,
     userAgent: 'HorizonResearch test@horizon.local',
     timeoutMs: 30,
@@ -190,7 +190,7 @@ test('SEC adapter: parses filings, source locators, reporting periods, and finan
     throw new Error('Unknown URL');
   };
 
-  const adapter = new SecEvidenceAdapter({
+  const adapter = new SecEvidenceAdapter({ userAgent: 'HorizonResearch test@example.com',
     fetch: mockFetch,
     userAgent: 'HorizonResearch test@horizon.local',
     now: () => new Date('2023-11-05T00:00:00Z'),
@@ -266,7 +266,7 @@ test('SEC adapter: respects point-in-time cutoff and separates amendments from o
     },
   };
 
-  const adapter = new SecEvidenceAdapter({
+  const adapter = new SecEvidenceAdapter({ userAgent: 'HorizonResearch test@example.com',
     fetch: async (url) => ({
       ok: true,
       json: async () => (String(url).includes('submissions') ? submissionsPayload : factsPayload),
@@ -297,8 +297,29 @@ test('SEC adapter: respects point-in-time cutoff and separates amendments from o
   assert.notEqual(amendment.source_locator, original.source_locator);
 });
 
+test('SEC adapter: a date-only filing is unavailable until the conservative end-of-day fallback', async () => {
+  const submissionsPayload = { cik: '0000320193', filings: { recent: {
+    accessionNumber: ['0000320193-23-000107'],
+    filingDate: ['2023-11-03'],
+    reportDate: ['2023-09-30'],
+    acceptanceDateTime: [null],
+    form: ['8-K'],
+    primaryDocument: ['form8k.htm'],
+  } } };
+  const adapter = new SecEvidenceAdapter({
+    fetch: async (url) => ({ ok: true, json: async () => (String(url).includes('submissions') ? submissionsPayload : { facts: {} }) }),
+    userAgent: 'HorizonResearch test@example.com',
+  });
+
+  const intraday = await adapter.fetchEvidence(testInstrument, { cutoffAt: '2023-11-03T12:00:00.000Z' });
+  assert.equal(intraday.length, 0, 'date-only filing must not be treated as available at midnight');
+  const endOfDay = await adapter.fetchEvidence(testInstrument, { cutoffAt: '2023-11-04T00:00:00.000Z' });
+  assert.equal(endOfDay.length, 1);
+  assert.equal(endOfDay[0].available_at, '2023-11-03T23:59:59.999Z');
+});
+
 test('Company News adapter: enforces news URL allowlist and rejects SSRF/arbitrary destinations', async () => {
-  const newsProvider = new CompanyNewsProvider();
+  const newsProvider = new CompanyNewsProvider({ userAgent: 'HorizonResearch test@example.com' });
 
   assert.ok(ALLOWED_NEWS_HOSTS.includes('www.prnewswire.com'));
   assert.ok(ALLOWED_NEWS_HOSTS.includes('finance.yahoo.com'));
@@ -345,7 +366,7 @@ test('Company News adapter: deduplicates repeated stories and marks headline-onl
     },
   ];
 
-  const newsProvider = new CompanyNewsProvider({
+  const newsProvider = new CompanyNewsProvider({ userAgent: 'HorizonResearch test@example.com',
     fetch: async () => ({
       ok: true,
       status: 200,
@@ -385,7 +406,7 @@ test('Company News adapter: sanitizes untrusted content and prevents tool/prompt
     },
   ];
 
-  const newsProvider = new CompanyNewsProvider({
+  const newsProvider = new CompanyNewsProvider({ userAgent: 'HorizonResearch test@example.com',
     fetch: async () => ({
       ok: true,
       status: 200,
@@ -465,13 +486,12 @@ test('EvidenceService: creates immutable snapshot, enforces point-in-time cutoff
       fetchNews: async (inst, { cutoffAt }) => newsItems.filter((i) => i.available_at <= cutoffAt),
     },
     evidenceRepository: repository,
-    instrumentResolver: async (id) => (id === testInstrument.instrument_id ? testInstrument : null),
     now: () => new Date('2023-11-04T12:00:00Z'),
     snapshotIdFactory: () => 'snapshot-evidence-test-1',
   });
 
   const { snapshot, items } = await service.gatherEvidence({
-    instrumentId: testInstrument.instrument_id,
+    instrument: testInstrument,
     sessionAsOf: '2023-11-03',
     cutoffAt: '2023-11-04T00:00:00Z',
   });
@@ -496,11 +516,10 @@ test('EvidenceService: explicitly documents lean-source gaps and does not invent
     secProvider: { fetchEvidence: async () => [] },
     newsProvider: { fetchNews: async () => [] },
     evidenceRepository: repository,
-    instrumentResolver: async (id) => (id === testInstrument.instrument_id ? testInstrument : null),
   });
 
   const { snapshot } = await service.gatherEvidence({
-    instrumentId: testInstrument.instrument_id,
+    instrument: testInstrument,
     sessionAsOf: '2023-11-03',
     cutoffAt: '2023-11-04T00:00:00Z',
   });
@@ -553,7 +572,6 @@ test('EvidenceService: analyst tools retrieve bounded excerpts and reject arbitr
     secProvider: { fetchEvidence: async () => [] },
     newsProvider: { fetchNews: async () => [] },
     evidenceRepository: repository,
-    instrumentResolver: async () => testInstrument,
   });
 
   // Valid tool call
@@ -627,7 +645,7 @@ test('Company News adapter: no-sourceUrl path fetches a real allowlisted per-ins
     };
   };
 
-  const provider = new CompanyNewsProvider({
+  const provider = new CompanyNewsProvider({ userAgent: 'HorizonResearch test@example.com',
     fetch: mockFetch,
     userAgent: 'HorizonResearch contact@horizon.app',
     now: () => new Date('2023-11-03T00:00:00Z'),
@@ -659,7 +677,7 @@ test('Company News adapter: no-sourceUrl path fetches a real allowlisted per-ins
 
 test('Company News adapter: accepts an explicit instrument IR/news feed URL and still validates it against the allowlist', async () => {
   const seenUrls = [];
-  const provider = new CompanyNewsProvider({
+  const provider = new CompanyNewsProvider({ userAgent: 'HorizonResearch test@example.com',
     fetch: async (url) => {
       seenUrls.push(String(url));
       return {
@@ -688,7 +706,7 @@ test('Company News adapter: accepts an explicit instrument IR/news feed URL and 
 
 test('Company News adapter: dead api.company-news.local allowlist entry is removed', async () => {
   assert.equal(ALLOWED_NEWS_HOSTS.includes('api.company-news.local'), false);
-  const provider = new CompanyNewsProvider();
+  const provider = new CompanyNewsProvider({ userAgent: 'HorizonResearch test@example.com' });
   await assert.rejects(
     () => provider.fetchNews(testInstrument, { sourceUrl: 'https://api.company-news.local/feed' }),
     (error) => error.code === 'URL_NOT_ALLOWED',
@@ -696,7 +714,7 @@ test('Company News adapter: dead api.company-news.local allowlist entry is remov
 });
 
 test('News and SEC adapters: extended internal-IP deny list (172.16/12, 0.0.0.0, 127/8 remainder, ::1, fe80::/10)', async () => {
-  const newsProvider = new CompanyNewsProvider();
+  const newsProvider = new CompanyNewsProvider({ userAgent: 'HorizonResearch test@example.com' });
   const secAdapter = new SecEvidenceAdapter({ userAgent: 'HorizonResearch test@horizon.local' });
   const deniedUrls = [
     'http://172.16.0.9/feed',
@@ -726,7 +744,7 @@ test('SEC adapter: missing CIK is explicit SEC unavailability, never a fabricate
     calls.push(String(url));
     return { ok: true, status: 200, json: async () => ({}) };
   };
-  const adapter = new SecEvidenceAdapter({
+  const adapter = new SecEvidenceAdapter({ userAgent: 'HorizonResearch test@example.com',
     fetch: mockFetch,
     userAgent: 'HorizonResearch test@horizon.local',
   });
@@ -749,13 +767,12 @@ test('EvidenceService: normalizes cutoffAt to an ISO string and rejects non-temp
     secProvider: { fetchEvidence: async () => [] },
     newsProvider: { fetchNews: async () => [] },
     evidenceRepository: repository,
-    instrumentResolver: async () => testInstrument,
     now: () => new Date('2023-11-04T12:00:00Z'),
     snapshotIdFactory: () => 'snapshot-evidence-cutoff-1',
   });
 
   const { snapshot } = await service.gatherEvidence({
-    instrumentId: testInstrument.instrument_id,
+    instrument: testInstrument,
     sessionAsOf: '2023-11-03',
     cutoffAt: new Date('2023-11-04T00:00:00Z'),
   });
@@ -764,7 +781,7 @@ test('EvidenceService: normalizes cutoffAt to an ISO string and rejects non-temp
 
   await assert.rejects(
     () => service.gatherEvidence({
-      instrumentId: testInstrument.instrument_id,
+      instrument: testInstrument,
       sessionAsOf: '2023-11-03',
       cutoffAt: 'not-a-timestamp',
     }),
@@ -788,13 +805,13 @@ test('EvidenceService: real provider wiring produces SEC filings and company new
   };
   const factsPayload = { cik: 320193, entityName: 'Apple Inc.', facts: { 'us-gaap': {} } };
 
-  const secAdapter = new SecEvidenceAdapter({
+  const secAdapter = new SecEvidenceAdapter({ userAgent: 'HorizonResearch test@example.com',
     fetch: async (url) => (String(url).includes('submissions')
       ? { ok: true, status: 200, json: async () => submissionsPayload }
       : { ok: true, status: 200, json: async () => factsPayload }),
     userAgent: 'HorizonResearch test@horizon.local',
   });
-  const newsProvider = new CompanyNewsProvider({
+  const newsProvider = new CompanyNewsProvider({ userAgent: 'HorizonResearch test@example.com',
     fetch: async () => ({
       ok: true,
       status: 200,
@@ -809,13 +826,12 @@ test('EvidenceService: real provider wiring produces SEC filings and company new
     secProvider: secAdapter,
     newsProvider,
     evidenceRepository: repository,
-    instrumentResolver: async () => testInstrument,
     now: () => new Date('2023-11-04T12:00:00Z'),
     snapshotIdFactory: () => 'snapshot-evidence-wiring-1',
   });
 
   const { snapshot } = await service.gatherEvidence({
-    instrumentId: testInstrument.instrument_id,
+    instrument: testInstrument,
     sessionAsOf: '2023-11-03',
     cutoffAt: '2023-11-04T00:00:00.000Z',
   });

@@ -1,8 +1,8 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
-import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:http/http.dart' as http;
@@ -11,6 +11,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/widgets/glass_card.dart';
 import '../auth/auth_repository.dart';
 import '../briefing/briefing_config_repository.dart';
+import '../market/market_repository.dart';
 import '../positions/position_models.dart';
 import '../positions/position_repository.dart';
 import '../positions/widgets/position_badge.dart';
@@ -19,6 +20,8 @@ import '../research/research_models.dart';
 import '../research/widgets/research_panel.dart';
 import '../stock/stock_repository.dart';
 import '../stock/opportunity_stats_provider.dart';
+import '../stock/widgets/chart_controller.dart';
+import '../stock/widgets/price_chart.dart';
 import '../dashboard/watchlist_provider.dart';
 
 class StockDetailScreen extends ConsumerWidget {
@@ -180,10 +183,17 @@ class _DetailContent extends ConsumerWidget {
                   ],
                 ),
                 const SizedBox(height: 30),
-                SizedBox(
-                  height: 250,
-                  width: double.infinity,
-                  child: _MainChart(data: stock.history, color: color),
+                // The legacy briefing list has neither identity nor OHLCV
+                // metadata. This slot resolves the matching tracked
+                // instrument and only then loads typed observed bars through
+                // the authenticated MarketRepository.
+                _ObservedPriceSection(ticker: stock.ticker),
+                const SizedBox(height: 30),
+                // A tracked position is a decision surface, so its validated
+                // research belongs ahead of the briefing-derived context.
+                _PositionResearchSection(
+                  stock: stock,
+                  autoOpenEditor: autoOpenPositionEditor,
                 ),
                 const SizedBox(height: 40),
                 if (stock.horizon != null || stock.direction != null) ...[
@@ -214,11 +224,9 @@ class _DetailContent extends ConsumerWidget {
                   const SizedBox(height: 30),
                 ],
                 Text(
-                  stock.source == StockSource.opportunity
-                      ? 'TACTICAL SETUP'
-                      : 'AI STRATEGIC SIGNAL',
+                  'HISTORIC / SECONDARY CONTEXT',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: AppTheme.goldAmber,
+                    color: Colors.white54,
                     fontWeight: FontWeight.bold,
                     letterSpacing: 1.5,
                   ),
@@ -232,10 +240,8 @@ class _DetailContent extends ConsumerWidget {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(
-                            stock.source == StockSource.opportunity
-                                ? 'Opportunity Thesis'
-                                : 'Strategic Position',
+                          const Text(
+                            'Legacy briefing context',
                             style: const TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
@@ -272,8 +278,8 @@ class _DetailContent extends ConsumerWidget {
                         icon: const Icon(Icons.analytics_outlined, size: 18),
                         label: Text(
                           stock.source == StockSource.opportunity
-                              ? 'VIEW ALL OPPORTUNITIES'
-                              : 'VIEW MARKET ANALYSIS',
+                              ? 'VIEW HISTORIC OPPORTUNITIES'
+                              : 'VIEW HISTORIC MARKET ANALYSIS',
                           style: const TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.bold,
@@ -284,7 +290,7 @@ class _DetailContent extends ConsumerWidget {
                       if (stock.potentialPriceAction != null) ...[
                         const SizedBox(height: 20),
                         const Text(
-                          'EXPECTED ACTION',
+                          'LEGACY EXPECTATION',
                           style: TextStyle(
                             color: AppTheme.goldAmber,
                             fontWeight: FontWeight.bold,
@@ -345,17 +351,172 @@ class _DetailContent extends ConsumerWidget {
                 ],
                 const SizedBox(height: 30),
                 _OpportunityScoutStats(ticker: stock.ticker),
-                const SizedBox(height: 30),
-                _PositionResearchSection(
-                  stock: stock,
-                  autoOpenEditor: autoOpenPositionEditor,
-                ),
                 const SizedBox(height: 100),
               ],
             ),
           ),
         ),
       ],
+    );
+  }
+}
+
+/// Hosts the existing interactive [PriceChart] in the detail hierarchy.
+///
+/// A ticker alone is not a market-instrument identity. This resolves the
+/// owner's matching non-archived position first, then supplies its canonical
+/// instrument id to the authenticated [MarketRepository].
+class _ObservedPriceSection extends ConsumerStatefulWidget {
+  const _ObservedPriceSection({required this.ticker});
+
+  final String ticker;
+
+  @override
+  ConsumerState<_ObservedPriceSection> createState() =>
+      _ObservedPriceSectionState();
+}
+
+class _ObservedPriceSectionState extends ConsumerState<_ObservedPriceSection> {
+  ChartController? _controller;
+  String? _error;
+  bool _resolving = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _resolveInstrument();
+  }
+
+  Future<void> _resolveInstrument() async {
+    _controller?.dispose();
+    _controller = null;
+    if (mounted) {
+      setState(() {
+        _resolving = true;
+        _error = null;
+      });
+    }
+    try {
+      final positions = await ref.read(positionRepositoryProvider).getPositions();
+      final ticker = widget.ticker.toUpperCase();
+      final matches = positions
+          .where((candidate) =>
+              !candidate.archived &&
+              candidate.instrument.symbol.toUpperCase() == ticker)
+          .toList(growable: false);
+      if (!mounted) return;
+      if (matches.isEmpty) {
+        setState(() {
+          _resolving = false;
+          _error = 'Observed market history is unavailable: no resolved '
+              'tracked instrument for $ticker.';
+        });
+        return;
+      }
+      if (matches.length != 1) {
+        setState(() {
+          _resolving = false;
+          _error = 'Observed market history is unavailable: $ticker matches '
+              'multiple tracked instruments. Resolve the duplicate positions '
+              'before viewing a chart.';
+        });
+        return;
+      }
+      final resolvedPosition = matches.single;
+      final controller = ChartController(
+        loadHistory: (range) => ref.read(marketRepositoryProvider).getHistory(
+              instrumentId: resolvedPosition.instrument.instrumentId,
+              range: range,
+            ),
+      );
+      if (resolvedPosition.averageCost != null) {
+        controller.setUserCost(resolvedPosition.averageCost);
+      }
+      setState(() {
+        _controller = controller;
+        _resolving = false;
+      });
+    } on Object catch (error, stackTrace) {
+      debugPrint('Failed to resolve chart instrument: $error\n$stackTrace');
+      if (!mounted) return;
+      setState(() {
+        _resolving = false;
+        _error = 'Observed market history could not be prepared. Try again.';
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller?.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final controller = _controller;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'OBSERVED MARKET DATA',
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: AppTheme.goldAmber,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 1.5,
+              ),
+        ),
+        const SizedBox(height: 12),
+        GlassCard(
+          padding: EdgeInsets.zero,
+          child: SizedBox(
+            height: 510,
+            width: double.infinity,
+            child: _resolving
+                ? const Center(
+                    child: CircularProgressIndicator(
+                      key: Key('detail_chart_resolving'),
+                    ),
+                  )
+                : controller != null
+                    ? PriceChart(controller: controller)
+                    : _ChartIdentityError(
+                        message: _error!,
+                        onRetry: _resolveInstrument,
+                      ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _ChartIdentityError extends StatelessWidget {
+  const _ChartIdentityError({required this.message, required this.onRetry});
+
+  final String message;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.cloud_off, color: Colors.white38, size: 28),
+            const SizedBox(height: 8),
+            Text(
+              message,
+              key: const Key('detail_chart_identity_error'),
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: Colors.white70, fontSize: 12),
+            ),
+            TextButton(onPressed: onRetry, child: const Text('RETRY')),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -417,96 +578,6 @@ class _DetailHeader extends ConsumerWidget {
           },
         ),
       ],
-    );
-  }
-}
-
-class _MainChart extends StatelessWidget {
-  final List<double> data;
-  final Color color;
-  const _MainChart({required this.data, required this.color});
-
-  @override
-  Widget build(BuildContext context) {
-    // H15B: without observed bars the chart slot is preserved but renders a
-    // truthful unavailable state — no synthetic candles are invented.
-    if (data.isEmpty) {
-      return Container(
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.03),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
-        ),
-        child: const Text(
-          'OBSERVED PRICE HISTORY UNAVAILABLE',
-          style: TextStyle(
-            color: Colors.white38,
-            fontSize: 11,
-            fontWeight: FontWeight.bold,
-            letterSpacing: 1.2,
-          ),
-        ),
-      );
-    }
-
-    final minVal = data.reduce((a, b) => a < b ? a : b);
-    final maxVal = data.reduce((a, b) => a > b ? a : b);
-    final range = maxVal - minVal;
-
-    // Add 15% padding to the range to make the chart look tactical and not hit the edges
-    final padding = range == 0 ? 1.0 : range * 0.15;
-
-    return LineChart(
-      LineChartData(
-        minY: minVal - padding,
-        maxY: maxVal + padding,
-        gridData: const FlGridData(show: false),
-        titlesData: const FlTitlesData(show: false),
-        borderData: FlBorderData(show: false),
-        lineTouchData: LineTouchData(
-          touchTooltipData: LineTouchTooltipData(
-            getTooltipColor: (touchedSpot) =>
-                Colors.black.withValues(alpha: 0.8),
-            getTooltipItems: (List<LineBarSpot> touchedBarSpots) {
-              return touchedBarSpots.map((barSpot) {
-                return LineTooltipItem(
-                  '\$${barSpot.y.toStringAsFixed(2)}',
-                  const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
-                );
-              }).toList();
-            },
-          ),
-        ),
-        lineBarsData: [
-          LineChartBarData(
-            spots: data
-                .asMap()
-                .entries
-                .map((e) => FlSpot(e.key.toDouble(), e.value))
-                .toList(),
-            isCurved: true,
-            color: color,
-            barWidth: 4,
-            isStrokeCapRound: true,
-            dotData: const FlDotData(show: false),
-            belowBarData: BarAreaData(
-              show: true,
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  color.withValues(alpha: 0.15),
-                  color.withValues(alpha: 0),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
     );
   }
 }
@@ -972,6 +1043,18 @@ class ResearchWire {
     return ResearchRun.fromJson(decoded['run'] as Map<String, dynamic>);
   }
 
+  /// Reads the authoritative current state for a queued run. A 202 queue
+  /// response only confirms acceptance; it is not a completed report.
+  Future<ResearchRun> getRun(String runId) async {
+    final decoded = await _sendJson('GET', '/research/runs/$runId');
+    if (decoded is! Map<String, dynamic> ||
+        decoded['run'] is! Map<String, dynamic>) {
+      throw const FormatException(
+          'research run status: expected a {run: ...} response');
+    }
+    return ResearchRun.fromJson(decoded['run'] as Map<String, dynamic>);
+  }
+
   /// Cancels in-flight requests and releases the client.
   void close() => _client.close();
 }
@@ -1005,6 +1088,8 @@ class _PositionResearchSection extends ConsumerStatefulWidget {
 class _PositionResearchSectionState
     extends ConsumerState<_PositionResearchSection> {
   static final Random _random = Random.secure();
+  static const Duration _runPollInterval = Duration(seconds: 3);
+  static const int _maxConsecutivePollFailures = 3;
 
   Position? _position;
   PositionResearchState? _research;
@@ -1014,6 +1099,20 @@ class _PositionResearchSectionState
   bool _autoOpened = false;
   String? _error;
   String? _queueError;
+  Timer? _runPollTimer;
+  String? _pollingRunId;
+  bool _pollInFlight = false;
+  int _consecutivePollFailures = 0;
+  bool _pollingPaused = false;
+  String? _pausedPollingRunId;
+
+  bool get _hasActiveLocalRun =>
+      _queuedRun?.status == RunStatus.queued || _queuedRun?.status == RunStatus.running;
+
+  bool get _hasActiveRemoteRun {
+    final status = _research?.latestAttempt?.status;
+    return status == 'queued' || status == 'running';
+  }
 
   @override
   void initState() {
@@ -1032,14 +1131,25 @@ class _PositionResearchSectionState
     try {
       final positions = await repository.getPositions();
       final ticker = widget.stock.ticker.toUpperCase();
-      Position? match;
-      for (final position in positions) {
-        if (!position.archived &&
-            position.instrument.symbol.toUpperCase() == ticker) {
-          match = position;
-          break;
-        }
+      final matches = positions
+          .where((position) =>
+              !position.archived &&
+              position.instrument.symbol.toUpperCase() == ticker)
+          .toList(growable: false);
+      if (matches.length > 1) {
+        if (!mounted) return;
+        _stopRunPolling();
+        setState(() {
+          _position = null;
+          _research = null;
+          _error = 'Position and research state are unavailable: $ticker '
+              'matches multiple tracked instruments. Resolve the duplicate '
+              'positions before continuing.';
+          _loading = false;
+        });
+        return;
       }
+      final match = matches.isEmpty ? null : matches.single;
       PositionResearchState? research;
       if (match != null && mounted) {
         research = await researchWire.latestState(match.id);
@@ -1050,6 +1160,17 @@ class _PositionResearchSectionState
         _research = research;
         _loading = false;
       });
+      // A reload can discover a run that this widget did not queue (for
+      // example after navigating back to this screen). Poll the authoritative
+      // run endpoint so the disabled action is released when it terminates.
+      final activeAttempt = research?.latestAttempt;
+      if (activeAttempt != null &&
+          (activeAttempt.status == 'queued' ||
+              activeAttempt.status == 'running')) {
+        _startRunPolling(activeAttempt.runId);
+      } else if (!_hasActiveLocalRun) {
+        _stopRunPolling();
+      }
       _maybeAutoOpenEditor();
     } on Object catch (e, st) {
       debugPrint('Failed to load position & research state: $e\n$st');
@@ -1190,7 +1311,9 @@ class _PositionResearchSectionState
 
   Future<void> _queueRun() async {
     final position = _position;
-    if (_queueing || position == null) return;
+    if (_queueing || _hasActiveLocalRun || _hasActiveRemoteRun || position == null) {
+      return;
+    }
     setState(() {
       _queueing = true;
       _queueError = null;
@@ -1210,13 +1333,23 @@ class _PositionResearchSectionState
         _queuedRun = run;
         _queueing = false;
       });
+      _startRunPolling(run.id);
     } on ApiException catch (error) {
       if (!mounted) return;
+      final message = switch (error.code) {
+        'RUN_ALREADY_ACTIVE' =>
+          'Research is already in progress. The current status is shown below.',
+        'IDEMPOTENCY_CONFLICT' =>
+          'This research request conflicts with an earlier request. Refresh and try again.',
+        _ => 'Research run could not be queued (${error.code}).',
+      };
       setState(() {
-        _queueError =
-            'Research run could not be queued (${error.code}).';
+        _queueError = message;
         _queueing = false;
       });
+      if (error.code == 'RUN_ALREADY_ACTIVE') {
+        _load();
+      }
     } on Object {
       if (!mounted) return;
       setState(() {
@@ -1224,6 +1357,151 @@ class _PositionResearchSectionState
         _queueing = false;
       });
     }
+  }
+
+  void _startRunPolling(String runId, {bool resetFailures = true}) {
+    // Do not create a second timer when a reload repeats the same active run.
+    if (_pollingRunId == runId &&
+        (_runPollTimer?.isActive == true || _pollInFlight)) {
+      return;
+    }
+    _stopRunPolling(clearPausedRun: false);
+    _pollingRunId = runId;
+    if (resetFailures) {
+      _consecutivePollFailures = 0;
+      _pollingPaused = false;
+      _pausedPollingRunId = null;
+    }
+    _scheduleRunPoll(runId, _runPollInterval);
+  }
+
+  void _scheduleRunPoll(String runId, Duration delay) {
+    _runPollTimer?.cancel();
+    _runPollTimer = Timer(delay, () => _pollRun(runId));
+  }
+
+  void _stopRunPolling({bool clearPausedRun = true}) {
+    _runPollTimer?.cancel();
+    _runPollTimer = null;
+    _pollingRunId = null;
+    if (clearPausedRun) {
+      _pollingPaused = false;
+      _pausedPollingRunId = null;
+    }
+  }
+
+  Duration _pollBackoffDelay(int consecutiveFailures) {
+    // The first retry waits 3s, then 6s, then 12s. The failure cap below
+    // prevents a permanently failing endpoint from polling indefinitely.
+    return switch (consecutiveFailures) {
+      1 => _runPollInterval,
+      2 => const Duration(seconds: 6),
+      _ => const Duration(seconds: 12),
+    };
+  }
+
+  void _pausePolling(String runId, String message) {
+    _stopRunPolling(clearPausedRun: false);
+    _pollingPaused = true;
+    _pausedPollingRunId = runId;
+    if (mounted) {
+      setState(() => _queueError = message);
+    }
+  }
+
+  void _retryRunPolling() {
+    final runId = _pausedPollingRunId ??
+        _queuedRun?.id ??
+        _research?.latestAttempt?.runId;
+    if (runId == null) return;
+    setState(() => _queueError = null);
+    _startRunPolling(runId);
+  }
+
+  Future<void> _pollRun(String runId) async {
+    // A slow request cannot overlap with a scheduled retry for the same run.
+    if (_pollInFlight || _pollingRunId != runId) return;
+    _pollInFlight = true;
+    try {
+      final run = await ref.read(researchWireProvider).getRun(runId);
+      // A reload may have switched to a newer active run while this request
+      // was in flight. Ignore the superseded answer instead of letting it
+      // cancel or overwrite the newer poller's state.
+      if (!mounted || _pollingRunId != runId) return;
+      setState(() => _queuedRun = run);
+      if (run.status == RunStatus.queued || run.status == RunStatus.running) {
+        _consecutivePollFailures = 0;
+        _scheduleRunPoll(runId, _runPollInterval);
+        return;
+      }
+      _stopRunPolling();
+      await _load();
+      // Retain the terminal local run until the next user request. This keeps a
+      // failure visible even if the latest-state projection has not caught up
+      // to the just-polled terminal status yet.
+    } on ApiException catch (error) {
+      if (!mounted || _pollingRunId != runId) return;
+      switch (error.statusCode) {
+        case 401:
+          _pausePolling(
+            runId,
+            'Polling stopped: your session expired (401). Sign in again, then reload.',
+          );
+          break;
+        case 403:
+          _pausePolling(
+            runId,
+            'Polling stopped: access was denied (403). Reload after your permissions are restored.',
+          );
+          break;
+        case 404:
+          _pausePolling(
+            runId,
+            'Polling stopped: this research run was not found (404). Reload to reconcile its status.',
+          );
+          break;
+        default:
+          _consecutivePollFailures += 1;
+          if (_consecutivePollFailures >= _maxConsecutivePollFailures) {
+            _pausePolling(
+              runId,
+              'Polling stopped after $_maxConsecutivePollFailures failed status checks. Retry status or reload.',
+            );
+          } else {
+            final retryDelay = _pollBackoffDelay(_consecutivePollFailures);
+            setState(() {
+              _queueError = 'Could not refresh research status (${error.code}). '
+                  'Retrying in ${retryDelay.inSeconds}s.';
+            });
+            _scheduleRunPoll(runId, retryDelay);
+          }
+          break;
+      }
+    } on Object {
+      if (!mounted || _pollingRunId != runId) return;
+      _consecutivePollFailures += 1;
+      if (_consecutivePollFailures >= _maxConsecutivePollFailures) {
+        _pausePolling(
+          runId,
+          'Polling stopped after $_maxConsecutivePollFailures failed status checks. Retry status or reload.',
+        );
+      } else {
+        final retryDelay = _pollBackoffDelay(_consecutivePollFailures);
+        setState(() {
+          _queueError = 'Could not refresh research status. '
+              'Retrying in ${retryDelay.inSeconds}s.';
+        });
+        _scheduleRunPoll(runId, retryDelay);
+      }
+    } finally {
+      _pollInFlight = false;
+    }
+  }
+
+  @override
+  void dispose() {
+    _stopRunPolling();
+    super.dispose();
   }
 
   String _randomHex(int bytes) => List.generate(bytes, (_) => _random.nextInt(256))
@@ -1311,6 +1589,8 @@ class _PositionResearchSectionState
       );
     }
     final research = _research;
+    final queueActionBlocked =
+        _queueing || _hasActiveLocalRun || _hasActiveRemoteRun;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1353,19 +1633,27 @@ class _PositionResearchSectionState
             _queueError!,
             style: const TextStyle(color: AppTheme.softCrimson, fontSize: 13),
           ),
+          if (_pollingPaused &&
+              (_hasActiveLocalRun || _hasActiveRemoteRun))
+            TextButton(
+              onPressed: _retryRunPolling,
+              child: const Text('RETRY STATUS'),
+            ),
         ],
         const SizedBox(height: 12),
         SizedBox(
           width: double.infinity,
           child: ElevatedButton(
-            onPressed: _queueing ? null : _queueRun,
+            onPressed: queueActionBlocked ? null : _queueRun,
             child: _queueing
                 ? const SizedBox(
                     height: 16,
                     width: 16,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
-                : const Text('RUN RESEARCH'),
+                : Text((_hasActiveLocalRun || _hasActiveRemoteRun)
+                    ? 'RESEARCH IN PROGRESS'
+                    : 'RUN RESEARCH'),
           ),
         ),
       ],

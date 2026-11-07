@@ -8,6 +8,9 @@ const express = require('express');
 
 const {
   ResearchService,
+  createMongooseRunRepository,
+  createMongooseAssessmentRepository,
+  createMongooseCheckpointRepository,
   payloadDigest,
 } = require('../src/features/research/research.service');
 const ResearchRunModel = require('../src/features/research/research_run.model');
@@ -523,6 +526,31 @@ test('callback with conflicting revision or snapshot is rejected with a conflict
   );
 });
 
+test('publication guard refuses a position changed after the run was claimed without writing an assessment', async () => {
+  const harness = createHarness();
+  const runId = await queueAndClaim(harness);
+  let guarded = 0;
+  harness.repos.assessmentRepository.createIfCurrent = async () => {
+    guarded += 1;
+    // Models the transactional position predicate finding a newer revision,
+    // instrument replacement, or ownership mismatch at commit time.
+    return null;
+  };
+
+  await assert.rejects(
+    () => harness.service.recordRunResult({
+      run_id: runId,
+      caller_owner_id: OWNER_A,
+      delivery_id: 'delivery-stale-position',
+      result: deliveredResult(),
+    }),
+    (error) => error.code === 'REVISION_CONFLICT',
+  );
+  assert.equal(guarded, 1);
+  assert.equal(harness.repos.assessmentRepository.records.length, 0);
+  assert.equal((await harness.repos.runRepository.findById(runId)).status, 'running');
+});
+
 // H08 review O2 (same silent-null class as F1, red-first note): the pre-repair
 // service normalized an absent/non-string session_as_of to null on write even
 // though the assessment model requires a non-null String. Deep format
@@ -1030,9 +1058,325 @@ test('mongoose assessment, snapshot and checkpoint schemas are immutable by cons
   assert.ok(badCheckpoint.validateSync(), 'fixed_observed_level must reject metric references');
 });
 
+test('assessment and snapshot schemas define one unique, non-conflicting run_id index', () => {
+  for (const [name, model] of [
+    ['assessment', ResearchAssessmentModel],
+    ['snapshot', ResearchSnapshotModel],
+  ]) {
+    const runIdIndexes = model.schema.indexes()
+      .filter(([definition]) => Object.keys(definition).length === 1 && definition.run_id === 1);
+
+    assert.equal(runIdIndexes.length, 1, `${name} must declare run_id only once`);
+    assert.equal(runIdIndexes[0][1].unique, true, `${name} run_id index must remain unique`);
+  }
+});
+
 // ---------------------------------------------------------------------------
 // Isolated router
 // ---------------------------------------------------------------------------
+
+test('mongoose research update repositories request the post-update document with returnDocument', async () => {
+  const calls = [];
+  const model = {
+    findOneAndUpdate(query, update, options) {
+      calls.push({ query, update, options });
+      return null;
+    },
+  };
+  const runs = createMongooseRunRepository(model);
+  const checkpoints = createMongooseCheckpointRepository(model);
+
+  await runs.claimQueued('run-options-1', { status: 'running' });
+  await runs.updateIfStatus('run-options-1', ['running'], { stage: 'collecting' });
+  await checkpoints.update('checkpoint-options-1', { status: 'triggered' });
+
+  assert.equal(calls.length, 3);
+  assert.deepEqual(calls.map(({ options }) => options), [
+    { returnDocument: 'after', lean: true },
+    { returnDocument: 'after', lean: true },
+    { returnDocument: 'after', lean: true },
+  ]);
+  assert.ok(calls.every(({ options }) => !Object.hasOwn(options, 'new')));
+});
+
+test('mongoose assessment publication uses a standalone-safe durable guard and releases only its own guard', async () => {
+  const positionCalls = [];
+  const creates = [];
+  const assessmentModel = {
+    async create(document) { creates.push(document); },
+  };
+  const positionModel = {
+    async findOneAndUpdate(filter, update, options) {
+      positionCalls.push({ filter, update, options });
+      return { _id: 'pos-publication-1' };
+    },
+  };
+  const repository = createMongooseAssessmentRepository(assessmentModel, { positionModel });
+  const assessment = {
+    id: 'assessment-publication-1', run_id: 'run-publication-1',
+    position_id: 'pos-publication-1', owner_id_internal: OWNER_A,
+    position_revision: 4, instrument_id: INSTRUMENT,
+    evidence_snapshot_id: 'snapshot-evidence-h08-1', generated_at: '2030-01-01T00:00:00.000Z',
+    session_as_of: '2030-01-01', status: 'complete', artifact_kind: 'judgment', assessment: {},
+  };
+
+  assert.deepEqual(await repository.createIfCurrent(assessment), assessment);
+  assert.deepEqual(positionCalls[0].filter, {
+    _id: 'pos-publication-1', owner_id: OWNER_A, revision: 4,
+    'instrument.instrument_id': INSTRUMENT, publication_guard: null,
+  });
+  assert.equal(typeof positionCalls[0].update.$set.publication_guard.token, 'string');
+  assert.equal(positionCalls[0].update.$set.publication_guard.assessment_id, assessment.id);
+  assert.equal(positionCalls[0].update.$set.publication_guard.position_revision, assessment.position_revision);
+  assert.ok(positionCalls[0].update.$set.publication_guard.acquired_at instanceof Date);
+  assert.deepEqual(positionCalls[0].options, { returnDocument: 'after', lean: true });
+  assert.equal(creates.length, 1);
+  assert.equal(creates[0]._id, assessment.id);
+  assert.ok(creates[0].generated_at instanceof Date);
+  assert.deepEqual(positionCalls[1].filter, {
+    _id: 'pos-publication-1', owner_id: OWNER_A, revision: 4,
+    'publication_guard.token': positionCalls[0].update.$set.publication_guard.token,
+    'publication_guard.assessment_id': assessment.id,
+  });
+  assert.deepEqual(positionCalls[1].update, { $set: { publication_guard: null } });
+
+  positionModel.findOneAndUpdate = async () => null;
+  assert.equal(await repository.createIfCurrent(assessment), null);
+  assert.equal(creates.length, 1, 'a failed current-position fence must not insert');
+});
+
+test('standalone publication blocks a same-revision edit until assessment insertion releases its guard', async () => {
+  const position = {
+    _id: 'pos-interleaving-1', owner_id: OWNER_A, revision: 4,
+    instrument: { instrument_id: INSTRUMENT }, publication_guard: null,
+  };
+  let allowInsert;
+  const insertStarted = new Promise((resolve) => { allowInsert = resolve; });
+  let releaseInsert;
+  const insertBlocked = new Promise((resolve) => { releaseInsert = resolve; });
+  const assessmentModel = {
+    async create() {
+      allowInsert();
+      await insertBlocked;
+    },
+  };
+  const positionModel = {
+    async findOneAndUpdate(filter, update) {
+      if (filter.publication_guard === null) {
+        if (position.publication_guard || position.revision !== filter.revision) return null;
+        position.publication_guard = structuredClone(update.$set.publication_guard);
+        return structuredClone(position);
+      }
+      if (filter['publication_guard.token'] !== position.publication_guard?.token) return null;
+      position.publication_guard = null;
+      return structuredClone(position);
+    },
+  };
+  const repository = createMongooseAssessmentRepository(assessmentModel, { positionModel });
+  const assessment = {
+    id: 'assessment-interleaving-1', run_id: 'run-interleaving-1',
+    position_id: position._id, owner_id_internal: OWNER_A, position_revision: 4,
+    instrument_id: INSTRUMENT, evidence_snapshot_id: 'snapshot-interleaving-1',
+    generated_at: '2030-01-01T00:00:00.000Z', session_as_of: '2030-01-01',
+    status: 'complete', artifact_kind: 'judgment', assessment: {},
+  };
+
+  const publishing = repository.createIfCurrent(assessment);
+  await insertStarted;
+  // This is the predicate used by PositionService's atomic update adapter.
+  const editWouldMatch = position.owner_id === OWNER_A && position.revision === 4
+    && position.publication_guard === null;
+  assert.equal(editWouldMatch, false, 'an edit cannot pass the fence while insert is pending');
+  releaseInsert();
+  assert.deepEqual(await publishing, assessment);
+  assert.equal(position.publication_guard, null, 'the publisher releases its own guard after insertion');
+});
+
+test('publication recovery clears only a guard proven complete and returns its existing assessment', async () => {
+  const assessment = {
+    _id: 'assessment-crash-1', run_id: 'run-crash-1', position_id: 'pos-crash-1',
+    owner_id_internal: OWNER_A, position_revision: 4, instrument_id: INSTRUMENT,
+    evidence_snapshot_id: 'snapshot-crash-1', generated_at: new Date('2030-01-01T00:00:00.000Z'),
+    session_as_of: '2030-01-01', status: 'complete', artifact_kind: 'judgment', assessment: {},
+  };
+  const position = {
+    _id: 'pos-crash-1', owner_id: OWNER_A, revision: 4, instrument: { instrument_id: INSTRUMENT },
+    publication_guard: { token: 'crash-token', assessment_id: assessment._id, position_revision: 4 },
+  };
+  const releases = [];
+  const assessmentModel = {
+    findOne(filter) {
+      return filter._id === assessment._id && (!filter.run_id || filter.run_id === 'run-crash-1')
+        ? structuredClone(assessment) : null;
+    },
+    async create() { throw new Error('must not insert after a proven crash'); },
+  };
+  const positionModel = {
+    async findOneAndUpdate(filter, update) {
+      if (filter.publication_guard === null) return null;
+      releases.push({ filter, update });
+      if (filter['publication_guard.token'] !== position.publication_guard?.token) return null;
+      position.publication_guard = null;
+      return structuredClone(position);
+    },
+    findOne() { return position.publication_guard ? structuredClone(position) : null; },
+  };
+  const repository = createMongooseAssessmentRepository(assessmentModel, { positionModel });
+  const recovered = await repository.createIfCurrent({
+    id: 'assessment-retry-1', run_id: 'run-crash-1', position_id: position._id,
+    owner_id_internal: OWNER_A, position_revision: 4, instrument_id: INSTRUMENT,
+    evidence_snapshot_id: 'snapshot-crash-1', generated_at: '2030-01-01T00:00:01.000Z',
+    session_as_of: '2030-01-01', status: 'complete', artifact_kind: 'judgment', assessment: {},
+  });
+  assert.equal(recovered.id, assessment._id);
+  assert.equal(position.publication_guard, null);
+  assert.equal(releases.length, 1);
+  assert.equal(releases[0].filter['publication_guard.assessment_id'], assessment._id);
+});
+
+test('ambiguous assessment insert keeps its guard until a retry proves the named immutable winner', async () => {
+  const position = {
+    _id: 'pos-ambiguous-1', owner_id: OWNER_A, revision: 4,
+    instrument: { instrument_id: INSTRUMENT }, publication_guard: null,
+  };
+  let persisted = null;
+  let createAttempts = 0;
+  const releases = [];
+  const assessmentModel = {
+    async create(document) {
+      createAttempts += 1;
+      // Simulate a client-side timeout after Mongo durably accepts the insert.
+      persisted = structuredClone(document);
+      const error = new Error('write timed out after server acceptance');
+      error.code = 'ETIMEDOUT';
+      throw error;
+    },
+    findOne(filter) {
+      if (!persisted || filter._id !== persisted._id || filter.run_id && filter.run_id !== persisted.run_id) return null;
+      if (filter.position_id && filter.position_id !== persisted.position_id) return null;
+      if (filter.owner_id_internal && filter.owner_id_internal !== persisted.owner_id_internal) return null;
+      if (filter.position_revision && filter.position_revision !== persisted.position_revision) return null;
+      return structuredClone(persisted);
+    },
+  };
+  const positionModel = {
+    async findOneAndUpdate(filter, update) {
+      if (filter.publication_guard === null) {
+        if (position.publication_guard) return null;
+        position.publication_guard = structuredClone(update.$set.publication_guard);
+        return structuredClone(position);
+      }
+      releases.push({ filter, update });
+      if (filter['publication_guard.token'] !== position.publication_guard?.token
+        || filter['publication_guard.assessment_id'] !== position.publication_guard?.assessment_id) return null;
+      position.publication_guard = null;
+      return structuredClone(position);
+    },
+    findOne() { return position.publication_guard ? structuredClone(position) : null; },
+  };
+  const repository = createMongooseAssessmentRepository(assessmentModel, { positionModel });
+  const first = {
+    id: 'assessment-ambiguous-first', run_id: 'run-ambiguous-1', position_id: position._id,
+    owner_id_internal: OWNER_A, position_revision: 4, instrument_id: INSTRUMENT,
+    evidence_snapshot_id: 'snapshot-ambiguous-1', generated_at: '2030-01-01T00:00:00.000Z',
+    session_as_of: '2030-01-01', status: 'complete', artifact_kind: 'judgment', assessment: {},
+  };
+  await assert.rejects(() => repository.createIfCurrent(first), /write timed out/);
+  assert.equal(position.publication_guard.assessment_id, first.id,
+    'an indeterminate insert result must not unlock the position');
+  assert.equal(releases.length, 0);
+
+  const retry = { ...first, id: 'assessment-ambiguous-retry' };
+  const recovered = await repository.createIfCurrent(retry);
+  assert.equal(recovered.id, first.id, 'retry must bind the already persisted winner');
+  assert.equal(createAttempts, 1, 'recovery must not issue a second insert');
+  assert.equal(position.publication_guard, null);
+  assert.equal(releases.length, 1);
+  assert.equal(releases[0].filter['publication_guard.assessment_id'], first.id);
+});
+
+test('a proved completed guard from another run is released then the current run retries once', async () => {
+  const position = {
+    _id: 'pos-other-run-1', owner_id: OWNER_A, revision: 4,
+    instrument: { instrument_id: INSTRUMENT },
+    publication_guard: { token: 'other-run-token', assessment_id: 'assessment-other-run', position_revision: 4 },
+  };
+  const other = {
+    _id: 'assessment-other-run', run_id: 'run-other', position_id: position._id,
+    owner_id_internal: OWNER_A, position_revision: 4,
+  };
+  const creates = [];
+  let releases = 0;
+  const assessmentModel = {
+    async create(document) { creates.push(structuredClone(document)); },
+    findOne(filter) {
+      return filter._id === other._id && (!filter.run_id || filter.run_id === other.run_id)
+        ? structuredClone(other) : null;
+    },
+  };
+  const positionModel = {
+    async findOneAndUpdate(filter, update) {
+      if (filter.publication_guard === null) {
+        if (position.publication_guard) return null;
+        position.publication_guard = structuredClone(update.$set.publication_guard);
+        return structuredClone(position);
+      }
+      if (filter['publication_guard.token'] !== position.publication_guard?.token
+        || filter['publication_guard.assessment_id'] !== position.publication_guard?.assessment_id) return null;
+      releases += 1;
+      position.publication_guard = null;
+      return structuredClone(position);
+    },
+    findOne() { return position.publication_guard ? structuredClone(position) : null; },
+  };
+  const repository = createMongooseAssessmentRepository(assessmentModel, { positionModel });
+  const current = {
+    id: 'assessment-current-run', run_id: 'run-current', position_id: position._id,
+    owner_id_internal: OWNER_A, position_revision: 4, instrument_id: INSTRUMENT,
+    evidence_snapshot_id: 'snapshot-current-run', generated_at: '2030-01-01T00:00:00.000Z',
+    session_as_of: '2030-01-01', status: 'complete', artifact_kind: 'judgment', assessment: {},
+  };
+  assert.deepEqual(await repository.createIfCurrent(current), current);
+  assert.equal(releases, 2, 'one release for the prior run and one for this publisher');
+  assert.equal(creates.length, 1);
+  assert.equal(creates[0]._id, current.id);
+  assert.equal(position.publication_guard, null);
+});
+
+test('publication recovery refuses an unproven guard and duplicate-key insert becomes DUPLICATE_ASSESSMENT', async () => {
+  const guardedPosition = {
+    _id: 'pos-unproven-1', owner_id: OWNER_A, revision: 4,
+    publication_guard: { token: 'live-token', assessment_id: 'assessment-live-1', position_revision: 4 },
+  };
+  let releaseAttempts = 0;
+  const blockedRepository = createMongooseAssessmentRepository({ findOne: () => null }, {
+    positionModel: {
+      async findOneAndUpdate() { releaseAttempts += 1; return null; },
+      findOne: () => structuredClone(guardedPosition),
+    },
+  });
+  const base = {
+    id: 'assessment-retry-2', run_id: 'run-retry-2', position_id: guardedPosition._id,
+    owner_id_internal: OWNER_A, position_revision: 4, instrument_id: INSTRUMENT,
+    evidence_snapshot_id: 'snapshot-retry-2', generated_at: '2030-01-01T00:00:00.000Z',
+    session_as_of: '2030-01-01', status: 'complete', artifact_kind: 'judgment', assessment: {},
+  };
+  assert.equal(await blockedRepository.createIfCurrent(base), null);
+  assert.equal(releaseAttempts, 1, 'only failed acquisition; unproven guard is never released');
+
+  const duplicateError = Object.assign(new Error('E11000 duplicate key'), { code: 11000 });
+  const duplicateRepository = createMongooseAssessmentRepository({
+    async create() { throw duplicateError; },
+  }, {
+    positionModel: {
+      async findOneAndUpdate(filter) {
+        return filter.publication_guard === null ? { _id: base.position_id } : { _id: base.position_id };
+      },
+    },
+  });
+  await assert.rejects(() => duplicateRepository.createIfCurrent(base),
+    (error) => error.code === 'DUPLICATE_ASSESSMENT');
+});
 
 test('research router exposes owner-scoped read/run endpoints as an isolated router', async () => {
   const harness = createHarness();
@@ -1048,6 +1392,13 @@ test('research router exposes owner-scoped read/run endpoints as an isolated rou
   app.use(express.json());
   app.use('/api/v1/research', createResearchRouter({
     researchService: harness.service,
+    // Queue route resolves the current position in the authenticated owner's
+    // scope before it accepts client metadata.
+    positionLookup: async (positionId, ownerId) => (
+      positionId === 'pos-h08-1' && ownerId === OWNER_A
+        ? { _id: positionId, owner_id: ownerId, revision: 1, instrument: { instrument_id: INSTRUMENT } }
+        : null
+    ),
     authenticate,
   }));
   const server = http.createServer(app);
@@ -1062,29 +1413,6 @@ test('research router exposes owner-scoped read/run endpoints as an isolated rou
     });
     assert.equal(missing.status, 400);
     assert.equal((await missing.json()).code, 'MISSING_IDEMPOTENCY_KEY');
-
-    // H08 review F1 (red-first note): this POST previously carried NO
-    // instrument_id and asserted 202 — encoding a null instrument that the
-    // snapshot/assessment models (required: true) reject. Post-repair the
-    // instrument-less queue must be rejected as INVALID_INPUT (400 per the
-    // router's INVALID_INPUT mapping), and the happy path must send an
-    // instrument.
-    const instrumentless = await fetch(`${base}/positions/pos-h08-1/runs`, {
-      method: 'POST',
-      headers: {
-        'x-test-owner': OWNER_A,
-        'content-type': 'application/json',
-        'idempotency-key': 'key-route-no-instrument',
-      },
-      body: JSON.stringify({
-        position_revision: 1,
-        run_kind: 'deep_research',
-        request_payload: { trigger: 'manual' },
-      }),
-    });
-    assert.equal(instrumentless.status, 400,
-      'a queue without a non-empty instrument_id must be rejected (review F1)');
-    assert.equal((await instrumentless.json()).code, 'INVALID_INPUT');
 
     const queued = await fetch(`${base}/positions/pos-h08-1/runs`, {
       method: 'POST',

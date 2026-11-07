@@ -64,7 +64,10 @@ function makeRepository(seed = []) {
       docs.set(id, stored);
       return structuredClone(stored);
     },
-    async update(doc) {
+    async updateIfCurrent(doc, expectedRevision) {
+      const current = docs.get(doc.id);
+      if (!current || current.owner_id !== doc.owner_id
+        || current.revision !== expectedRevision || current.publication_guard) return null;
       docs.set(doc.id, structuredClone(doc));
       return structuredClone(doc);
     },
@@ -454,6 +457,25 @@ test('service: missing or stale expected_revision is rejected; correct revision 
 // 7. P/L guards — misleading economics must be blocked, not approximated
 // ---------------------------------------------------------------------------
 const quote = (over = {}) => ({ current_price: 150, currency: 'USD', adjustment_basis: 'raw', ...over });
+
+test('service: a durable publication guard fails a position edit closed without changing revision', async () => {
+  const { service, repository } = makeService([{
+    ...structuredClone(CANDIDATE_INPUT),
+    id: 'pos-publication-guarded',
+    publication_guard: {
+      token: 'guard-token', assessment_id: 'assessment-guarded',
+      position_revision: 1, acquired_at: new Date().toISOString(),
+    },
+  }]);
+  await assert.rejects(
+    () => service.update('owner-1', 'pos-publication-guarded', {
+      expected_revision: 1, changes: { original_thesis: 'must not race publication' },
+    }),
+    (error) => error.code === 'PUBLICATION_IN_PROGRESS',
+  );
+  assert.equal(repository.docs.get('pos-publication-guarded').revision, 1);
+  assert.equal(repository.docs.get('pos-publication-guarded').original_thesis, '');
+});
 
 test('pl: unknown cost stays null and P/L is unavailable with unknown_cost', async () => {
   const { service } = makeService([structuredClone(OWNED_INPUT)]);
@@ -862,4 +884,26 @@ test('model: decimal validator matches the service bound — <=18 total / <=12 f
     quantity: '999999999999999.99',
   });
   assert.equal(ok.validateSync(), undefined, 'values within the bound must validate');
+});
+
+test('routes: PUBLICATION_IN_PROGRESS is a typed HTTP 409, never a 500', async () => {
+  const { service } = makeService([{
+    ...structuredClone(CANDIDATE_INPUT), id: 'pos-http-publication-guard',
+    publication_guard: {
+      token: 'guard-http', assessment_id: 'assessment-http', position_revision: 1,
+      acquired_at: new Date().toISOString(),
+    },
+  }]);
+  const router = createPositionRouter({
+    positionService: service,
+    authenticate: (req, res, next) => { req.user = { _id: 'owner-1' }; next(); },
+  });
+  await withServer(router, async (baseUrl) => {
+    const response = await requestJson(baseUrl, '/pos-http-publication-guard', {
+      method: 'PATCH', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ expected_revision: 1, changes: { original_thesis: 'must wait' } }),
+    });
+    assert.equal(response.status, 409);
+    assert.equal(response.body.code, 'PUBLICATION_IN_PROGRESS');
+  });
 });

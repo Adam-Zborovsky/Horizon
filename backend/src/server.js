@@ -1,7 +1,7 @@
 const app = require('./app');
 const env = require('./config/env');
 const connectDB = require('./config/db');
-const { startScheduler } = require('./utils/scheduler');
+const { startScheduler, startResearchScheduler } = require('./utils/scheduler');
 
 const { PositionService, createMongoosePositionRepository } = require('./features/positions/position.service');
 const {
@@ -22,6 +22,22 @@ const {
   createAutomationMiddleware,
   createRunCallbackAuthorizer,
 } = require('./middleware/automation.middleware');
+
+// The source-only scheduler creates work only when the external automation
+// identity can poll, start, and observe that work. The Node worker performs
+// the synthesis itself, so input/callback scopes are not prerequisites for
+// the scheduled execution loop.
+const REQUIRED_AUTOMATION_EXECUTION_SCOPES = Object.freeze([
+  'research:trigger',
+  'research:execute',
+  'research:status',
+]);
+
+function hasAutomationExecutionScopes(scopes) {
+  if (!Array.isArray(scopes)) return false;
+  const configured = new Set(scopes);
+  return REQUIRED_AUTOMATION_EXECUTION_SCOPES.every((scope) => configured.has(scope));
+}
 
 // ---------------------------------------------------------------------------
 // H15 — production composition.
@@ -190,6 +206,28 @@ function defaultIsExchangeSession(sessionDate) {
   return weekday >= 1 && weekday <= 5;
 }
 
+// Keep legacy briefings independent. Research daily work is intentionally
+// started only after its bounded local worker is composed. The scheduler owns
+// queueing while that worker owns the authenticated, server-derived execution
+// path, so an external polling 401 cannot strand newly queued work.
+function startProductionSchedulers({
+  researchService,
+  runWorker,
+  automationReady = Boolean(runWorker),
+  legacySchedulerStarter = startScheduler,
+  researchSchedulerStarter = startResearchScheduler,
+  logger = console,
+} = {}) {
+  legacySchedulerStarter();
+  if (!automationReady) {
+    if (logger && typeof logger.warn === 'function') {
+      logger.warn('Research scheduler not started: the bounded research worker is unavailable; no daily runs will be queued.');
+    }
+    return null;
+  }
+  return researchSchedulerStarter({ researchService, runWorker, logger });
+}
+
 const startServer = async () => {
   // Connect to the database
   await connectDB();
@@ -211,25 +249,41 @@ const startServer = async () => {
   // _OWNER_ID. Partial provisioning stays unmounted (fail closed).
   let automationRouter = null;
   let runWorker = null;
-  if (env.AUTOMATION_SERVICE_TOKEN && env.RESEARCH_LLM_API_KEY && env.RESEARCH_LLM_BASE_URL && env.RESEARCH_LLM_MODEL) {
+  const automationScopes = String(env.AUTOMATION_SERVICE_SCOPES || '')
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
+  const modelIdentityConfigured = Boolean(
+    env.RESEARCH_LLM_API_KEY && env.RESEARCH_LLM_BASE_URL && env.RESEARCH_LLM_MODEL,
+  );
+  const automationExecutionReady = Boolean(
+    env.AUTOMATION_SERVICE_TOKEN
+    && env.AUTOMATION_OWNER_ID
+    && hasAutomationExecutionScopes(automationScopes),
+  );
+  if (modelIdentityConfigured && automationExecutionReady) {
     const { createOpenAICompatibleModelClient } = require('./features/research/model_client');
     const { createMongooseRunInputProvider } = require('./features/research/run_inputs');
+    const { createProductionEvidenceService } = require('./features/research/evidence_composition');
     const PositionModel = require('./features/positions/position.model');
     const ResearchAssessmentModel = require('./features/research/research_assessment.model');
-    const automationScopes = String(env.AUTOMATION_SERVICE_SCOPES || '')
-      .split(',')
-      .map((s) => s.trim())
-      .filter(Boolean);
     const modelClient = createOpenAICompatibleModelClient({
       baseUrl: env.RESEARCH_LLM_BASE_URL,
       apiKey: env.RESEARCH_LLM_API_KEY,
       model: env.RESEARCH_LLM_MODEL,
+    });
+    // SEC adapter resolves a CIK only through SEC's ticker mapping. When
+    // SEC_USER_AGENT is not a legitimate configured contact, composition
+    // injects disabled providers and the run records explicit coverage gaps.
+    const evidenceService = createProductionEvidenceService({
+      userAgent: env.SEC_USER_AGENT || null,
     });
     ({ router: automationRouter, worker: runWorker } = composeAutomationSurface({
       modelClient,
       inputProvider: createMongooseRunInputProvider({
         positionModel: PositionModel,
         assessmentModel: ResearchAssessmentModel,
+        evidenceService,
       }),
       runRepository: services.runRepository,
       assessmentRepository: createMongooseAssessmentRepository(),
@@ -243,12 +297,17 @@ const startServer = async () => {
       },
     }));
     console.log(`🔌 Automation surface composed (model: ${env.RESEARCH_LLM_MODEL}; scopes: ${automationScopes.join(' ')})`);
-  } else if (env.AUTOMATION_SERVICE_TOKEN) {
-    console.warn('⏳ AUTOMATION_SERVICE_TOKEN is configured, but no model client identity is provisioned; /automation/research stays unmounted (fail closed).');
+  } else if (env.AUTOMATION_SERVICE_TOKEN || modelIdentityConfigured) {
+    console.warn('⏳ Research automation is partially provisioned; /automation/research and the daily research scheduler stay unmounted (fail closed). Required automation scopes: research:trigger, research:execute, research:status.');
   }
 
-  // Start the daily briefing scheduler (legacy flow; preserved unchanged).
-  startScheduler();
+  // Start the legacy briefing scheduler and, only when the bounded local
+  // research worker is composed, the daily research queue/execution scheduler.
+  startProductionSchedulers({
+    researchService: services.researchService,
+    runWorker,
+    automationReady: Boolean(runWorker),
+  });
 
   // Listen for requests — owner-facing position/research mounts are now
   // injected alongside the default H15A market slice; /automation/research
@@ -279,5 +338,8 @@ module.exports = {
   composeAutomationSurface,
   createMongooseEvidenceSnapshotLookup,
   defaultIsExchangeSession,
+  hasAutomationExecutionScopes,
+  REQUIRED_AUTOMATION_EXECUTION_SCOPES,
+  startProductionSchedulers,
   startServer,
 };

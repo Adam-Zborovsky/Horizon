@@ -24,6 +24,10 @@ const CONTEXT_BUDGETS = Object.freeze({
   MAX_THESIS_SUMMARY_CHARS: 1200,
   MAX_CLAIMS_PER_SECTION_RENDER: 10,
   MAX_PRIOR_CHECKPOINTS: 20,
+  MAX_FACTS_PER_EVIDENCE_ITEM: 12,
+  MAX_PRIOR_THESIS_SECTIONS: 3,
+  MAX_PRIOR_OUTLOOKS: 3,
+  MAX_PRIOR_MISSING_DATA: 12,
 });
 
 const ISO_DATE_AT_RE = /\d{4}-\d{2}-\d{2}(T[\d:.]+Z)?/g;
@@ -93,10 +97,37 @@ function priorSlice(prior) {
   if (typeof prior !== 'object' || typeof prior.assessment_id !== 'string') {
     throw new TypeError('Expected a prior assessment slice or null');
   }
+  const thesisSections = (Array.isArray(prior.thesis_sections) ? prior.thesis_sections : [])
+    .slice(0, CONTEXT_BUDGETS.MAX_PRIOR_THESIS_SECTIONS)
+    .map((section) => Object.freeze({
+      key: boundedText(section?.key ?? '', 80),
+      summary: boundedText(section?.summary ?? '', 500),
+    }))
+    .filter((section) => section.key && section.summary);
+  const recommendation = prior.recommendation && typeof prior.recommendation === 'object'
+    ? Object.freeze({
+      action: boundedText(prior.recommendation.action ?? '', 40),
+      headline: boundedText(prior.recommendation.headline ?? '', 300),
+      evidence_quality: boundedText(prior.recommendation.evidence_quality ?? '', 300),
+    })
+    : null;
+  const outlooks = (Array.isArray(prior.outlooks) ? prior.outlooks : [])
+    .slice(0, CONTEXT_BUDGETS.MAX_PRIOR_OUTLOOKS)
+    .map((outlook) => Object.freeze({
+      horizon_months: [1, 2, 3].includes(outlook?.horizon_months) ? outlook.horizon_months : null,
+      direction: boundedText(outlook?.direction ?? '', 40),
+      data_limitations: Object.freeze((Array.isArray(outlook?.data_limitations) ? outlook.data_limitations : [])
+        .slice(0, 8).map((item) => boundedText(item, 200)).filter(Boolean)),
+    }));
   return Object.freeze({
     assessment_id: prior.assessment_id,
     session_as_of: typeof prior.session_as_of === 'string' ? prior.session_as_of : null,
     market_thesis_summary: boundedText(prior.market_thesis_summary ?? '', CONTEXT_BUDGETS.MAX_THESIS_SUMMARY_CHARS),
+    thesis_sections: Object.freeze(thesisSections),
+    recommendation,
+    outlooks: Object.freeze(outlooks),
+    missing_data: Object.freeze((Array.isArray(prior.missing_data) ? prior.missing_data : [])
+      .slice(0, CONTEXT_BUDGETS.MAX_PRIOR_MISSING_DATA).map((item) => boundedText(item, 200)).filter(Boolean)),
     checkpoints: Object.freeze(
       (Array.isArray(prior.checkpoints) ? prior.checkpoints : [])
         .slice(0, CONTEXT_BUDGETS.MAX_PRIOR_CHECKPOINTS)
@@ -172,6 +203,26 @@ function buildMarketSynthesisContext({
       coverage_status: item.coverage_status,
       excerpt: boundedText(item.excerpt ?? '', CONTEXT_BUDGETS.MAX_EXCERPT_CHARS),
       source_locator: item.source_locator ?? null,
+      facts: Object.freeze((Array.isArray(item.facts) ? item.facts : [])
+        .slice(0, CONTEXT_BUDGETS.MAX_FACTS_PER_EVIDENCE_ITEM)
+        .map((fact) => Object.freeze({
+          id: boundedText(fact?.id ?? '', 160),
+          label: boundedText(fact?.label ?? '', 200),
+          value: typeof fact?.value === 'number' || typeof fact?.value === 'string'
+            ? boundedText(String(fact.value), 160)
+            : '',
+          unit: boundedText(fact?.unit ?? '', 80),
+          currency: boundedText(fact?.currency ?? '', 8),
+          basis: boundedText(fact?.basis ?? '', 160),
+          reporting_period: fact?.reporting_period && typeof fact.reporting_period === 'object'
+            ? Object.freeze({
+              start: boundedText(fact.reporting_period.start ?? '', 20),
+              end: boundedText(fact.reporting_period.end ?? '', 20),
+              label: boundedText(fact.reporting_period.label ?? '', 160),
+            })
+            : null,
+        }))
+        .filter((fact) => fact.id && fact.label && fact.value)),
     }));
 
   const metricRecords = (Array.isArray(metrics) ? metrics : [])
@@ -324,11 +375,29 @@ function renderSynthesisUserPrompt(frozenContext) {
   for (const item of ctx.evidence) {
     lines.push(`  ${item.id} [${item.kind}, ${item.coverage_status}] ${item.title} — ${item.source_name} (available_at ${item.available_at ?? item.published_at ?? 'unknown'})`);
     if (item.excerpt) lines.push(`    excerpt: ${renderClaim(item.excerpt)}`);
+    for (const fact of item.facts) {
+      const period = fact.reporting_period
+        ? ` period=${fact.reporting_period.label || `${fact.reporting_period.start || '?'}..${fact.reporting_period.end || '?'}`}`
+        : '';
+      lines.push(`    fact ${fact.id}: ${fact.label}=${fact.value}${fact.unit ? ` ${fact.unit}` : ''}${fact.currency ? ` ${fact.currency}` : ''}${fact.basis ? ` basis=${fact.basis}` : ''}${period}`);
+    }
   }
   lines.push('');
   if (ctx.prior) {
     lines.push(`PRIOR REPORT (a prior decision, NOT evidence) id=${ctx.prior.assessment_id} session=${ctx.prior.session_as_of ?? 'unknown'}`);
     if (ctx.prior.market_thesis_summary) lines.push(`  prior summary: ${ctx.prior.market_thesis_summary}`);
+    for (const section of ctx.prior.thesis_sections) {
+      lines.push(`  prior ${section.key}: ${section.summary}`);
+    }
+    if (ctx.prior.recommendation?.action || ctx.prior.recommendation?.headline) {
+      lines.push(`  prior recommendation: ${ctx.prior.recommendation.action || 'unknown'}${ctx.prior.recommendation.headline ? ` — ${ctx.prior.recommendation.headline}` : ''}`);
+    }
+    for (const outlook of ctx.prior.outlooks) {
+      if (outlook.horizon_months || outlook.direction) {
+        lines.push(`  prior outlook ${outlook.horizon_months ?? '?'}m: ${outlook.direction || 'unknown'}${outlook.data_limitations.length ? ` | limitations: ${outlook.data_limitations.join('; ')}` : ''}`);
+      }
+    }
+    if (ctx.prior.missing_data.length) lines.push(`  prior missing data: ${ctx.prior.missing_data.join('; ')}`);
     for (const cp of ctx.prior.checkpoints) {
       lines.push(`  checkpoint ${cp.id} [${cp.kind}/${cp.status}] ${cp.condition}`);
     }

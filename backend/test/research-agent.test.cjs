@@ -408,6 +408,31 @@ test('invalid first attempt gets exactly one bounded repair attempt', async () =
   assert.ok(log[1].issues.length > 0, 'repair prompt must carry concrete issues');
 });
 
+test('canonical-schema-only synthesis defect gets the bounded repair attempt', async () => {
+  const bad = validSynthesis();
+  bad.recommendation.headline = 'x'.repeat(4001);
+  const { runtime, log } = makeRuntime({ responses: [bad, validSynthesis()] });
+  const outcome = await runMarketSynthesis(runtime);
+  assert.equal(outcome.status, 'complete');
+  assert.equal(outcome.model_calls, 2);
+  assert.equal(log.length, 2);
+  assert.ok(log[1].issues.some((entry) => entry.code === 'SCHEMA_INVALID'
+    && entry.path === 'recommendation.headline'));
+});
+
+test('unrepairable canonical-schema-only synthesis defect reports field diagnostics', async () => {
+  const bad = validSynthesis();
+  bad.recommendation.headline = 'x'.repeat(4001);
+  const { runtime, log } = makeRuntime({ responses: [bad, bad] });
+  const outcome = await runMarketSynthesis(runtime);
+  assert.equal(outcome.status, 'failed');
+  assert.equal(outcome.error_code, 'SYNTHESIS_VALIDATION_FAILED');
+  assert.equal(outcome.model_calls, 2);
+  assert.equal(log.length, 2);
+  assert.deepEqual(outcome.validation_issues.map((entry) => entry.code), ['SCHEMA_INVALID']);
+  assert.equal(outcome.validation_issues[0].path, 'recommendation.headline');
+});
+
 test('two failed attempts produce a real failed status with the validation issues', async () => {
   const bad = validSynthesis();
   bad.market_thesis.rationale = [claim('Uses an invented source.', { evidence: ['ev-invented'] })];

@@ -343,12 +343,7 @@ function validateSynthesisOutput(output, ctx) {
  */
 function validateAssessmentDelivery(assessment, { run, snapshot } = {}) {
   const issues = [];
-  const parsed = researchAssessmentSchema.safeParse(assessment);
-  if (!parsed.success) {
-    for (const problem of parsed.error.issues) {
-      issues.push(issue('SCHEMA_INVALID', problem.path.join('.'), problem.message));
-    }
-  }
+  issues.push(...validateAssessmentSchema(assessment).issues);
   if (!isPlainObject(run) || !isPlainObject(snapshot)) {
     issues.push(issue('BINDING_MISMATCH', '', 'Run and snapshot references are required'));
     return { ok: false, issues };
@@ -372,6 +367,23 @@ function validateAssessmentDelivery(assessment, { run, snapshot } = {}) {
   return { ok: issues.length === 0, issues };
 }
 
+// Canonical contract validation in the same issue envelope used by synthesis
+// validation. The runtime uses this against its deterministic composition
+// before accepting a model answer, so schema-only defects get the one bounded
+// repair opportunity rather than surfacing only after assembly.
+function validateAssessmentSchema(assessment) {
+  const parsed = researchAssessmentSchema.safeParse(assessment);
+  if (parsed.success) return { ok: true, issues: [], assessment: parsed.data };
+  return {
+    ok: false,
+    issues: parsed.error.issues.map((problem) => issue(
+      'SCHEMA_INVALID',
+      problem.path.join('.'),
+      problem.message,
+    )),
+  };
+}
+
 function parseAssessment(assessment) {
   return researchAssessmentSchema.parse(assessment);
 }
@@ -381,6 +393,7 @@ module.exports = {
   STATE_ACTIONS,
   containsUnregisteredNumericClaim,
   parseAssessment,
+  validateAssessmentSchema,
   validateAssessmentDelivery,
   validateSynthesisOutput,
 };

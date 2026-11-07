@@ -112,6 +112,79 @@ function composePositionContext(position) {
   return context;
 }
 
+// All model-controlled fields enter the canonical assessment through this one
+// deterministic composition. Keeping it shared by the pre-acceptance schema
+// probe and final assembly prevents the two validation boundaries drifting.
+function composeAssessment({
+  assessmentId,
+  generatedAt,
+  run,
+  snapshot,
+  instrument,
+  position,
+  currentPrice,
+  context,
+  synthesis,
+} = {}) {
+  const serverHorizons = new Map(context.horizons.map((h) => [h.horizon_months, h]));
+  const coverageGaps = context.coverage.status !== 'available' ? [...context.coverage.gaps] : [];
+  const missingData = dedupe([...(synthesis.missing_data ?? []), ...coverageGaps]);
+  const status = context.coverage.status === 'available' ? 'complete' : 'limited';
+  const economics = composeEconomics(position, currentPrice);
+
+  return {
+    id: assessmentId,
+    contract_version: 1,
+    position_id: position.position_id ?? null,
+    position_revision: run.position_revision,
+    instrument_id: run.instrument_id ?? instrument.instrument_id,
+    run_id: run.id,
+    evidence_snapshot_id: snapshot.snapshot_id,
+    generated_at: generatedAt,
+    session_as_of: context.session_as_of,
+    status,
+    market_thesis: synthesis.market_thesis,
+    recommendation: synthesis.recommendation,
+    position_context: composePositionContext(
+      { ...position, instrument_id: run.instrument_id ?? instrument.instrument_id },
+    ),
+    changes_since_previous: synthesis.changes_since_previous ?? null,
+    checkpoints: (Array.isArray(synthesis.checkpoints) ? synthesis.checkpoints : []).map((cp, index) => ({
+      id: `${assessmentId}-cp-${index + 1}`,
+      instrument_id: run.instrument_id ?? instrument.instrument_id,
+      kind: cp.kind,
+      metric_id: cp.metric_id ?? null,
+      fixed_level: cp.fixed_level ?? null,
+      condition: cp.condition,
+      created_at: generatedAt,
+      updated_at: generatedAt,
+      status: cp.status,
+      reason: cp.reason,
+      source_assessment_id: assessmentId,
+    })),
+    outlooks: (Array.isArray(synthesis.outlooks) ? synthesis.outlooks : []).map((outlook) => {
+      const server = serverHorizons.get(outlook.horizon_months);
+      return {
+        horizon_months: outlook.horizon_months,
+        calendar_target_date: server?.calendar_target_date,
+        evaluation_session_date: server?.evaluation_session_date,
+        direction: outlook.direction,
+        base_case: outlook.base_case,
+        upside_case: outlook.upside_case,
+        downside_case: outlook.downside_case,
+        catalysts: outlook.catalysts ?? [],
+        invalidators: outlook.invalidators ?? [],
+        numeric_projection: null,
+        data_limitations: outlook.data_limitations ?? [],
+      };
+    }),
+    missing_data: missingData,
+    next_review: null,
+    versions: { ...PIPELINE_VERSIONS },
+    economics,
+  };
+}
+
 function createResearchAgentRuntime({ modelClient, now, idFactory, isExchangeSession } = {}) {
   if (!modelClient || typeof modelClient.complete !== 'function') {
     throw new TypeError('createResearchAgentRuntime requires an injected model client');
@@ -266,11 +339,31 @@ function createResearchAgentRuntime({ modelClient, now, idFactory, isExchangeSes
       }
 
       const verdict = validator.validateSynthesisOutput(output, context);
-      if (verdict.ok) {
+      if (!verdict.ok) {
+        issues = verdict.issues;
+        continue;
+      }
+
+      // Probe the exact canonical shape that final assembly will persist.
+      // This makes canonical schema constraints (bounded text/arrays, dates,
+      // checkpoint invariants, etc.) part of bounded synthesis repair.
+      const schemaProbe = composeAssessment({
+        assessmentId: 'assessment-validation-probe',
+        generatedAt: snapshot.cutoff_at,
+        run,
+        snapshot,
+        instrument,
+        position,
+        currentPrice,
+        context,
+        synthesis: output,
+      });
+      const canonical = validator.validateAssessmentSchema(schemaProbe);
+      if (canonical.ok) {
         synthesis = output;
         break;
       }
-      issues = verdict.issues;
+      issues = canonical.issues;
     }
 
     if (synthesis == null) {
@@ -280,67 +373,18 @@ function createResearchAgentRuntime({ modelClient, now, idFactory, isExchangeSes
     // ---- Deterministic server composition (no model involvement) ----
     const assessmentId = idFactory();
     const generatedAt = now().toISOString();
-    const serverHorizons = new Map(context.horizons.map((h) => [h.horizon_months, h]));
-    const coverageGaps = context.coverage.status !== 'available' ? [...context.coverage.gaps] : [];
-    const missingData = dedupe([...(synthesis.missing_data ?? []), ...coverageGaps]);
     const status = context.coverage.status === 'available' ? 'complete' : 'limited';
-
-    const economics = composeEconomics(position, currentPrice);
-
-    const assessment = {
-      id: assessmentId,
-      contract_version: 1,
-      position_id: position.position_id ?? null,
-      position_revision: run.position_revision,
-      instrument_id: run.instrument_id ?? instrument.instrument_id,
-      run_id: run.id,
-      evidence_snapshot_id: snapshot.snapshot_id,
-      generated_at: generatedAt,
-      session_as_of: context.session_as_of,
-      status,
-      market_thesis: synthesis.market_thesis,
-      recommendation: synthesis.recommendation,
-      position_context: composePositionContext(
-        { ...position, instrument_id: run.instrument_id ?? instrument.instrument_id },
-      ),
-      changes_since_previous: synthesis.changes_since_previous ?? null,
-      checkpoints: (Array.isArray(synthesis.checkpoints) ? synthesis.checkpoints : []).map((cp, index) => ({
-        id: `${assessmentId}-cp-${index + 1}`,
-        instrument_id: run.instrument_id ?? instrument.instrument_id,
-        kind: cp.kind,
-        metric_id: cp.metric_id ?? null,
-        fixed_level: cp.fixed_level ?? null,
-        condition: cp.condition,
-        created_at: generatedAt,
-        updated_at: generatedAt,
-        status: cp.status,
-        reason: cp.reason,
-        source_assessment_id: assessmentId,
-      })),
-      outlooks: synthesis.outlooks.map((outlook) => {
-        const server = serverHorizons.get(outlook.horizon_months);
-        return {
-          horizon_months: outlook.horizon_months,
-          calendar_target_date: server.calendar_target_date,
-          evaluation_session_date: server.evaluation_session_date,
-          direction: outlook.direction,
-          base_case: outlook.base_case,
-          upside_case: outlook.upside_case,
-          downside_case: outlook.downside_case,
-          catalysts: outlook.catalysts ?? [],
-          invalidators: outlook.invalidators ?? [],
-          // H07A is a held follow-up: qualitative outlooks carry null.
-          numeric_projection: null,
-          data_limitations: outlook.data_limitations ?? [],
-        };
-      }),
-      missing_data: missingData,
-      next_review: null,
-      versions: { ...PIPELINE_VERSIONS },
-      // Additive server-composed owner-bound economics (schema passthrough
-      // keeps it legal); the market thesis is never derived from these values.
-      economics,
-    };
+    const assessment = composeAssessment({
+      assessmentId,
+      generatedAt,
+      run,
+      snapshot,
+      instrument,
+      position,
+      currentPrice,
+      context,
+      synthesis,
+    });
 
     // Final canonical schema gate + exact binding check before persistence.
     let parsed;
@@ -385,5 +429,6 @@ module.exports = {
   PIPELINE_VERSIONS,
   composeEconomics,
   composePositionContext,
+  composeAssessment,
   createResearchAgentRuntime,
 };

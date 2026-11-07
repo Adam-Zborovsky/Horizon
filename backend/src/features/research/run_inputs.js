@@ -25,6 +25,8 @@ const MARKET_EVIDENCE_ID = 'ev-market-daily-1y';
 const METHOD_VERSION = 'v1';
 const ET_ZONE = 'America/New_York';
 const MAX_BARS = 400;
+// Reserve one prompt evidence slot for the observed market-history item.
+const MAX_EXTERNAL_EVIDENCE_ITEMS = 19;
 
 function ymdInZone(seconds, timeZone = ET_ZONE) {
   return new Intl.DateTimeFormat('en-CA', {
@@ -37,6 +39,60 @@ function ymdInZone(seconds, timeZone = ET_ZONE) {
 
 function decimalString(value) {
   return value.toFixed(2);
+}
+
+function addGap(gaps, gap) {
+  if (!gaps.includes(gap)) gaps.push(gap);
+}
+
+function boundedEvidenceItems(items, { instrumentId, cutoffAt }) {
+  return (Array.isArray(items) ? items : [])
+    .filter((item) => item && item.instrument_id === instrumentId)
+    .filter((item) => {
+      const availableAt = item.available_at || item.published_at;
+      return !availableAt || availableAt <= cutoffAt;
+    })
+    // EvidenceService sorts ascending; retain the most recent valid material.
+    .slice(-MAX_EXTERNAL_EVIDENCE_ITEMS);
+}
+
+function priorDecisionFromDocument(priorDoc) {
+  // ResearchAssessment persists the assessment under `assessment`; tolerate
+  // the legacy flat shape without changing the fact/decision boundary.
+  const assessment = priorDoc?.assessment && typeof priorDoc.assessment === 'object'
+    ? priorDoc.assessment
+    : priorDoc;
+  const thesis = assessment?.market_thesis && typeof assessment.market_thesis === 'object'
+    ? assessment.market_thesis
+    : {};
+  const thesisSections = ['business_assessment', 'price_technical_assessment', 'valuation_assessment']
+    .map((key) => ({ key, summary: thesis[key]?.summary }))
+    .filter((entry) => typeof entry.summary === 'string' && entry.summary.length > 0);
+
+  return {
+    assessment_id: String(priorDoc._id),
+    session_as_of: typeof priorDoc.session_as_of === 'string' ? priorDoc.session_as_of : null,
+    market_thesis_summary: typeof thesis.summary === 'string'
+      ? thesis.summary
+      : thesisSections.map((entry) => `${entry.key}: ${entry.summary}`).join('\n'),
+    thesis_sections: thesisSections,
+    recommendation: assessment?.recommendation && typeof assessment.recommendation === 'object'
+      ? {
+        action: assessment.recommendation.action,
+        headline: assessment.recommendation.headline,
+        evidence_quality: assessment.recommendation.evidence_quality,
+      }
+      : null,
+    outlooks: Array.isArray(assessment?.outlooks)
+      ? assessment.outlooks.map((outlook) => ({
+        horizon_months: outlook?.horizon_months,
+        direction: outlook?.direction,
+        data_limitations: outlook?.data_limitations,
+      }))
+      : [],
+    missing_data: Array.isArray(assessment?.missing_data) ? assessment.missing_data : [],
+    checkpoints: Array.isArray(assessment?.checkpoints) ? assessment.checkpoints : [],
+  };
 }
 
 async function fetchDailyBars({ symbol, fetchImpl, timeoutMs = 15000 }) {
@@ -155,6 +211,7 @@ function buildMetrics({ instrumentId, snapshotId, bars, evidenceIds, currency })
 function createMongooseRunInputProvider({
   positionModel,
   assessmentModel,
+  evidenceService = null,
   fetchImpl = globalThis.fetch,
   now = () => new Date(),
   logger = null,
@@ -165,19 +222,36 @@ function createMongooseRunInputProvider({
   if (!assessmentModel || typeof assessmentModel.findOne !== 'function') {
     throw new TypeError('createMongooseRunInputProvider requires an assessment model');
   }
+  if (evidenceService != null && typeof evidenceService.gatherEvidence !== 'function') {
+    throw new TypeError('createMongooseRunInputProvider evidenceService must provide gatherEvidence');
+  }
 
   return async function loadRunInputs(claimedRun) {
+    const ownerId = claimedRun.owner_id_internal;
+    const positionRevision = claimedRun.position_revision;
+    const instrumentId = claimedRun.run_input_ref?.instrument_id;
+    if (typeof ownerId !== 'string' || ownerId.length === 0
+      || !Number.isSafeInteger(positionRevision) || positionRevision < 1
+      || typeof instrumentId !== 'string' || instrumentId.length === 0) {
+      throw Object.assign(new Error('claimed run lacks immutable position binding'), { code: 'INPUT_UNAVAILABLE' });
+    }
+    // The worker must re-read exactly the owner/revision/instrument recorded
+    // when the run was queued. A position ID alone permits cross-owner reads;
+    // a current-but-different revision/instrument would make model inputs
+    // disagree with the immutable run and its eventual result binding.
     const positionDoc = await positionModel
-      .findOne({ _id: String(claimedRun.position_id) })
+      .findOne({
+        _id: String(claimedRun.position_id),
+        owner_id: ownerId,
+        revision: positionRevision,
+        'instrument.instrument_id': instrumentId,
+      })
       .lean();
     if (!positionDoc) {
-      throw Object.assign(new Error('position missing for run'), { code: 'INPUT_UNAVAILABLE' });
+      throw Object.assign(new Error('position no longer matches the claimed run binding'), { code: 'INPUT_UNAVAILABLE' });
     }
     const positionId = positionDoc._id;
     const instrument = positionDoc.instrument;
-    if (!instrument || typeof instrument.instrument_id !== 'string') {
-      throw Object.assign(new Error('position has no instrument identity'), { code: 'INPUT_UNAVAILABLE' });
-    }
 
     const cutoffAt = now().toISOString();
     const gaps = [];
@@ -219,7 +293,42 @@ function createMongooseRunInputProvider({
       evidenceIds.push(MARKET_EVIDENCE_ID);
     }
 
-    const coverageStatus = bars.length === 0 ? 'unavailable' : (gaps.length > 0 ? 'partial' : 'available');
+    let externalCoverage = null;
+    if (evidenceService) {
+      if (bars.length === 0) {
+        addGap(gaps, 'fundamental_evidence_skipped_no_market_session');
+      } else {
+        try {
+          const gathered = await evidenceService.gatherEvidence({
+            instrument,
+            sessionAsOf: bars[bars.length - 1].session_date,
+            cutoffAt,
+          });
+          const externalSnapshot = gathered?.snapshot;
+          externalCoverage = externalSnapshot?.coverage ?? null;
+          for (const gap of externalCoverage?.gaps || []) addGap(gaps, gap);
+          const sourceItems = gathered?.items ?? externalSnapshot?.items ?? [];
+          const eligibleItems = sourceItems.filter((item) => item && item.instrument_id === instrument.instrument_id
+            && (!(item.available_at || item.published_at) || (item.available_at || item.published_at) <= cutoffAt));
+          const externalItems = boundedEvidenceItems(eligibleItems, { instrumentId: instrument.instrument_id, cutoffAt });
+          if (sourceItems.length > eligibleItems.length) addGap(gaps, 'external_evidence_excluded');
+          if (eligibleItems.length > externalItems.length) addGap(gaps, 'external_evidence_context_truncated');
+          items.push(...externalItems);
+          evidenceIds.push(...externalItems.map((item) => item.id));
+        } catch (error) {
+          // Never put provider/network details in model context.
+          addGap(gaps, 'fundamental_evidence_service_unavailable');
+          if (logger?.warn) logger.warn(`run_inputs: evidence lookup failed for run ${claimedRun.id}`);
+        }
+      }
+    } else {
+      addGap(gaps, 'sec_filings_not_configured');
+      addGap(gaps, 'company_news_not_configured');
+    }
+
+    const coverageStatus = externalCoverage?.status === 'available' && bars.length > 0 && gaps.length === 0
+      ? 'available'
+      : items.length > 0 ? 'partial' : 'unavailable';
     const snapshotId = claimedRun.input_snapshot_id
       || (claimedRun.run_input_ref && claimedRun.run_input_ref.snapshot_id)
       || `snapshot-${claimedRun.id}`;
@@ -249,17 +358,18 @@ function createMongooseRunInputProvider({
         .sort({ _id: -1 })
         .lean();
       if (priorDoc) {
-        prior = {
-          assessment_id: String(priorDoc._id),
-          session_as_of: typeof priorDoc.session_as_of === 'string' ? priorDoc.session_as_of : null,
-          market_thesis_summary: priorDoc.market_thesis?.summary ?? '',
-          checkpoints: Array.isArray(priorDoc.checkpoints) ? priorDoc.checkpoints : [],
-        };
+        prior = priorDecisionFromDocument(priorDoc);
       }
     } catch (error) {
       if (logger?.warn) logger.warn(`run_inputs: prior lookup failed for run ${claimedRun.id}`);
-      gaps.push('prior_assessment_lookup_failed');
+      addGap(gaps, 'prior_assessment_lookup_failed');
     }
+
+    // The prior lookup is part of the run input as well. Re-evaluate after it
+    // so a late coverage gap cannot leave an inconsistent "available" label.
+    snapshot.coverage.status = externalCoverage?.status === 'available' && bars.length > 0 && gaps.length === 0
+      ? 'available'
+      : items.length > 0 ? 'partial' : 'unavailable';
 
     const currentPrice = lastClose != null
       ? {
@@ -292,4 +402,11 @@ function createMongooseRunInputProvider({
   };
 }
 
-module.exports = { createMongooseRunInputProvider, fetchDailyBars, buildMetrics };
+module.exports = {
+  MAX_EXTERNAL_EVIDENCE_ITEMS,
+  boundedEvidenceItems,
+  buildMetrics,
+  createMongooseRunInputProvider,
+  fetchDailyBars,
+  priorDecisionFromDocument,
+};

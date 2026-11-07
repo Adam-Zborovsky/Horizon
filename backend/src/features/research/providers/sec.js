@@ -5,6 +5,8 @@ const ALLOWED_SEC_HOSTS = Object.freeze([
   'www.sec.gov',
   'sec.gov',
 ]);
+const SEC_TICKER_MAPPING_URL = 'https://www.sec.gov/files/company_tickers.json';
+const DEFAULT_MAPPING_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 
 function providerError(code, message) {
   const error = new Error(message);
@@ -83,18 +85,82 @@ function requireCik(instrument) {
   return digits.padStart(10, '0');
 }
 
+function normalizeTicker(symbol) {
+  const normalized = String(symbol || '').trim().toUpperCase();
+  if (!/^[A-Z0-9.\-]{1,15}$/.test(normalized)) throw providerError('TICKER_MISSING', 'Instrument has no valid ticker for SEC CIK resolution');
+  return normalized;
+}
+
+// SEC publishes this mapping; never derive a CIK from a ticker or trust a caller-supplied CIK when this resolver is used.
+class SecTickerCikResolver {
+  constructor({ fetch = globalThis.fetch, userAgent, timeoutMs = 8_000, now = () => new Date(), cacheTtlMs = DEFAULT_MAPPING_CACHE_TTL_MS } = {}) {
+    if (typeof fetch !== 'function') throw new TypeError('SecTickerCikResolver requires fetch');
+    if (typeof userAgent !== 'string' || userAgent.trim().length === 0) throw new TypeError('SecTickerCikResolver requires a configured userAgent');
+    if (!Number.isInteger(cacheTtlMs) || cacheTtlMs <= 0) throw new RangeError('cacheTtlMs must be a positive integer');
+    this.fetch = fetch; this.userAgent = userAgent; this.timeoutMs = timeoutMs; this.now = now; this.cacheTtlMs = cacheTtlMs;
+    this.cache = null; this.inFlight = null;
+  }
+  async loadMapping() {
+    const nowMs = this.now().valueOf();
+    if (this.cache && this.cache.expiresAt > nowMs) return this.cache.byTicker;
+    if (this.inFlight) return this.inFlight;
+    this.inFlight = (async () => {
+      const controller = new AbortController();
+      let timer;
+      const timeoutPromise = new Promise((_, reject) => {
+        timer = setTimeout(() => {
+          controller.abort();
+          reject(providerError('PROVIDER_TIMEOUT', 'SEC ticker mapping timed out'));
+        }, this.timeoutMs);
+      });
+      try {
+        assertAllowedSecUrl(SEC_TICKER_MAPPING_URL);
+        const response = await Promise.race([
+          this.fetch(SEC_TICKER_MAPPING_URL, { signal: controller.signal, headers: { 'User-Agent': this.userAgent, Accept: 'application/json' } }),
+          timeoutPromise,
+        ]);
+        if (!response?.ok) throw providerError('PROVIDER_UNAVAILABLE', `SEC ticker mapping returned HTTP ${response?.status || 'unknown'}`);
+        const payload = await Promise.race([response.json(), timeoutPromise]);
+        const byTicker = new Map();
+        for (const entry of Object.values(payload || {})) {
+          const ticker = String(entry?.ticker || '').trim().toUpperCase();
+          const digits = String(entry?.cik_str || '').replace(/\D/g, '');
+          if (/^[A-Z0-9.\-]{1,15}$/.test(ticker) && digits) byTicker.set(ticker, digits.padStart(10, '0'));
+        }
+        this.cache = { byTicker, expiresAt: this.now().valueOf() + this.cacheTtlMs };
+        return byTicker;
+      } catch (error) {
+        if (error?.code) throw error;
+        if (error?.name === 'AbortError') throw providerError('PROVIDER_TIMEOUT', 'SEC ticker mapping timed out');
+        throw providerError('PROVIDER_UNAVAILABLE', error?.message || 'SEC ticker mapping request failed');
+      } finally { clearTimeout(timer); this.inFlight = null; }
+    })();
+    return this.inFlight;
+  }
+  async resolve(instrument) {
+    const ticker = normalizeTicker(instrument?.symbol);
+    const cik = (await this.loadMapping()).get(ticker);
+    if (!cik) throw providerError('CIK_NOT_FOUND', `SEC ticker mapping has no CIK for ${ticker}`);
+    return cik;
+  }
+}
+
 class SecEvidenceAdapter {
   constructor({
     fetch = globalThis.fetch,
-    userAgent = 'HorizonResearch contact@horizon.local',
+    userAgent,
     timeoutMs = 8_000,
     now = () => new Date(),
+    cikResolver = null,
   } = {}) {
     if (typeof fetch !== 'function') throw new TypeError('SecEvidenceAdapter requires fetch');
+    if (typeof userAgent !== 'string' || userAgent.trim().length === 0) throw new TypeError('SecEvidenceAdapter requires a configured userAgent');
+    if (cikResolver != null && typeof cikResolver.resolve !== 'function') throw new TypeError('SecEvidenceAdapter cikResolver must provide resolve(instrument)');
     this.fetch = fetch;
     this.userAgent = userAgent;
     this.timeoutMs = timeoutMs;
     this.now = now;
+    this.cikResolver = cikResolver;
   }
 
   async fetchFromUrl(url) {
@@ -139,13 +205,13 @@ class SecEvidenceAdapter {
   }
 
   async fetchSubmissions(instrument, { cutoffAt } = {}) {
-    const cik = requireCik(instrument);
+    const cik = this.cikResolver ? await this.cikResolver.resolve(instrument) : requireCik(instrument);
     const url = `https://data.sec.gov/submissions/CIK${cik}.json`;
     return this.fetchFromUrl(url);
   }
 
   async fetchCompanyFacts(instrument, { cutoffAt } = {}) {
-    const cik = requireCik(instrument);
+    const cik = this.cikResolver ? await this.cikResolver.resolve(instrument) : requireCik(instrument);
     const url = `https://data.sec.gov/api/xbrl/companyfacts/CIK${cik}.json`;
     return this.fetchFromUrl(url);
   }
@@ -156,14 +222,14 @@ class SecEvidenceAdapter {
     try {
       submissions = await this.fetchSubmissions(instrument, { cutoffAt });
     } catch (error) {
-      if (error.code === 'PROVIDER_TIMEOUT' || error.code === 'URL_NOT_ALLOWED' || error.code === 'CIK_MISSING') throw error;
+      if (error.code === 'PROVIDER_TIMEOUT' || error.code === 'URL_NOT_ALLOWED' || error.code === 'CIK_MISSING' || error.code === 'CIK_NOT_FOUND' || error.code === 'TICKER_MISSING') throw error;
       submissions = null;
     }
 
     try {
       companyFacts = await this.fetchCompanyFacts(instrument, { cutoffAt });
     } catch (error) {
-      if (error.code === 'PROVIDER_TIMEOUT' || error.code === 'URL_NOT_ALLOWED' || error.code === 'CIK_MISSING') throw error;
+      if (error.code === 'PROVIDER_TIMEOUT' || error.code === 'URL_NOT_ALLOWED' || error.code === 'CIK_MISSING' || error.code === 'CIK_NOT_FOUND' || error.code === 'TICKER_MISSING') throw error;
       companyFacts = null;
     }
 
@@ -173,7 +239,10 @@ class SecEvidenceAdapter {
 
     const recent = submissions.filings.recent;
     const count = recent.accessionNumber?.length || 0;
-    const cikNum = parseInt(cleanCik(submissions.cik || instrument.cik), 10) || 0;
+    const resolvedCik = this.cikResolver ? await this.cikResolver.resolve(instrument) : cleanCik(submissions.cik || instrument.cik);
+    // Archive URLs must use the same authoritative mapping result used for
+    // requests, not an unverified CIK echoed by an upstream payload.
+    const cikNum = parseInt(resolvedCik, 10) || 0;
 
     // Index facts by accession number
     const factsByAccn = new Map();
@@ -240,8 +309,11 @@ class SecEvidenceAdapter {
       const acceptanceDateTime = recent.acceptanceDateTime?.[i];
       const primaryDoc = recent.primaryDocument?.[i] || `${form}.htm`;
 
+      // A filing date alone has no intraday publication precision. Treat it
+      // as available only at the end of that UTC day, rather than midnight,
+      // so a point-in-time run cannot see a filing that may arrive later.
       const availableAt = normalizeTimestamp(acceptanceDateTime)
-        || (filingDate ? `${filingDate}T00:00:00.000Z` : null);
+        || (filingDate ? `${filingDate}T23:59:59.999Z` : null);
 
       // Strict cutoff filtering
       if (cutoffAt && availableAt && availableAt > cutoffAt) {
@@ -301,5 +373,8 @@ class SecEvidenceAdapter {
 
 module.exports = {
   SecEvidenceAdapter,
+  SecTickerCikResolver,
   ALLOWED_SEC_HOSTS,
+  SEC_TICKER_MAPPING_URL,
+  DEFAULT_MAPPING_CACHE_TTL_MS,
 };

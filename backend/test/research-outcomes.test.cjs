@@ -578,3 +578,22 @@ test('createMongooseForecastRepository exposes the storage adapter surface', () 
     assert.equal(typeof repo[method], 'function', `expected repository method ${method}`);
   }
 });
+
+test('mongoose forecast settlement requests the post-update document with returnDocument', async () => {
+  let receivedOptions;
+  const model = {
+    findOneAndUpdate(query, update, options) {
+      receivedOptions = options;
+      return { lean: async () => null };
+    },
+  };
+
+  await createMongooseForecastRepository(model).settle(
+    'ledger-options-1',
+    { realized_direction: 'positive' },
+    '2030-01-01T00:00:00.000Z',
+  );
+
+  assert.deepEqual(receivedOptions, { returnDocument: 'after' });
+  assert.equal(Object.hasOwn(receivedOptions, 'new'), false);
+});

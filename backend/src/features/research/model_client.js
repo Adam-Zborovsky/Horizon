@@ -13,6 +13,10 @@
 
 const DEFAULT_TIMEOUT_MS = 120000;
 const DEFAULT_MAX_OUTPUT_TOKENS = Number(process.env.RESEARCH_LLM_MAX_OUTPUT_TOKENS) || 16384;
+// Every retry reaches the provider and may be billable. This is a *total*
+// per-completion request budget, shared by malformed JSON and transient
+// transport responses; nested retry loops would silently multiply spend.
+const MAX_MODEL_REQUEST_ATTEMPTS = 2;
 
 function sanitizeJsonText(text) {
   let cleaned = text.trim();
@@ -40,6 +44,53 @@ function deadlineTimeoutMs(deadlineAt, now = () => new Date(), timeoutMs = DEFAU
   return Math.min(timeoutMs, remaining);
 }
 
+function rejectWhenAborted(promise, signal) {
+  if (signal.aborted) {
+    const error = new Error('deadline exceeded');
+    error.name = 'AbortError';
+    return Promise.reject(error);
+  }
+  return new Promise((resolve, reject) => {
+    const onAbort = () => {
+      const error = new Error('deadline exceeded');
+      error.name = 'AbortError';
+      reject(error);
+    };
+    signal.addEventListener('abort', onAbort, { once: true });
+    Promise.resolve(promise).then(
+      (value) => {
+        signal.removeEventListener('abort', onAbort);
+        resolve(value);
+      },
+      (error) => {
+        signal.removeEventListener('abort', onAbort);
+        reject(error);
+      },
+    );
+  });
+}
+
+function waitWhenNotAborted(delayMs, signal) {
+  if (signal.aborted) {
+    const error = new Error('deadline exceeded');
+    error.name = 'AbortError';
+    return Promise.reject(error);
+  }
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => {
+      signal.removeEventListener('abort', onAbort);
+      resolve();
+    }, delayMs);
+    const onAbort = () => {
+      clearTimeout(timer);
+      const error = new Error('deadline exceeded');
+      error.name = 'AbortError';
+      reject(error);
+    };
+    signal.addEventListener('abort', onAbort, { once: true });
+  });
+}
+
 function createOpenAICompatibleModelClient({
   baseUrl,
   apiKey,
@@ -50,8 +101,8 @@ function createOpenAICompatibleModelClient({
   fetchImpl = globalThis.fetch,
   now = () => new Date(),
 } = {}) {
-  if (typeof baseUrl !== 'string' || !/^https?:\/\//.test(baseUrl)) {
-    throw new TypeError('createOpenAICompatibleModelClient requires an http(s) RESEARCH_LLM_BASE_URL');
+  if (typeof baseUrl !== 'string' || !/^https:\/\//.test(baseUrl)) {
+    throw new TypeError('createOpenAICompatibleModelClient requires an HTTPS RESEARCH_LLM_BASE_URL');
   }
   if (typeof apiKey !== 'string' || apiKey.length < 8) {
     throw new TypeError('createOpenAICompatibleModelClient requires RESEARCH_LLM_API_KEY');
@@ -81,67 +132,84 @@ function createOpenAICompatibleModelClient({
 
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), budgetMs);
-    let response = null;
-    // Transport retries are a separate budget from the schema-repair attempts
-    // (CONTRACTS §8): transient 429/5xx get one retry with short backoff.
+    // The runtime has its own schema-repair budget. At this client boundary,
+    // transient transport errors and malformed JSON share one extra request.
     const retryStatuses = new Set([429, 500, 502, 503]);
     try {
-      for (let attempt = 1; attempt <= 4; attempt += 1) {
-        response = await fetchImpl(endpoint, {
-          method: 'POST',
-          headers: {
-            'content-type': 'application/json',
-            authorization: `Bearer ${apiKey}`,
-          },
-          body: JSON.stringify({
+      for (let requestAttempt = 1; requestAttempt <= MAX_MODEL_REQUEST_ATTEMPTS; requestAttempt += 1) {
+        let response;
+        try {
+          response = await fetchImpl(endpoint, {
+              method: 'POST',
+              headers: {
+                'content-type': 'application/json',
+                authorization: `Bearer ${apiKey}`,
+              },
+              body: JSON.stringify({
+                model,
+                messages,
+                temperature,
+                max_tokens: maxOutputTokens,
+                reasoning_effort: process.env.RESEARCH_LLM_REASONING_EFFORT || 'low',
+                response_format: { type: 'json_object' },
+              }),
+              signal: controller.signal,
+          });
+        } catch (error) {
+          throw Object.assign(new Error(`model transport failed: ${error.name === 'AbortError' ? 'timeout' : error.message}`), { code: 'MODEL_CLIENT_FAILED' });
+        }
+
+        if (retryStatuses.has(response.status) && requestAttempt < MAX_MODEL_REQUEST_ATTEMPTS) {
+          try {
+            // Backoff itself observes the original deadline; it must not keep
+            // the worker alive after the fetch has been aborted.
+            await waitWhenNotAborted(2000, controller.signal);
+          } catch (error) {
+            throw Object.assign(new Error(`model transport failed: ${error.name === 'AbortError' ? 'timeout' : error.message}`), { code: 'MODEL_CLIENT_FAILED' });
+          }
+          continue;
+        }
+        if (!response.ok) {
+          // Status only — never the body (it can echo prompt fragments).
+          throw Object.assign(new Error(`model endpoint returned HTTP ${response.status}`), { code: 'MODEL_CLIENT_FAILED' });
+        }
+
+        let payload;
+        try {
+          // response.json() is not required to observe the request signal.
+          // Race it explicitly so a stalled body cannot outlive the deadline.
+          payload = await rejectWhenAborted(response.json(), controller.signal);
+        } catch (error) {
+          if (error.name === 'AbortError') {
+            throw Object.assign(new Error('model endpoint response body timed out'), { code: 'MODEL_CLIENT_FAILED' });
+          }
+          throw Object.assign(new Error('model endpoint returned a non-JSON body'), { code: 'MODEL_CLIENT_FAILED' });
+        }
+        const text = payload?.choices?.[0]?.message?.content;
+        if (typeof text !== 'string' || text.length === 0) {
+          throw Object.assign(new Error('model response contained no message content'), { code: 'MODEL_CLIENT_FAILED' });
+        }
+        try {
+          return {
+            output: JSON.parse(sanitizeJsonText(text)),
             model,
-            messages,
-            temperature,
-            max_tokens: maxOutputTokens,
-            reasoning_effort: process.env.RESEARCH_LLM_REASONING_EFFORT || 'low',
-            response_format: { type: 'json_object' },
-          }),
-          signal: controller.signal,
-        });
-        if (!retryStatuses.has(response.status) || attempt === 4) break;
-        const delayMs = Math.min(10000, 2000 * Math.pow(2, attempt - 1));
-        await new Promise((resolve) => setTimeout(resolve, delayMs));
+            finish_reason: payload?.choices?.[0]?.finish_reason ?? null,
+          };
+        } catch (error) {
+          if (payload?.choices?.[0]?.finish_reason === 'length') {
+            throw Object.assign(new Error('model response was truncated (max_tokens reached)'), { code: 'MODEL_CLIENT_FAILED' });
+          }
+          if (requestAttempt === MAX_MODEL_REQUEST_ATTEMPTS) {
+            // Do not include model content or parser detail; either can expose a prompt echo.
+            throw Object.assign(new Error('model response was not parseable JSON after retry'), { code: 'MODEL_CLIENT_FAILED' });
+          }
+        }
       }
-    } catch (error) {
-      throw Object.assign(new Error(`model transport failed: ${error.name === 'AbortError' ? 'timeout' : error.message}`), { code: 'MODEL_CLIENT_FAILED' });
     } finally {
+      // This timer spans every transport and JSON-repair attempt so retries
+      // cannot extend the caller's original deadline.
       clearTimeout(timer);
     }
-
-    if (!response.ok) {
-      // Status only — never the body (it can echo prompt fragments).
-      throw Object.assign(new Error(`model endpoint returned HTTP ${response.status}`), { code: 'MODEL_CLIENT_FAILED' });
-    }
-
-    let payload;
-    try {
-      payload = await response.json();
-    } catch (error) {
-      throw Object.assign(new Error('model endpoint returned a non-JSON body'), { code: 'MODEL_CLIENT_FAILED' });
-    }
-    const text = payload?.choices?.[0]?.message?.content;
-    if (typeof text !== 'string' || text.length === 0) {
-      throw Object.assign(new Error('model response contained no message content'), { code: 'MODEL_CLIENT_FAILED' });
-    }
-    let output;
-    try {
-      output = JSON.parse(sanitizeJsonText(text));
-    } catch (error) {
-      if (payload?.choices?.[0]?.finish_reason === 'length') {
-        throw Object.assign(new Error('model response was truncated (max_tokens reached)'), { code: 'MODEL_CLIENT_FAILED' });
-      }
-      throw Object.assign(new Error(`model response was not parseable JSON: ${error.message}`), { code: 'MODEL_CLIENT_FAILED' });
-    }
-    return {
-      output,
-      model,
-      finish_reason: payload?.choices?.[0]?.finish_reason ?? null,
-    };
   }
 
   return Object.freeze({ complete });

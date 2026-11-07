@@ -4,6 +4,7 @@ const ResearchRunModel = require('./research_run.model');
 const ResearchAssessmentModel = require('./research_assessment.model');
 const ResearchSnapshotModel = require('./research_snapshot.model');
 const ThesisCheckpointModel = require('./thesis_state.model');
+const PositionModel = require('../positions/position.model');
 const { researchRunSchema, CONTRACT_VERSION } = require('./contracts');
 const { STAGES, STAGE_ORDER, validateStage } = require('./tool_registry');
 
@@ -19,6 +20,10 @@ function serviceError(code, message) {
   const error = new Error(message || code);
   error.code = code;
   return error;
+}
+
+function isDuplicateKeyError(error) {
+  return Boolean(error) && (error.code === 11000 || error.code === '11000');
 }
 
 // Deterministic digest of the request payload: the idempotency contract
@@ -143,14 +148,14 @@ function createMongooseRunRepository(model = ResearchRunModel) {
       return fromDoc(await model.findOneAndUpdate(
         { _id: runId, status: 'queued' },
         { $set: datePatch(patch) },
-        { new: true, lean: true },
+        { returnDocument: 'after', lean: true },
       ));
     },
     async updateIfStatus(runId, expectedStatuses, patch) {
       return fromDoc(await model.findOneAndUpdate(
         { _id: runId, status: { $in: expectedStatuses } },
         { $set: datePatch(patch) },
-        { new: true, lean: true },
+        { returnDocument: 'after', lean: true },
       ));
     },
     async supersedeStale({ ownerId, positionId, beforeRevision, excludeRunId, finishedAt }) {
@@ -189,7 +194,10 @@ function createMongooseRunRepository(model = ResearchRunModel) {
   };
 }
 
-function createMongooseAssessmentRepository(model = ResearchAssessmentModel) {
+function createMongooseAssessmentRepository(
+  model = ResearchAssessmentModel,
+  { positionModel = PositionModel } = {},
+) {
   const fromDoc = (record) => {
     if (!record) return null;
     const plain = record.toObject ? record.toObject() : record;
@@ -208,6 +216,141 @@ function createMongooseAssessmentRepository(model = ResearchAssessmentModel) {
       assessment: plain.assessment,
     };
   };
+  const readLean = async (query, { includePublicationGuard = false } = {}) => {
+    if (!query) return null;
+    if (includePublicationGuard && typeof query.select === 'function') query = query.select('+publication_guard');
+    if (typeof query.lean === 'function') return query.lean();
+    return query;
+  };
+  const guardAssessmentFilter = (guard, position) => ({
+    _id: guard.assessment_id,
+    position_id: position._id,
+    owner_id_internal: position.owner_id,
+    position_revision: guard.position_revision,
+  });
+
+  // A guard can be reclaimed only when the immutable assessment it names is
+  // already durably present and is bound to the same position/owner/revision.
+  // That is proof that a prior publisher cannot later insert a *new* judgment:
+  // the unique run_id index makes a second insert impossible. In every other
+  // case (including a worker paused before insert), leave the guard intact.
+  const reconcileCompletedGuard = async ({ positionId, ownerId, apply = false } = {}) => {
+    if (!positionModel || typeof positionModel.findOne !== 'function') {
+      throw serviceError('PUBLICATION_GUARD_UNAVAILABLE', 'Position storage does not support publication guard inspection');
+    }
+    const position = await readLean(positionModel.findOne({
+      _id: positionId,
+      owner_id: ownerId,
+      publication_guard: { $ne: null },
+    }), { includePublicationGuard: true });
+    if (!position) return { status: 'NO_GUARD' };
+    const guard = position.publication_guard;
+    if (!guard || typeof guard.token !== 'string' || typeof guard.assessment_id !== 'string'
+      || !Number.isSafeInteger(guard.position_revision)) {
+      return { status: 'BLOCKED_INVALID_GUARD' };
+    }
+    const persisted = await readLean(model.findOne(guardAssessmentFilter(guard, position)));
+    if (!persisted) {
+      return {
+        status: 'BLOCKED_UNPROVEN',
+        assessment_id: guard.assessment_id,
+        guard_token: guard.token,
+      };
+    }
+    if (!apply) {
+      return { status: 'PROVEN_DRY_RUN', assessment_id: guard.assessment_id, guard_token: guard.token };
+    }
+    const released = await positionModel.findOneAndUpdate(
+      {
+        _id: position._id,
+        owner_id: position.owner_id,
+        revision: guard.position_revision,
+        'publication_guard.token': guard.token,
+        'publication_guard.assessment_id': guard.assessment_id,
+      },
+      { $set: { publication_guard: null } },
+      { returnDocument: 'after', lean: true },
+    );
+    return released
+      ? { status: 'RECONCILED', assessment_id: guard.assessment_id, guard_token: guard.token }
+      : { status: 'RACE_LOST', assessment_id: guard.assessment_id, guard_token: guard.token };
+  };
+  const createIfCurrent = async (assessment, { retriedAfterOtherCompletedGuard = false } = {}) => {
+    if (!positionModel || typeof positionModel.findOneAndUpdate !== 'function') {
+      throw serviceError('PUBLICATION_GUARD_UNAVAILABLE', 'Position storage does not support atomic publication guards');
+    }
+    const token = crypto.randomUUID();
+    const acquiredAt = new Date();
+    let acquired = false;
+    // Never clear a guard after an indeterminate write failure. A network or
+    // write-concern timeout can be reported before the server finishes the
+    // insert, so releasing then would permit an edit before a delayed insert.
+    // A resolved insert and a duplicate-key response are terminal outcomes.
+    let publicationWriteSettled = false;
+    try {
+      const position = await positionModel.findOneAndUpdate(
+        {
+          _id: assessment.position_id,
+          owner_id: assessment.owner_id_internal,
+          revision: assessment.position_revision,
+          'instrument.instrument_id': assessment.instrument_id,
+          publication_guard: null,
+        },
+        { $set: { publication_guard: {
+          token,
+          assessment_id: assessment.id,
+          position_revision: assessment.position_revision,
+          acquired_at: acquiredAt,
+        } } },
+        { returnDocument: 'after', lean: true },
+      );
+      if (!position) {
+        if (typeof positionModel.findOne !== 'function') return null;
+        const reconciliation = await reconcileCompletedGuard({
+          positionId: assessment.position_id,
+          ownerId: assessment.owner_id_internal,
+          apply: true,
+        });
+        if (reconciliation.status !== 'RECONCILED') return null;
+        const existing = await readLean(model.findOne({
+          run_id: assessment.run_id,
+          _id: reconciliation.assessment_id,
+        }));
+        if (existing) return fromDoc(existing);
+        // A different completed run's guard was proved and released. It is
+        // not this run's result; retry once against the unchanged position.
+        return retriedAfterOtherCompletedGuard
+          ? null
+          : createIfCurrent(assessment, { retriedAfterOtherCompletedGuard: true });
+      }
+      acquired = true;
+      try {
+        await model.create({ ...assessment, _id: assessment.id, generated_at: new Date(assessment.generated_at) });
+        publicationWriteSettled = true;
+      } catch (error) {
+        if (isDuplicateKeyError(error)) {
+          publicationWriteSettled = true;
+          throw serviceError('DUPLICATE_ASSESSMENT', 'An assessment for this run already exists');
+        }
+        throw error;
+      }
+      return structuredClone(assessment);
+    } finally {
+      if (acquired && publicationWriteSettled) {
+        await positionModel.findOneAndUpdate(
+          {
+            _id: assessment.position_id,
+            owner_id: assessment.owner_id_internal,
+            revision: assessment.position_revision,
+            'publication_guard.token': token,
+            'publication_guard.assessment_id': assessment.id,
+          },
+          { $set: { publication_guard: null } },
+          { returnDocument: 'after', lean: true },
+        );
+      }
+    }
+  };
   return {
     async create(assessment) {
       try {
@@ -220,8 +363,22 @@ function createMongooseAssessmentRepository(model = ResearchAssessmentModel) {
       }
       return structuredClone(assessment);
     },
+    // Publication is a cross-collection operation. Standalone MongoDB cannot
+    // transact it, so acquire a durable guard on the exact Position revision
+    // before inserting. Position edits atomically require publication_guard
+    // to be null. Thus either an edit wins first (acquisition returns null) or
+    // publication wins and the edit is refused until the insert completes.
+    // The guard deliberately has no expiry: reclaiming by time would let a
+    // delayed publisher insert after a newer position edit.
+    createIfCurrent,
     async findById(assessmentId) {
       return fromDoc(await model.findOne({ _id: assessmentId }).lean());
+    },
+    // Operator-facing, proof-gated reconciliation. This intentionally cannot
+    // clear a guard whose assessment is absent: a delayed old worker might
+    // still be about to insert in that case.
+    async reconcileCompletedPublicationGuard({ position_id, owner_id, apply = false } = {}) {
+      return reconcileCompletedGuard({ positionId: position_id, ownerId: owner_id, apply });
     },
     async findByRunId(runId) {
       return fromDoc(await model.findOne({ run_id: runId }).lean());
@@ -345,7 +502,7 @@ function createMongooseCheckpointRepository(model = ThesisCheckpointModel) {
       const record = await model.findOneAndUpdate(
         { _id: checkpointId },
         { $set: mapped },
-        { new: true, lean: true },
+        { returnDocument: 'after', lean: true },
       );
       return fromDoc(record);
     },
@@ -715,7 +872,7 @@ class ResearchService {
     let assessmentIdResolved = assessmentId;
     let assessmentCreated = true;
     try {
-      await this.assessmentRepository.create({
+      const assessment = {
         id: assessmentId,
         run_id,
         position_id: run.position_id,
@@ -728,7 +885,21 @@ class ResearchService {
         status: result.status,
         artifact_kind: 'judgment',
         assessment: structuredClone(result.assessment ?? {}),
-      });
+      };
+      // The production adapter provides createIfCurrent: a transactionally
+      // fenced owner/revision/instrument check at the persistence boundary.
+      // Lightweight repositories used by isolated tests may only expose
+      // create(), but production never falls back to that unsafe path.
+      const persisted = typeof this.assessmentRepository.createIfCurrent === 'function'
+        ? await this.assessmentRepository.createIfCurrent(assessment)
+        : await this.assessmentRepository.create(assessment);
+      if (!persisted) {
+        throw serviceError('REVISION_CONFLICT', 'Position owner, revision, or instrument changed before assessment publication');
+      }
+      // Safe stale-guard reconciliation can return the immutable assessment
+      // inserted before a crash. Bind the run to that persisted winner, not to
+      // this retry's newly generated candidate id.
+      assessmentIdResolved = persisted.id;
     } catch (error) {
       if (error && error.code === 'DUPLICATE_ASSESSMENT') {
         // Concurrent callback won the race: resolve to the single persisted

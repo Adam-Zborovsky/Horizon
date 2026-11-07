@@ -18,6 +18,22 @@ const validator = require('./result_validator');
 
 const RUN_ID_MAX_LENGTH = 160;
 const TERMINAL_STATUSES = Object.freeze(['succeeded', 'limited', 'failed', 'stalled', 'superseded']);
+const SAFE_DIAGNOSTIC_CODES = Object.freeze(new Set(['SCHEMA_INVALID']));
+const SAFE_SCHEMA_SEGMENTS = Object.freeze(new Set([
+  'id', 'contract_version', 'position_id', 'position_revision', 'instrument_id', 'run_id',
+  'evidence_snapshot_id', 'generated_at', 'session_as_of', 'status', 'market_thesis',
+  'business_assessment', 'price_technical_assessment', 'valuation_assessment', 'summary',
+  'claims', 'rationale', 'counterevidence', 'recommendation', 'action', 'horizon_months',
+  'headline', 'countercase', 'invalidation_conditions', 'evidence_quality',
+  'predictive_uncertainty', 'position_context', 'revision', 'average_cost', 'quantity',
+  'opened_on', 'economics_status', 'amount', 'currency', 'basis', 'changes_since_previous',
+  'previous_assessment_id', 'previous_session_as_of', 'missing_report_sessions', 'thesis_changes',
+  'component', 'checkpoint_change_ids', 'checkpoints', 'kind', 'metric_id', 'fixed_level',
+  'condition', 'created_at', 'updated_at', 'reason', 'source_assessment_id', 'outlooks',
+  'calendar_target_date', 'evaluation_session_date', 'direction', 'base_case', 'upside_case',
+  'downside_case', 'catalysts', 'invalidators', 'numeric_projection', 'data_limitations',
+  'missing_data', 'next_review', 'versions', 'text', 'evidence_ids', 'metric_ids', 'claim_type',
+]));
 
 function workerError(code, message) {
   const error = new Error(message || code);
@@ -63,6 +79,41 @@ function safeErrorCode(error, fallback) {
   return fallback;
 }
 
+// Validation messages and paths can reflect model output. Logs retain only a
+// small, schema-owned code/path vocabulary, never the original message/value.
+function normalizeSafeSchemaPath(path) {
+  if (typeof path !== 'string' || path.length === 0 || path.length > 240) return null;
+  const segments = path.split('.');
+  if (segments.length > 12 || !SAFE_SCHEMA_SEGMENTS.has(segments[0])) return null;
+  let normalized = '';
+  for (const segment of segments) {
+    if (/^(?:0|[1-9]\d{0,2})$/.test(segment)) {
+      normalized += `[${segment}]`;
+    } else if (SAFE_SCHEMA_SEGMENTS.has(segment)) {
+      normalized += normalized.length === 0 ? segment : `.${segment}`;
+    } else {
+      return null;
+    }
+  }
+  return normalized;
+}
+
+function safeValidationDiagnostics(validationIssues) {
+  if (!Array.isArray(validationIssues)) return [];
+  const diagnostics = [];
+  const seen = new Set();
+  for (const entry of validationIssues) {
+    const path = normalizeSafeSchemaPath(entry?.path);
+    if (!entry || !SAFE_DIAGNOSTIC_CODES.has(entry.code) || path == null) continue;
+    const key = `${entry.code}:${path}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    diagnostics.push({ code: entry.code, path });
+    if (diagnostics.length === 8) break;
+  }
+  return diagnostics;
+}
+
 function createRunWorker({
   researchService,
   agentRuntime,
@@ -93,10 +144,13 @@ function createRunWorker({
   // share the same claim + pipeline instead of racing the persisted claim.
   const inflight = new Map();
 
-  function logWarning(code, runId, detail = '') {
+  function logWarning(code, runId, validationIssues = []) {
     if (logger && typeof logger.warn === 'function') {
-      // Codes only — never upstream payloads, prompts or credentials.
-      logger.warn(`run_worker: run ${runId} failed with ${code}${detail ? ` (${detail})` : ''}`);
+      // Codes plus a strictly allowlisted canonical field name; never model
+      // output, arbitrary error messages, raw validation paths or credentials.
+      const diagnostics = safeValidationDiagnostics(validationIssues);
+      const suffix = diagnostics.length > 0 ? ` diagnostics=${JSON.stringify(diagnostics)}` : '';
+      logger.warn(`run_worker: run ${runId} failed with ${code}${suffix}`);
     }
   }
 
@@ -201,7 +255,7 @@ function createRunWorker({
     });
 
     if (envelope.status === 'failed') {
-      logWarning(envelope.error_code || 'PIPELINE_FAILED', runId, envelope.client_error);
+      logWarning(envelope.error_code || 'PIPELINE_FAILED', runId, envelope.validation_issues);
       return completeFailure(runId, envelope.error_code || 'PIPELINE_FAILED');
     }
 
@@ -498,6 +552,7 @@ function createResearchScheduler({
 
 module.exports = {
   TERMINAL_STATUSES,
+  safeValidationDiagnostics,
   createRunWorker,
   queueDailyUpdateRuns,
   toStatusView,

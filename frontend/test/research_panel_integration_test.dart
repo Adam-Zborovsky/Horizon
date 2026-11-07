@@ -22,9 +22,8 @@
 //
 // Fixtures are hand-built wire-shape JSON parsed through the strict H11
 // models; nothing invents prices, candles, metrics or evidence. The stock
-// fixture carries no history: the chart slot must render its truthful
-// unavailable state while panels stay fully functional (panels do not wait
-// for chart completion).
+// fixture carries no typed observed bars, so the screen does not promote its
+// legacy numeric history list into a chart; panels stay fully functional.
 //
 // EXECUTION STATUS: DEFERRED_TO_DEV_PC (no Dart/Flutter SDK on this host —
 // `dart --version` → command not found). Authored here; must be run on the
@@ -40,6 +39,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 
+import 'package:horizon/src/features/market/market_repository.dart';
 import 'package:horizon/src/features/positions/position_repository.dart';
 import 'package:horizon/src/features/stock/stock_detail_screen.dart';
 import 'package:horizon/src/features/stock/stock_repository.dart';
@@ -279,13 +279,19 @@ Map<String, dynamic> _lastSuccessJson() => {
       'finished_at': '2026-10-30T20:05:00.000Z',
     };
 
-Map<String, dynamic> _latestAttemptJson() => {
+Map<String, dynamic> _latestAttemptJson({
+  String status = 'failed',
+  String stage = 'synthesis',
+  String? errorCode = 'PIPELINE_VALIDATION_FAILED',
+}) => {
       'run_id': 'run-2',
-      'status': 'failed',
-      'stage': 'synthesis',
+      'status': status,
+      'stage': stage,
       'started_at': '2026-10-30T22:00:00.000Z',
-      'finished_at': '2026-10-30T22:10:00.000Z',
-      'error_code': 'PIPELINE_VALIDATION_FAILED',
+      'finished_at': status == 'queued' || status == 'running'
+          ? null
+          : '2026-10-30T22:10:00.000Z',
+      'error_code': errorCode,
       'deadline_at': '2026-10-30T22:30:00.000Z',
     };
 
@@ -311,7 +317,15 @@ class _FixtureStockRepository extends StockRepository {
 /// Records every request so tests can assert the exact wire contracts the
 /// wiring emits (PATCH envelope, Idempotency-Key header, Bearer token).
 class _RecordingTransport {
-  _RecordingTransport({this.patchResponse, this.latestWire, this.positionWire});
+  _RecordingTransport({
+    this.patchResponse,
+    this.runResponse,
+    this.runDetailResponse,
+    this.onRunDetailRequest,
+    this.latestWire,
+    this.positionWire,
+    this.positionWires,
+  });
 
   /// Latest-state response body (defaults to a complete success state).
   Map<String, dynamic>? latestWire;
@@ -320,10 +334,24 @@ class _RecordingTransport {
   /// position with full economics).
   Map<String, dynamic>? positionWire;
 
+  /// Explicit list for ambiguous-ticker scenarios. When unset, the legacy
+  /// single-position fixture remains the default.
+  List<Map<String, dynamic>>? positionWires;
+
   /// When set, PATCH /positions/pos-1 answers with this raw status/body
   /// (used for the revision-conflict scenario); otherwise a 200 with an
   /// updated position wire is returned.
   ({int status, Map<String, dynamic> body})? patchResponse;
+
+  /// Optional raw POST response for queue conflict/error handling.
+  ({int status, Map<String, dynamic> body})? runResponse;
+
+  /// Optional authoritative GET /runs/:id response for polling tests.
+  ({int status, Map<String, dynamic> body})? runDetailResponse;
+
+  /// Lets a polling fixture update the following latest-state response after
+  /// the run endpoint reports a terminal result.
+  void Function()? onRunDetailRequest;
 
   final List<http.Request> requests = [];
 
@@ -335,7 +363,7 @@ class _RecordingTransport {
       final path = request.url.path;
       if (request.method == 'GET' && path.endsWith('/positions')) {
         return _json(200, {
-          'positions': [positionWire ?? _positionJson()],
+          'positions': positionWires ?? [positionWire ?? _positionJson()],
         });
       }
       if (request.method == 'GET' &&
@@ -345,8 +373,15 @@ class _RecordingTransport {
           lastSuccess: _lastSuccessJson(),
         ));
       }
+      if (request.method == 'GET' && path.endsWith('/research/runs/run-2')) {
+        onRunDetailRequest?.call();
+        final detail = runDetailResponse;
+        if (detail != null) return _json(detail.status, detail.body);
+      }
       if (request.method == 'POST' &&
           path.endsWith('/research/positions/pos-1/runs')) {
+        final queued = runResponse;
+        if (queued != null) return _json(queued.status, queued.body);
         return _json(202, {
           'run': _runJson(status: 'queued'),
           'idempotent_replay': false,
@@ -399,6 +434,15 @@ Future<void> _pumpScreen(
               tokenProvider: () async => _RecordingTransport._token,
             ),
           ),
+          // The detail screen now resolves observed-history identity through
+          // MarketRepository. Keep this harness hermetic and make every
+          // request observable by the recording transport.
+          marketRepositoryProvider.overrideWith(
+            (ref) => MarketRepository(
+              client: client,
+              tokenProvider: () async => _RecordingTransport._token,
+            ),
+          ),
           researchWireProvider.overrideWithValue(
             ResearchWire(
               client: client,
@@ -428,17 +472,14 @@ void main() {
 
   group('H15B integrated stock detail journey', () {
     testWidgets(
-        'renders position state, economics and grounded research panel with '
-        'the chart slot preserved truthfully unavailable', (tester) async {
+        'renders the grounded research decision surface before visibly '
+        'secondary legacy briefing context', (tester) async {
       final transport = _RecordingTransport();
       await _pumpScreen(tester, transport);
 
       // Briefing-derived price header still rendered (not overwritten by
       // immutable research prices).
       expect(find.text('\$152.25'), findsOneWidget);
-      // Truthful unavailable chart slot — the panels render without any
-      // chart dependency.
-      expect(find.text('OBSERVED PRICE HISTORY UNAVAILABLE'), findsOneWidget);
       // Position section: owned badge and honest economics line.
       expect(find.bySemanticsLabel('Owned position'), findsOneWidget);
       expect(find.text('Cost 152.25 USD · Quantity 10'), findsOneWidget);
@@ -447,6 +488,13 @@ void main() {
       // Continuity card rendered from changes_since_previous.
       expect(
           find.text('What changed since the previous report'), findsOneWidget);
+      // The previous briefing is retained but cannot compete with the current
+      // position-specific research recommendation.
+      expect(find.text('HISTORIC / SECONDARY CONTEXT'), findsOneWidget);
+      expect(
+        tester.getTopLeft(find.text('Recommendation')).dy,
+        lessThan(tester.getTopLeft(find.text('HISTORIC / SECONDARY CONTEXT')).dy),
+      );
     });
 
     testWidgets('candidate position shows candidate economics truthfully',
@@ -609,6 +657,88 @@ void main() {
       // fabricated while it is pending.
       expect(find.text('No research report yet'), findsOneWidget);
       expect(find.textContaining('Run status:'), findsOneWidget);
+      expect(find.text('RESEARCH IN PROGRESS'), findsOneWidget);
+    });
+
+    testWidgets('polling a terminal failure preserves its status and error code',
+        (tester) async {
+      final transport = _RecordingTransport()
+        ..latestWire = _latestWire()
+        ..runDetailResponse = (
+          status: 200,
+          body: {
+            'run': _runJson(
+              status: 'failed',
+              errorCode: 'PIPELINE_VALIDATION_FAILED',
+            ),
+          },
+        );
+      await _pumpScreen(tester, transport);
+
+      await tester.ensureVisible(find.text('RUN RESEARCH'));
+      await tester.tap(find.text('RUN RESEARCH'));
+      await tester.pump(const Duration(seconds: 3));
+      await tester.pump(const Duration(milliseconds: 400));
+
+      expect(find.text('Run status: Failed'), findsOneWidget);
+      expect(find.text('Error: PIPELINE_VALIDATION_FAILED'), findsOneWidget);
+      expect(transport.calls('GET', '/research/runs/run-2'), hasLength(1));
+    });
+
+    testWidgets(
+        'an active run discovered on reload is polled to completion and '
+        'releases the disabled research action', (tester) async {
+      final transport = _RecordingTransport();
+      transport.latestWire = _latestWire(
+        latestAttempt: _latestAttemptJson(status: 'running'),
+      );
+      transport.runDetailResponse = (
+        status: 200,
+        body: {
+          'run': _runJson(
+            status: 'failed',
+            errorCode: 'PIPELINE_VALIDATION_FAILED',
+          ),
+        },
+      );
+      transport.onRunDetailRequest = () {
+        transport.latestWire = _latestWire(
+          latestAttempt: _latestAttemptJson(),
+        );
+      };
+      await _pumpScreen(tester, transport);
+
+      expect(find.text('RESEARCH IN PROGRESS'), findsOneWidget);
+      await tester.pump(const Duration(seconds: 3));
+      await tester.pump(const Duration(milliseconds: 400));
+
+      expect(transport.calls('GET', '/research/runs/run-2'), hasLength(1));
+      expect(find.text('RUN RESEARCH'), findsOneWidget);
+      expect(find.text('Run status: Failed'), findsOneWidget);
+    });
+
+    testWidgets('active-run conflict is explained and does not create a retry',
+        (tester) async {
+      final transport = _RecordingTransport()
+        ..latestWire = _latestWire()
+        ..runResponse = (
+          status: 409,
+          body: {
+            'code': 'RUN_ALREADY_ACTIVE',
+            'message': 'An active run already exists for this position revision',
+          },
+        );
+      await _pumpScreen(tester, transport);
+
+      await tester.ensureVisible(find.text('RUN RESEARCH'));
+      await tester.tap(find.text('RUN RESEARCH'));
+      await tester.pump(const Duration(milliseconds: 400));
+
+      expect(
+        find.text('Research is already in progress. The current status is shown below.'),
+        findsOneWidget,
+      );
+      expect(transport.calls('POST', '/research/positions/pos-1/runs'), hasLength(1));
     });
 
     testWidgets(
@@ -622,7 +752,7 @@ void main() {
       // exactly the briefing price formatting, proving no research value was
       // merged into the market price slot.
       expect(find.text('\$152.25'), findsOneWidget);
-      expect(find.text('OBSERVED PRICE HISTORY UNAVAILABLE'), findsOneWidget);
+      expect(find.text('HISTORIC / SECONDARY CONTEXT'), findsOneWidget);
     });
 
     testWidgets('a ticker without a tracked position renders truthful copy '
@@ -652,6 +782,12 @@ void main() {
                   tokenProvider: () async => 'test-token',
                 ),
               ),
+              marketRepositoryProvider.overrideWith(
+                (ref) => MarketRepository(
+                  client: noPosition,
+                  tokenProvider: () async => 'test-token',
+                ),
+              ),
               researchWireProvider.overrideWithValue(
                 ResearchWire(
                   client: noPosition,
@@ -670,6 +806,116 @@ void main() {
           findsOneWidget);
       // No research runs may be queued without a position.
       expect(find.text('RUN RESEARCH'), findsNothing);
+    });
+
+    testWidgets('ambiguous ticker identity fails closed without choosing a '
+        'position or requesting research', (tester) async {
+      final first = _positionJson();
+      final second = _positionJson()
+        ..['id'] = 'pos-2'
+        ..['instrument'] = {
+          ..._instrumentJson,
+          'instrument_id': 'instr-2',
+        };
+      final transport = _RecordingTransport()
+        ..positionWires = [first, second];
+      await _pumpScreen(tester, transport);
+
+      expect(
+        find.textContaining('MSFT matches multiple tracked instruments'),
+        findsNWidgets(2),
+      );
+      expect(
+        transport.calls('GET', '/research/positions/pos-1/latest'),
+        isEmpty,
+      );
+      expect(
+        transport.calls('GET', '/market/instruments/instr-1/history'),
+        isEmpty,
+      );
+    });
+
+    for (final fixture in <({int status, String message})>[
+      (
+        status: 401,
+        message:
+            'Polling stopped: your session expired (401). Sign in again, then reload.',
+      ),
+      (
+        status: 403,
+        message:
+            'Polling stopped: access was denied (403). Reload after your permissions are restored.',
+      ),
+      (
+        status: 404,
+        message:
+            'Polling stopped: this research run was not found (404). Reload to reconcile its status.',
+      ),
+    ]) {
+      testWidgets('polling HTTP ${fixture.status} stops immediately and does '
+          'not retry', (tester) async {
+        final transport = _RecordingTransport()
+          ..latestWire = _latestWire()
+          ..runDetailResponse = (
+            status: fixture.status,
+            body: {
+              'success': false,
+              'error': {
+                'code': 'HTTP_${fixture.status}',
+                'message': 'fixture failure',
+              },
+            },
+          );
+        await _pumpScreen(tester, transport);
+
+        await tester.ensureVisible(find.text('RUN RESEARCH'));
+        await tester.tap(find.text('RUN RESEARCH'));
+        await tester.pump(const Duration(milliseconds: 400));
+        await tester.pump(const Duration(seconds: 3));
+        await tester.pump();
+
+        expect(find.text(fixture.message), findsOneWidget);
+        expect(find.text('RETRY STATUS'), findsOneWidget);
+        expect(transport.calls('GET', '/research/runs/run-2'), hasLength(1));
+
+        await tester.pump(const Duration(seconds: 30));
+        expect(transport.calls('GET', '/research/runs/run-2'), hasLength(1));
+      });
+    }
+
+    testWidgets('transient polling errors back off and stop after three '
+        'failed checks', (tester) async {
+      final transport = _RecordingTransport()
+        ..latestWire = _latestWire()
+        ..runDetailResponse = (
+          status: 500,
+          body: {
+            'success': false,
+            'error': {'code': 'UPSTREAM_UNAVAILABLE', 'message': 'fixture failure'},
+          },
+        );
+      await _pumpScreen(tester, transport);
+
+      await tester.ensureVisible(find.text('RUN RESEARCH'));
+      await tester.tap(find.text('RUN RESEARCH'));
+      await tester.pump(const Duration(milliseconds: 400));
+      await tester.pump(const Duration(seconds: 3));
+      await tester.pump();
+      expect(find.textContaining('Retrying in 3s.'), findsOneWidget);
+
+      await tester.pump(const Duration(seconds: 3));
+      await tester.pump();
+      expect(find.textContaining('Retrying in 6s.'), findsOneWidget);
+      await tester.pump(const Duration(seconds: 6));
+      await tester.pump();
+      expect(
+        find.text('Polling stopped after 3 failed status checks. Retry status or reload.'),
+        findsOneWidget,
+      );
+      expect(transport.calls('GET', '/research/runs/run-2'), hasLength(3));
+
+      await tester.pump(const Duration(seconds: 30));
+      expect(transport.calls('GET', '/research/runs/run-2'), hasLength(3));
     });
   });
 }

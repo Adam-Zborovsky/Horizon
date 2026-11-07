@@ -16,6 +16,10 @@ const envSchema = zod.object({
   RESEARCH_LLM_BASE_URL: zod.string().url().optional(),
   RESEARCH_LLM_API_KEY: zod.string().min(8).optional(),
   RESEARCH_LLM_MODEL: zod.string().min(1).optional(),
+  // Required to enable outbound SEC/news evidence. It must name a real
+  // operator contact (validated again by evidence composition); absence
+  // intentionally leaves those providers disabled.
+  SEC_USER_AGENT: zod.string().min(1).optional(),
   JWT_SECRET: zod.string(),
   JWT_EXPIRES_IN: zod.string().default('30d'),
 });

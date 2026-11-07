@@ -16,6 +16,16 @@ const {
   createInMemoryLeaderLease,
   createResearchScheduler,
 } = require('../src/features/research/run_worker');
+const {
+  startResearchScheduler,
+  createMongooseLeaderLease,
+  createMongooseScheduledPositionsProvider,
+  startQueuedRunExecutions,
+} = require('../src/utils/scheduler');
+const {
+  hasAutomationExecutionScopes,
+  startProductionSchedulers,
+} = require('../src/server');
 
 // ---------------------------------------------------------------------------
 // In-memory repositories (hermetic; synthetic fixtures, NOT observed data)
@@ -421,4 +431,187 @@ test('bounded retry: gives up after maxTickRetries and surfaces the last error',
     (error) => error.code === 'TRANSIENT_DB_ERROR',
   );
   assert.equal(recoverCalls, 3, 'exactly maxTickRetries + 1 attempts, no unbounded loop');
+});
+
+// ---------------------------------------------------------------------------
+// 5. Source-only production integration seams
+// ---------------------------------------------------------------------------
+
+test('source scheduler uses the post-close New York cron and queues through the shared service', async () => {
+  const scheduled = [];
+  const cron = {
+    schedule(expression, callback, options) {
+      scheduled.push({ expression, callback, options });
+      return { stop() {} };
+    },
+  };
+  const service = createControllableService();
+  const executionCalls = [];
+  const logs = [];
+  const started = startResearchScheduler({
+    researchService: service,
+    runWorker: { async startRun({ run_id }) { executionCalls.push(run_id); return { replayed: false }; } },
+    positions: () => [position()],
+    leadership: createInMemoryLeaderLease(),
+    cron,
+    ownerId: 'source-test-replica',
+    logger: { info(message) { logs.push(message); }, warn() {} },
+  });
+
+  assert.equal(scheduled.length, 1);
+  assert.equal(scheduled[0].expression, '20 16 * * 1-5');
+  assert.deepEqual(scheduled[0].options, { timezone: 'America/New_York' });
+
+  await scheduled[0].callback();
+  assert.equal(service.calls.recover, 1);
+  assert.equal(service.calls.queue, 1);
+  assert.deepEqual(executionCalls, ['run-1']);
+  assert.equal(started.scheduler instanceof Object, true);
+  assert.match(logs.at(-1), /queued=1 replayed=0 queue_errors=0 execution_started=1 execution_replayed=0 execution_errors=0 recovered=0/);
+});
+
+test('source scheduler retries idempotent queued runs after restart and reports safe execution errors', async () => {
+  const calls = [];
+  let pipelineStarts = 0;
+  const result = await startQueuedRunExecutions({
+    queued: [
+      { run_id: 'run-fresh', idempotent_replay: false },
+      // The queue replay means a prior tick persisted this run. It does not
+      // prove a worker claimed it before a process crash, so it must be tried.
+      { run_id: 'run-replay', idempotent_replay: true },
+      { run_id: 'run-failing', idempotent_replay: false },
+    ],
+    runWorker: {
+      async startRun({ run_id }) {
+        calls.push(run_id);
+        if (run_id === 'run-failing') {
+          const error = new Error('upstream credential detail must not be logged');
+          error.code = 'INPUT_UNAVAILABLE';
+          throw error;
+        }
+        // This mirrors the atomic persisted claim contract: an already-claimed
+        // run returns a replay receipt and never starts another pipeline.
+        if (run_id === 'run-replay') return { replayed: true };
+        pipelineStarts += 1;
+        return { replayed: false };
+      },
+    },
+  });
+  assert.deepEqual(calls, ['run-fresh', 'run-replay', 'run-failing']);
+  assert.equal(pipelineStarts, 1, 'a claimed run is observed but never executed twice');
+  assert.deepEqual(result, {
+    started: 1,
+    replayed: 1,
+    errors: [{ run_id: 'run-failing', error_code: 'INPUT_UNAVAILABLE' }],
+  });
+});
+
+test('mongoose leader lease uses atomic ownership filters and refuses a duplicate-key race', async () => {
+  const calls = [];
+  const model = {
+    findOneAndUpdate(filter, update, options) {
+      calls.push({ filter, update, options });
+      return { lean: async () => ({ _id: 'research-scheduler', owner: 'replica-a', expires_at: new Date('2030-01-01T00:01:00.000Z') }) };
+    },
+    async deleteOne(filter) {
+      calls.push({ delete: filter });
+      return { deletedCount: 1 };
+    },
+  };
+  const leadership = createMongooseLeaderLease({
+    model,
+    now: () => new Date('2030-01-01T00:00:00.000Z'),
+  });
+
+  const lease = await leadership.tryAcquire('research-scheduler', 'replica-a', 60000);
+  assert.deepEqual(lease, {
+    key: 'research-scheduler', owner: 'replica-a', expires_at: '2030-01-01T00:01:00.000Z',
+  });
+  assert.deepEqual(calls[0].filter, {
+    _id: 'research-scheduler',
+    $or: [
+      { expires_at: { $lte: new Date('2030-01-01T00:00:00.000Z') } },
+      { owner: 'replica-a' },
+    ],
+  });
+  assert.equal(calls[0].options.upsert, true);
+  assert.equal(await leadership.release(lease), true);
+
+  const collision = createMongooseLeaderLease({
+    model: {
+      findOneAndUpdate() { return { lean: async () => { const error = new Error('duplicate'); error.code = 11000; throw error; } }; },
+      async deleteOne() { return { deletedCount: 0 }; },
+    },
+  });
+  assert.equal(await collision.tryAcquire('research-scheduler', 'replica-b', 60000), null);
+});
+
+test('scheduled positions provider selects only active queueing fields', async () => {
+  let filter;
+  let projection;
+  const provider = createMongooseScheduledPositionsProvider({
+    model: {
+      find(query) {
+        filter = query;
+        return {
+          select(value) {
+            projection = value;
+            return this;
+          },
+          lean: async () => [{
+            _id: 'pos-provider-1',
+            owner_id: 'owner-provider-1',
+            revision: 4,
+            instrument: { instrument_id: 'inst-provider-1' },
+          }],
+        };
+      },
+    },
+  });
+
+  assert.deepEqual(await provider(), [{
+    position_id: 'pos-provider-1',
+    owner_id: 'owner-provider-1',
+    revision: 4,
+    instrument_id: 'inst-provider-1',
+  }]);
+  assert.deepEqual(filter, { archived: false });
+  assert.equal(projection, '_id owner_id instrument revision');
+});
+
+test('server wires the source scheduler only with its bounded local worker', () => {
+  let legacyStarts = 0;
+  let researchStarts = 0;
+  const warnings = [];
+  const common = {
+    researchService: { marker: 'shared-service' },
+    legacySchedulerStarter() { legacyStarts += 1; },
+    runWorker: { startRun() {} },
+    researchSchedulerStarter(options) {
+      researchStarts += 1;
+      assert.equal(options.researchService.marker, 'shared-service');
+      return { task: 'research-task' };
+    },
+    logger: { warn(message) { warnings.push(message); } },
+  };
+
+  assert.equal(startProductionSchedulers({ ...common, runWorker: null }), null);
+  assert.equal(legacyStarts, 1);
+  assert.equal(researchStarts, 0);
+  assert.match(warnings[0], /bounded research worker is unavailable/);
+
+  assert.deepEqual(startProductionSchedulers(common), { task: 'research-task' });
+  assert.equal(legacyStarts, 2);
+  assert.equal(researchStarts, 1);
+
+  assert.equal(startProductionSchedulers({ ...common, automationReady: false }), null);
+  assert.equal(legacyStarts, 3);
+  assert.equal(researchStarts, 1);
+  assert.match(warnings.at(-1), /bounded research worker is unavailable/);
+});
+
+test('automation execution readiness requires the n8n trigger, execute, and status scopes', () => {
+  assert.equal(hasAutomationExecutionScopes(['research:trigger', 'research:execute', 'research:status']), true);
+  assert.equal(hasAutomationExecutionScopes(['research:trigger', 'research:execute']), false);
+  assert.equal(hasAutomationExecutionScopes(null), false);
 });

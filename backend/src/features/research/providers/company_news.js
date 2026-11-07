@@ -15,7 +15,6 @@ const ALLOWED_NEWS_HOSTS = Object.freeze([
   'press.company.com',
 ]);
 
-const DEFAULT_NEWS_USER_AGENT = 'HorizonResearch contact@horizon.local';
 const MAX_FEED_ENTRIES = 50;
 
 function providerError(code, message) {
@@ -205,11 +204,13 @@ function normalizeTitleForDedup(title) {
 class CompanyNewsProvider {
   constructor({
     fetch = globalThis.fetch,
-    userAgent = DEFAULT_NEWS_USER_AGENT,
+    userAgent,
     timeoutMs = 8_000,
     now = () => new Date(),
     allowedHosts = ALLOWED_NEWS_HOSTS,
   } = {}) {
+    if (typeof fetch !== 'function') throw new TypeError('CompanyNewsProvider requires fetch');
+    if (typeof userAgent !== 'string' || userAgent.trim().length === 0) throw new TypeError('CompanyNewsProvider requires a configured userAgent');
     this.fetch = fetch;
     this.userAgent = userAgent;
     this.timeoutMs = timeoutMs;

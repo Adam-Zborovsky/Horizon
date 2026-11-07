@@ -12,7 +12,7 @@ const ASSESSMENT_STATUSES = Object.freeze(['complete', 'limited']);
 // this collection ever stores.
 const researchAssessmentSchema = new mongoose.Schema({
   _id: { type: String, required: true },
-  run_id: { type: String, required: true, immutable: true, index: true },
+  run_id: { type: String, required: true, immutable: true },
   position_id: { type: String, required: true, immutable: true, index: true },
   owner_id_internal: { type: String, required: true, immutable: true, index: true },
   position_revision: { type: Number, required: true, min: 1, immutable: true },

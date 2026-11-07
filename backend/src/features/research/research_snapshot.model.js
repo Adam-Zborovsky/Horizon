@@ -9,7 +9,7 @@ const mongoose = require('mongoose');
 // here (owner-scoped collection), so it must never enter shared caches.
 const researchSnapshotSchema = new mongoose.Schema({
   snapshot_id: { type: String, required: true, unique: true, immutable: true, index: true },
-  run_id: { type: String, required: true, immutable: true, index: true },
+  run_id: { type: String, required: true, immutable: true },
   owner_id_internal: { type: String, required: true, immutable: true, index: true },
   position_id: { type: String, required: true, immutable: true },
   position_revision: { type: Number, required: true, min: 1, immutable: true },

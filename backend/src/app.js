@@ -19,6 +19,9 @@ function createApp({
   positionRouter = null,
   researchService = null,
   researchRouter = null,
+  // Optional explicit lookup for composed deployments/tests whose position
+  // store is not the default Mongoose model.
+  positionLookup = null,
   automationRouter = null,
   runWorker = null,
   authenticate = null,
@@ -69,6 +72,18 @@ function createApp({
   const effectiveResearchRouter = researchRouter
     || (researchService ? createResearchRouter({
         researchService,
+        // PositionService enforces the same indistinguishable-not-found owner
+        // boundary for non-Mongoose compositions. Production otherwise uses
+        // the router's owner-scoped default model lookup.
+        positionLookup: positionLookup || (positionService && typeof positionService.get === 'function'
+          ? async (positionId, ownerId) => {
+            try {
+              return await positionService.get(ownerId, positionId);
+            } catch (_) {
+              return null;
+            }
+          }
+          : undefined),
         onRunQueued: runWorker ? (run) => runWorker.startRun({ run_id: run.id }) : null,
         authenticate,
       }) : null);

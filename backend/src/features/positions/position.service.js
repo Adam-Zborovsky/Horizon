@@ -269,8 +269,8 @@ class PositionService {
       || typeof positionRepository.listByOwner !== 'function'
       || typeof positionRepository.findById !== 'function'
       || typeof positionRepository.insert !== 'function'
-      || typeof positionRepository.update !== 'function') {
-      throw new TypeError('PositionService requires a position repository');
+      || typeof positionRepository.updateIfCurrent !== 'function') {
+      throw new TypeError('PositionService requires a position repository with atomic revision updates');
     }
     this.repository = positionRepository;
     this.now = now;
@@ -461,7 +461,20 @@ class PositionService {
 
     next.revision = doc.revision + 1;
     next.updated_at = this.now().toISOString();
-    const saved = await this.repository.update(next);
+    // The persistence boundary compares owner + expected revision and refuses
+    // an active publication guard in one operation. A read/validate/save
+    // sequence would let an edit slip between publication fencing and insert.
+    const saved = await this.repository.updateIfCurrent(next, expectedRevision);
+    if (!saved) {
+      const current = await this.repository.findById(String(id));
+      if (!current || current.owner_id !== String(ownerId)) {
+        throw serviceError('NOT_FOUND', 'Position not found');
+      }
+      if (current.publication_guard) {
+        throw serviceError('PUBLICATION_IN_PROGRESS', 'Position is being published; retry after publication completes');
+      }
+      throw serviceError('REVISION_CONFLICT', 'Position changed concurrently');
+    }
     return serialize(saved);
   }
 
@@ -674,6 +687,7 @@ function mapRecord(record) {
     risk_context: plain.risk_context ? structuredClone(plain.risk_context) : null,
     archived: plain.archived,
     revision: plain.revision,
+    publication_guard: plain.publication_guard ? structuredClone(plain.publication_guard) : null,
     created_at: plain.created_at instanceof Date ? plain.created_at.toISOString() : plain.created_at,
     updated_at: plain.updated_at instanceof Date ? plain.updated_at.toISOString() : plain.updated_at,
   };
@@ -694,20 +708,25 @@ function createMongoosePositionRepository(model = PositionModel) {
       return records.map(mapRecord);
     },
     async findById(id) {
-      const record = await model.findById(id).lean();
+      const record = await model.findById(id).select('+publication_guard').lean();
       return mapRecord(record);
     },
     async insert(doc) {
       const created = await model.create({ ...doc, _id: doc.id });
       return mapRecord(created);
     },
-    async update(doc) {
-      const record = await model.findById(doc.id);
-      if (!record) throw serviceError('NOT_FOUND', 'Position not found');
-      record.set({
+    async updateIfCurrent(doc, expectedRevision) {
+      const record = await model.findOneAndUpdate(
+        {
+          _id: doc.id,
+          owner_id: doc.owner_id,
+          revision: expectedRevision,
+          publication_guard: null,
+        },
+        { $set: {
         state: doc.state,
         average_cost: doc.average_cost,
-        quantity: doc.quantity,
+          quantity: doc.quantity,
         opened_on: doc.opened_on,
         preferred_horizon_months: doc.preferred_horizon_months,
         original_thesis: doc.original_thesis,
@@ -715,9 +734,11 @@ function createMongoosePositionRepository(model = PositionModel) {
         risk_context: doc.risk_context,
         archived: doc.archived,
         revision: doc.revision,
-      });
-      const saved = await record.save();
-      return mapRecord(saved);
+        updated_at: new Date(doc.updated_at),
+        } },
+        { returnDocument: 'after', lean: true, runValidators: true, timestamps: false },
+      );
+      return mapRecord(record);
     },
   };
 }

@@ -551,6 +551,13 @@ test('B1: end-to-end journey — user queue, scoped automation view, bounded wor
   const harness = createAutomationHarness();
   const app = createApp({
     researchService: harness.service,
+    // The user-facing queue must resolve this fixture position in owner scope;
+    // the automation harness intentionally does not construct PositionService.
+    positionLookup: async (positionId, ownerId) => (
+      positionId === 'pos-h15-1' && ownerId === OWNER_A
+        ? { _id: positionId, owner_id: ownerId, revision: 7, instrument: INSTRUMENT }
+        : null
+    ),
     authenticate: makeUserAuth(),
     automationRouter: harness.router,
     logging: false,

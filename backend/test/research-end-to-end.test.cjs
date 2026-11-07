@@ -273,7 +273,10 @@ function createInMemoryPositionRepository() {
       docs.set(doc.id, structuredClone(doc));
       return structuredClone(doc);
     },
-    async update(doc) {
+    async updateIfCurrent(doc, expectedRevision) {
+      const current = docs.get(doc.id);
+      if (!current || current.owner_id !== doc.owner_id
+        || current.revision !== expectedRevision || current.publication_guard) return null;
       docs.set(doc.id, structuredClone(doc));
       return structuredClone(doc);
     },
