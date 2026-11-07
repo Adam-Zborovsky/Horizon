@@ -676,6 +676,7 @@ void main() {
       await _pumpScreen(tester, transport);
 
       await tester.ensureVisible(find.text('RUN RESEARCH'));
+      await tester.pump(const Duration(milliseconds: 200));
       await tester.tap(find.text('RUN RESEARCH'));
       await tester.pump(const Duration(seconds: 3));
       await tester.pump(const Duration(milliseconds: 400));
@@ -731,6 +732,7 @@ void main() {
       await _pumpScreen(tester, transport);
 
       await tester.ensureVisible(find.text('RUN RESEARCH'));
+      await tester.pump(const Duration(milliseconds: 200));
       await tester.tap(find.text('RUN RESEARCH'));
       await tester.pump(const Duration(milliseconds: 400));
 
@@ -869,6 +871,7 @@ void main() {
         await _pumpScreen(tester, transport);
 
         await tester.ensureVisible(find.text('RUN RESEARCH'));
+        await tester.pump(const Duration(milliseconds: 200));
         await tester.tap(find.text('RUN RESEARCH'));
         await tester.pump(const Duration(milliseconds: 400));
         await tester.pump(const Duration(seconds: 3));
@@ -897,6 +900,7 @@ void main() {
       await _pumpScreen(tester, transport);
 
       await tester.ensureVisible(find.text('RUN RESEARCH'));
+      await tester.pump(const Duration(milliseconds: 200));
       await tester.tap(find.text('RUN RESEARCH'));
       await tester.pump(const Duration(milliseconds: 400));
       await tester.pump(const Duration(seconds: 3));

@@ -1242,10 +1242,8 @@ class _PositionResearchSectionState
               borderRadius: const BorderRadius.vertical(
                 top: Radius.circular(28),
               ),
-              border: Border(
-                top: BorderSide(color: Colors.white.withValues(alpha: 0.12)),
-                left: BorderSide(color: Colors.white.withValues(alpha: 0.06)),
-                right: BorderSide(color: Colors.white.withValues(alpha: 0.06)),
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.08),
               ),
               boxShadow: [
                 BoxShadow(
